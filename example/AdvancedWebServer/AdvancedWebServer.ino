@@ -127,6 +127,7 @@ void setup ( void ) {
 	server.onNotFound ( handleNotFound );
 	server.begin();
 	Serial.println ( "HTTP server started" );
+	myLib("Start");
 }
 
 void loop ( void ) {
