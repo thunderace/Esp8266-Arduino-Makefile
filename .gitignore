@@ -1,2 +1,8 @@
 build-*
+xtensa-lx106-elf
+bin/esptool
+bin/espota.py
+bin/mkspiffs
+
+
 
