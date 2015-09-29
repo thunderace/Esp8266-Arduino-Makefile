@@ -1,6 +1,5 @@
 build-*/
 xtensa-lx106-elf
-bin/esptool
 bin/espota.py
 bin/mkspiffs
 example/AdvancedWebServer/build.nodemcu/
