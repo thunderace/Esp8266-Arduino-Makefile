@@ -1,5 +1,6 @@
 # Esp8266-Arduino-Makefile
-Makefile to build arduino code for ESP8266 under linux (tested on debian X64)
+Makefile to build arduino code for ESP8266 under linux (tested on debian X64).
+Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
 29/09/2015 : 

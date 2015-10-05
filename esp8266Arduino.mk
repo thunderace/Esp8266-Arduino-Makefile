@@ -199,7 +199,7 @@ $(BUILD_OUT)/$(TARGET).bin: $(BUILD_OUT)/$(TARGET).elf
 		-bs .text -bp 4096 -ec -eo $(BUILD_OUT)/$(TARGET).elf -bs .irom0.text -bs .text -bs .data -bs .rodata -bc -ec
 
 
-upload: $(BUILD_OUT)/$(TARGET).bin
+upload: $(BUILD_OUT)/$(TARGET).bin size
 	$(ESPTOOL) $(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cb $(UPLOAD_SPEED) -cp $(SERIAL_PORT) -ca 0x00000 -cf $(BUILD_OUT)/$(TARGET).bin 
 
 ota: $(BUILD_OUT)/$(TARGET).bin
