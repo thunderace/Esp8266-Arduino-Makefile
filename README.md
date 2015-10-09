@@ -5,6 +5,7 @@ Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/20
 ## Changelog
 08/10/2015 : 
 - add $(ARDUINO_CORE)/variants/$(VARIANT) to include path for nodemcuv2
+
 29/09/2015 : 
 - fix README for third party tools installation
 - move post-installation out of the makefile
