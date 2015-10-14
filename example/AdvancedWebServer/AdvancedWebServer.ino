@@ -37,8 +37,8 @@
 void drawGraph();  
 
 
-const char *ssid = "YourSSIDHere";
-const char *password = "YourPSKHere";
+const char *ssid = _SSID_;
+const char *password = _WIFI_PASSWORD_;
 MDNSResponder mdns;
 
 

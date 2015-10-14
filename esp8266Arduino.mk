@@ -55,7 +55,7 @@ ifndef ARDUINO_LIBS
 endif
 
 ifndef USER_LIBS
-    # automatically determine included libraries
+    # automatically determine included user libraries
     USER_LIBS = $(sort $(filter $(notdir $(wildcard $(USER_LIBDIR)/*)), \
         $(shell sed -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
 endif
@@ -96,7 +96,7 @@ LIB_INOSRC = $(wildcard $(addsuffix /*.ino,$(USRCDIRS)))
 # object files
 OBJ_FILES = $(addprefix $(BUILD_OUT)/,$(notdir $(LIB_SRC:.c=.c.o) $(LIB_CXXSRC:.cpp=.cpp.o) $(LIB_INOSRC:.ino=.ino.o) $(USER_SRC:.c=.c.o) $(USER_CXXSRC:.cpp=.cpp.o)))
 
-DEFINES = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ \
+DEFINES = $(USER_DEFINE) -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ \
 	-DF_CPU=$(F_CPU) -DARDUINO=$(ARDUINO_VERSION) \
 	-DARDUINO_$(ARDUINO_BOARD) -DESP8266 \
 	-DARDUINO_ARCH_$(shell echo "$(ARDUINO_ARCH)" | tr '[:lower:]' '[:upper:]') \
