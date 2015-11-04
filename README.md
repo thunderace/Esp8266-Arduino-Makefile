@@ -3,6 +3,11 @@ Makefile to build arduino code for ESP8266 under linux (tested on debian X64).
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
+04/11/2015 :
+- use zip file from official link (http://arduino.esp8266.com/staging/package_esp8266com_index.json)
+- ESP8266 git submodule removed
+- remove $(ARDUINO_CORE)/variants/$(VARIANT) to include path (not needed)
+
 08/10/2015 : 
 - add $(ARDUINO_CORE)/variants/$(VARIANT) to include path for nodemcuv2
 
