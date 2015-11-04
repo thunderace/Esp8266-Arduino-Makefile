@@ -3,17 +3,14 @@ ROOT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 
 SERIAL_PORT ?= /dev/tty.nodemcu
 
-# arduino installation and 3rd party hardware folder stuff
-ARDUINO_HOME ?=  $(ROOT_DIR)/Arduino
-ARDUINO_VENDOR = esp8266com
+ARDUINO_HOME ?=  $(ROOT_DIR)/esp8266
 ARDUINO_ARCH = esp8266
 ARDUINO_BOARD ?= ESP8266_ESP12
 ARDUINO_VARIANT ?= nodemcu
-ARDUINO_CORE ?= $(ARDUINO_HOME)/hardware/$(ARDUINO_VENDOR)/$(ARDUINO_ARCH)
 ARDUINO_VERSION ?= 10605
 #ESPTOOL_VERBOSE ?= -vv
 
-BOARDS_TXT  = $(ARDUINO_CORE)/boards.txt
+BOARDS_TXT  = $(ARDUINO_HOME)/boards.txt
 PARSE_BOARD = $(ROOT_DIR)/bin/ard-parse-boards
 PARSE_BOARD_OPTS = --boards_txt=$(BOARDS_TXT)
 PARSE_BOARD_CMD = $(PARSE_BOARD) $(PARSE_BOARD_OPTS)
@@ -32,17 +29,17 @@ UPLOAD_SPEED = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.speed)
 USER_LIBDIR ?= ./libraries
 
 XTENSA_TOOLCHAIN ?= $(ROOT_DIR)/xtensa-lx106-elf/bin/
-ESPRESSIF_SDK = $(ARDUINO_CORE)/tools/sdk
+ESPRESSIF_SDK = $(ARDUINO_HOME)/tools/sdk
 ESPTOOL ?= $(ROOT_DIR)/bin/esptool
-ESPOTA ?= $(ARDUINO_CORE)/tools/espota.py
+ESPOTA ?= $(ARDUINO_HOME)/tools/espota.py
 
 BUILD_OUT = ./build.$(ARDUINO_VARIANT)
 
-CORE_SSRC = $(wildcard $(ARDUINO_CORE)/cores/$(ARDUINO_ARCH)/*.S)
-CORE_SRC = $(wildcard $(ARDUINO_CORE)/cores/$(ARDUINO_ARCH)/*.c)
+CORE_SSRC = $(wildcard $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/*.S)
+CORE_SRC = $(wildcard $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/*.c)
 # spiffs files are in a subdirectory
-CORE_SRC += $(wildcard $(ARDUINO_CORE)/cores/$(ARDUINO_ARCH)/*/*.c)
-CORE_CXXSRC = $(wildcard $(ARDUINO_CORE)/cores/$(ARDUINO_ARCH)/*.cpp)
+CORE_SRC += $(wildcard $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/*/*.c)
+CORE_CXXSRC = $(wildcard $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/*.cpp)
 CORE_OBJS = $(addprefix $(BUILD_OUT)/core/, \
 	$(notdir $(CORE_SSRC:.S=.S.o) $(CORE_SRC:.c=.c.o) $(CORE_CXXSRC:.cpp=.cpp.o)))
 
@@ -50,7 +47,7 @@ CORE_OBJS = $(addprefix $(BUILD_OUT)/core/, \
 LOCAL_SRCS = $(USER_SRC) $(USER_CXXSRC) $(LIB_INOSRC) $(USER_HSRC) $(USER_HPPSRC)
 ifndef ARDUINO_LIBS
     # automatically determine included libraries
-    ARDUINO_LIBS = $(sort $(filter $(notdir $(wildcard $(ARDUINO_HOME)/hardware/$(ARDUINO_VENDOR)/$(ARDUINO_ARCH)/libraries/*)), \
+    ARDUINO_LIBS = $(sort $(filter $(notdir $(wildcard $(ARDUINO_HOME)/libraries/*)), \
         $(shell sed -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
 endif
 
@@ -63,10 +60,10 @@ endif
 
 # arduino libraries
 ALIBDIRS = $(sort $(dir $(wildcard \
-	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/hardware/$(ARDUINO_VENDOR)/$(ARDUINO_ARCH)/libraries/%/*.c) \
-	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/hardware/$(ARDUINO_VENDOR)/$(ARDUINO_ARCH)/libraries/%/*.cpp) \
-	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/hardware/$(ARDUINO_VENDOR)/$(ARDUINO_ARCH)/libraries/%/src/*.c) \
-	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/hardware/$(ARDUINO_VENDOR)/$(ARDUINO_ARCH)/libraries/%/src/*.cpp))))
+	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/*.c) \
+	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/*.cpp) \
+	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/src/*.c) \
+	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/src/*.cpp))))
 
 # user libraries and sketch code
 ULIBDIRS = $(sort $(dir $(wildcard \
@@ -102,10 +99,9 @@ DEFINES = $(USER_DEFINE) -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ \
 	-DARDUINO_ARCH_$(shell echo "$(ARDUINO_ARCH)" | tr '[:lower:]' '[:upper:]') \
 	-I$(ESPRESSIF_SDK)/include
 
-CORE_INC = $(ARDUINO_CORE)/cores/$(ARDUINO_ARCH) \
-	$(ARDUINO_CORE)/variants/$(ARDUINO_VARIANT) \
-	$(ARDUINO_CORE)/variants/$(VARIANT)
-CORE_INC += $(ARDUINO_CORE)/cores/$(ARDUINO_ARCH)/spiffs
+CORE_INC = $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH) \
+	$(ARDUINO_HOME)/variants/$(VARIANT)
+CORE_INC += $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/spiffs
 
 INCLUDES = $(CORE_INC:%=-I%) $(ALIBDIRS:%=-I%) $(ULIBDIRS:%=-I%)
 VPATH = . $(CORE_INC) $(ALIBDIRS) $(ULIBDIRS)
@@ -151,16 +147,16 @@ libs: dirs $(OBJ_FILES)
 
 bin: $(BUILD_OUT)/$(TARGET).bin
 
-$(BUILD_OUT)/core/%.o: $(ARDUINO_CORE)/cores/$(ARDUINO_ARCH)/%.c
+$(BUILD_OUT)/core/%.o: $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/%.c
 	$(CC) $(DEFINES) $(CORE_INC:%=-I%) $(CFLAGS) -o $@ $<
 
-$(BUILD_OUT)/spiffs/%.o: $(ARDUINO_CORE)/cores/$(ARDUINO_ARCH)/spiffs/%.c
+$(BUILD_OUT)/spiffs/%.o: $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/spiffs/%.c
 	$(CC) $(DEFINES) $(CORE_INC:%=-I%) $(CFLAGS) -o $@ $<
 
-$(BUILD_OUT)/core/%.o: $(ARDUINO_CORE)/cores/$(ARDUINO_ARCH)/%.cpp
+$(BUILD_OUT)/core/%.o: $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/%.cpp
 	$(CXX) $(DEFINES) $(CORE_INC:%=-I%) $(CXXFLAGS) -o $@ $<
 
-$(BUILD_OUT)/core/%.S.o: $(ARDUINO_CORE)/cores/$(ARDUINO_ARCH)/%.S
+$(BUILD_OUT)/core/%.S.o: $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/%.S
 	$(CC) $(ASFLAGS) -o $@ $<
 
 $(BUILD_OUT)/core/core.a: $(CORE_OBJS)
@@ -195,7 +191,7 @@ size : $(BUILD_OUT)/$(TARGET).elf
 
 
 $(BUILD_OUT)/$(TARGET).bin: $(BUILD_OUT)/$(TARGET).elf
-	$(ESPTOOL) -eo $(ARDUINO_CORE)/bootloaders/eboot/eboot.elf -bo $(BUILD_OUT)/$(TARGET).bin \
+	$(ESPTOOL) -eo $(ARDUINO_HOME)/bootloaders/eboot/eboot.elf -bo $(BUILD_OUT)/$(TARGET).bin \
 		-bm $(FLASH_MODE) -bf $(FLASH_FREQ) -bz $(FLASH_SIZE) \
 		-bs .text -bp 4096 -ec -eo $(BUILD_OUT)/$(TARGET).elf -bs .irom0.text -bs .text -bs .data -bs .rodata -bc -ec
 
