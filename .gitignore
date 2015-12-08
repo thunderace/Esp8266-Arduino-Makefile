@@ -3,6 +3,10 @@ xtensa-lx106-elf
 bin/espota.py
 bin/mkspiffs
 example/AdvancedWebServer/build.nodemcu/
+node_modules
+download
+
+
 
 
 
