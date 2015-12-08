@@ -5,6 +5,8 @@ Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/20
 ## Changelog
 08/12/2015 :
 - add install script for 32 bit linux
+- update to esp8266-2.0.0-rc2
+
 04/11/2015 :
 - use zip file from official link (http://arduino.esp8266.com/staging/package_esp8266com_index.json)
 - ESP8266 git submodule removed
