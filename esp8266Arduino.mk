@@ -1,5 +1,5 @@
 TARGET = $(notdir $(realpath .))
-ROOT_DIR ?= $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
+ROOT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 
 SERIAL_PORT ?= /dev/tty.nodemcu
 
