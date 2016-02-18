@@ -1,5 +1,5 @@
 TARGET = $(notdir $(realpath .))
-ROOT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
+ROOT_DIR ?= $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 
 SERIAL_PORT ?= /dev/tty.nodemcu
 
@@ -19,9 +19,9 @@ VARIANT = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.variant)
 MCU   = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.mcu)
 SERIAL_BAUD   = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.speed)
 F_CPU = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.f_cpu)
-FLASH_SIZE = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.flash_size)
-FLASH_MODE = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.flash_mode)
-FLASH_FREQ = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.flash_freq)
+FLASH_SIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.flash_size)
+FLASH_MODE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.flash_mode)
+FLASH_FREQ ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.flash_freq)
 UPLOAD_RESETMETHOD = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.resetmethod)
 UPLOAD_SPEED = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.speed)
 
@@ -72,8 +72,8 @@ ULIBDIRS = $(sort $(dir $(wildcard \
 	$(USER_LIBS:%=$(USER_LIBDIR)/%/src/*/*.c) \
 	$(USER_LIBS:%=$(USER_LIBDIR)/%/*.cpp) \
 	$(USER_LIBS:%=$(USER_LIBDIR)/%/src/*/*.cpp) \
-	$(USER_LIBS:%=$(USER_LIBDIR)/%/src/*.cpp)))) 
-	
+	$(USER_LIBS:%=$(USER_LIBDIR)/%/src/*.cpp))))
+
 USRCDIRS = .
 # all sources
 LIB_SRC = $(wildcard $(addsuffix /*.c,$(ULIBDIRS))) \
@@ -129,8 +129,8 @@ CAT	= cat
 
 all: show_variables dirs core libs bin size
 
-show_variables:  
-	$(info [ARDUINO_LIBS] : $(ARDUINO_LIBS)) 
+show_variables:
+	$(info [ARDUINO_LIBS] : $(ARDUINO_LIBS))
 	$(info [USER_LIBS] : $(USER_LIBS))
 
 dirs:
@@ -197,10 +197,10 @@ $(BUILD_OUT)/$(TARGET).bin: $(BUILD_OUT)/$(TARGET).elf
 
 
 upload: $(BUILD_OUT)/$(TARGET).bin size
-	$(ESPTOOL) $(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cb $(UPLOAD_SPEED) -cp $(SERIAL_PORT) -ca 0x00000 -cf $(BUILD_OUT)/$(TARGET).bin 
+	$(ESPTOOL) $(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cb $(UPLOAD_SPEED) -cp $(SERIAL_PORT) -ca 0x00000 -cf $(BUILD_OUT)/$(TARGET).bin
 
 ota: $(BUILD_OUT)/$(TARGET).bin
-	$(ESPOTA) 192.168.1.184 8266 $(BUILD_OUT)/$(TARGET).bin 
+	$(ESPOTA) 192.168.1.184 8266 $(BUILD_OUT)/$(TARGET).bin
 
 term:
 	minicom -D $(SERIAL_PORT) -b $(UPLOAD_SPEED)
