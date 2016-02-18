@@ -3,6 +3,11 @@ Makefile to build arduino code for ESP8266 under linux (tested on debian X64).
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
+02/18/2016 :
+- new x86 and x64 linux install
+- cleanup
+-
+
 08/12/2015 :
 - add install script for 32 bit linux
 - update to esp8266-2.0.0-rc2
@@ -30,11 +35,11 @@ Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/20
 - Clone this repository : `git clone --recursive https://github.com/thunderace/Esp8266-Arduino-Makefile.git`
 - Install third party tools : for 64 bits linux `cd Esp8266-Arduino-Makefile && chmod+x install-x86_64-pc-linux-gnu.sh && ./install-x86_64-pc-linux-gnu.sh && cd ..` 
                               for 32 bits linux : `cd Esp8266-Arduino-Makefile && chmod+x install-i686-pc-linux-gnu.sh && ./install-i686-pc-linux-gnu.sh && cd ..` 
-- In your sketch directory place a Makefile that defines anything that is project specific and follow that with a line `include /path_to_Esp8266-Arduino-Makefile_directory/esp8266Arduino.mk` (see example)
+- In your sketch directory place a Makefile that defines anything that is project specific and put this line at the end `include /path_to_Esp8266-Arduino-Makefile_directory/esp8266Arduino.mk` (see example)
 - `make upload` should build your sketch and upload it...
 
 #dependencies
-- this project use the last esp8266/Arduino repository (not stable) and the last stagging esptool and xtensa-lx106 toolchain
+- this project install the lastest stable  esp8266/Arduino repository (2.0.0) and the last stagging esptool and xtensa-lx106 toolchain
 
 ## TODO
 - build user libs in their own directory to avoid problems with multiple files with same name.
