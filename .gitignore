@@ -2,11 +2,12 @@ build-*/
 xtensa-lx106-elf
 bin/espota.py
 bin/mkspiffs
+bin/esptool
 example/AdvancedWebServer/build.nodemcu/
 node_modules
 download
-
-
+esp8266
+esp8266-2.0.0
 
 
 
