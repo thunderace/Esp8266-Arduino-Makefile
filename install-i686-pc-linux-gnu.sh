@@ -7,7 +7,7 @@ mkdir $DOWNLOAD_CACHE
 
 # Get MKSPIFFS Tool
 wget --no-clobber https://github.com/igrr/mkspiffs/releases/download/$MKSPIFFS_VER/mkspiffs-$MKSPIFFS_VER-linux32.tar.gz -P $DOWNLOAD_CACHE
-tar xvfz $DOWNLOAD_CACHE/mkspiffs-$MKSPIFFS_VER-linux32.tar.gz -C ./bin -C --strip=1   
+tar xvfz $DOWNLOAD_CACHE/mkspiffs-$MKSPIFFS_VER-linux32.tar.gz -C ./bin --strip=1   
 chmod +x bin/mkspiffs
 
 # Get ESPTOOL
