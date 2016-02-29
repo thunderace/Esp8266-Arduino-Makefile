@@ -34,8 +34,8 @@ FLASH_FREQ ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.flash_freq)
 UPLOAD_RESETMETHOD = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.resetmethod)
 UPLOAD_SPEED = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.speed)
 
-# sketch-specific
-USER_LIBDIR ?= ./libraries
+LOCAL_USER_LIBDIR ?= ./libraries
+GLOBAL_USER_LIBDIR ?= $(ROOT_DIR)/libraries
 
 XTENSA_TOOLCHAIN ?= $(ROOT_DIR)/xtensa-lx106-elf/bin/
 ESPRESSIF_SDK = $(ARDUINO_HOME)/tools/sdk
@@ -62,7 +62,9 @@ endif
 
 ifndef USER_LIBS
     # automatically determine included user libraries
-    USER_LIBS = $(sort $(filter $(notdir $(wildcard $(USER_LIBDIR)/*)), \
+    USER_LIBS = $(sort $(filter $(notdir $(wildcard $(LOCAL_USER_LIBDIR)/*)), \
+        $(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
+    USER_LIBS += $(sort $(filter $(notdir $(wildcard $(GLOBAL_USER_LIBDIR)/*)), \
         $(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
 endif
 
@@ -76,12 +78,18 @@ ALIBDIRS = $(sort $(dir $(wildcard \
 
 # user libraries and sketch code
 ULIBDIRS = $(sort $(dir $(wildcard \
-	$(USER_LIBS:%=$(USER_LIBDIR)/%/*.c) \
-	$(USER_LIBS:%=$(USER_LIBDIR)/%/src/*.c) \
-	$(USER_LIBS:%=$(USER_LIBDIR)/%/src/*/*.c) \
-	$(USER_LIBS:%=$(USER_LIBDIR)/%/*.cpp) \
-	$(USER_LIBS:%=$(USER_LIBDIR)/%/src/*/*.cpp) \
-	$(USER_LIBS:%=$(USER_LIBDIR)/%/src/*.cpp))))
+	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/*.c) \
+	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*.c) \
+	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*/*.c) \
+	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/*.cpp) \
+	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*/*.cpp) \
+	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*.cpp) \
+	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/*.c) \
+	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*.c) \
+	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*/*.c) \
+	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/*.cpp) \
+	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*/*.cpp) \
+	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*.cpp))))
 
 USRCDIRS = .
 # all sources

@@ -33,6 +33,7 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 #include "myLib.h"
+#include "myGlobalLib.h"
 
 void drawGraph();  
 
@@ -127,7 +128,8 @@ void setup ( void ) {
 	server.onNotFound ( handleNotFound );
 	server.begin();
 	Serial.println ( "HTTP server started" );
-	myLib("Start");
+	myLib("Local Start");
+	myGlobalLib("Global Start");
 }
 
 void loop ( void ) {
