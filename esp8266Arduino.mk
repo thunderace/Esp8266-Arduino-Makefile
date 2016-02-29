@@ -1,5 +1,14 @@
 TARGET = $(notdir $(realpath .))
-ROOT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
+ARCH = $(shell uname)
+ifeq ($(ARCH), Linux)
+	ROOT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
+	EXEC_EXT = ""
+else
+	# The extensa tools cannot use cygwin paths, so convert /cygdrive/c/abc/... to c:/cygwin64/abc/...
+	ROOT_DIR_RAW := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
+	ROOT_DIR := $(shell cygpath -m $(ROOT_DIR_RAW))
+	EXEC_EXT = ".exe"
+endif
 
 SERIAL_PORT ?= /dev/tty.nodemcu
 
@@ -30,7 +39,7 @@ USER_LIBDIR ?= ./libraries
 
 XTENSA_TOOLCHAIN ?= $(ROOT_DIR)/xtensa-lx106-elf/bin/
 ESPRESSIF_SDK = $(ARDUINO_HOME)/tools/sdk
-ESPTOOL ?= $(ROOT_DIR)/bin/esptool
+ESPTOOL ?= $(ROOT_DIR)/bin/esptool$(EXEC_EXT)
 ESPOTA ?= $(ARDUINO_HOME)/tools/espota.py
 
 BUILD_OUT = ./build.$(ARDUINO_VARIANT)
@@ -48,13 +57,13 @@ LOCAL_SRCS = $(USER_SRC) $(USER_CXXSRC) $(LIB_INOSRC) $(USER_HSRC) $(USER_HPPSRC
 ifndef ARDUINO_LIBS
     # automatically determine included libraries
     ARDUINO_LIBS = $(sort $(filter $(notdir $(wildcard $(ARDUINO_HOME)/libraries/*)), \
-        $(shell sed -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
+        $(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
 endif
 
 ifndef USER_LIBS
     # automatically determine included user libraries
     USER_LIBS = $(sort $(filter $(notdir $(wildcard $(USER_LIBDIR)/*)), \
-        $(shell sed -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
+        $(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
 endif
 
 
@@ -123,7 +132,8 @@ AR := $(XTENSA_TOOLCHAIN)xtensa-lx106-elf-ar
 LD := $(XTENSA_TOOLCHAIN)xtensa-lx106-elf-gcc
 OBJDUMP := $(XTENSA_TOOLCHAIN)xtensa-lx106-elf-objdump
 SIZE := $(XTENSA_TOOLCHAIN)xtensa-lx106-elf-size
-CAT	= cat
+CAT	= cat$(EXEC_EXT)
+SED = sed$(EXEC_EXT)
 
 .PHONY: all arduino dirs clean upload
 

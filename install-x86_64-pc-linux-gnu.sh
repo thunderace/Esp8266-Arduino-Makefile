@@ -1,6 +1,6 @@
-declare ESP8266_VER=2.0.0
+declare ESP8266_VER=2.1.0
 declare MKSPIFFS_VER=0.1.2
-declare ESPTOOL_VER=0.4.6
+declare ESPTOOL_VER=0.4.8
 
 declare DOWNLOAD_CACHE=./download
 mkdir $DOWNLOAD_CACHE
