@@ -3,10 +3,20 @@ Makefile to build arduino code for ESP8266 under linux (tested on debian X64).
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
+03/08/2016 :
+- Handle subdirectories of core uniformly : pull request from surr. Thank you
+ 
+02/29/2016
+- Cygwin support (from intrepidor not tested)
+- update to esp8266-2.1.0
+- user can install specific libraries in libraries dir
+ 
+02/21/2016 :
+- fix mkspiffs install
+
 02/18/2016 :
 - new x86 and x64 linux install
 - cleanup
--
 
 08/12/2015 :
 - add install script for 32 bit linux
