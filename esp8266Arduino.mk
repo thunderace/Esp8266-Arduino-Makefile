@@ -46,11 +46,12 @@ BUILD_OUT = ./build.$(ARDUINO_VARIANT)
 
 CORE_SSRC = $(wildcard $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/*.S)
 CORE_SRC = $(wildcard $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/*.c)
-# spiffs files are in a subdirectory
 CORE_SRC += $(wildcard $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/*/*.c)
 CORE_CXXSRC = $(wildcard $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/*.cpp)
 CORE_OBJS = $(addprefix $(BUILD_OUT)/core/, \
-	$(notdir $(CORE_SSRC:.S=.S.o) $(CORE_SRC:.c=.c.o) $(CORE_CXXSRC:.cpp=.cpp.o)))
+	$(notdir $(CORE_SSRC:.S=.S.o) $(CORE_CXXSRC:.cpp=.cpp.o))) \
+	$(addprefix $(BUILD_OUT)/core/, $(patsubst $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/%.c,%.c.o,$(CORE_SRC)))
+CORE_DIRS = $(sort $(dir $(CORE_OBJS)))
 
 #autodetect arduino libs and user libs
 LOCAL_SRCS = $(USER_SRC) $(USER_CXXSRC) $(LIB_INOSRC) $(USER_HSRC) $(USER_HPPSRC)
@@ -118,7 +119,6 @@ DEFINES = $(USER_DEFINE) -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ \
 
 CORE_INC = $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH) \
 	$(ARDUINO_HOME)/variants/$(VARIANT)
-CORE_INC += $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/spiffs
 
 INCLUDES = $(CORE_INC:%=-I%) $(ALIBDIRS:%=-I%) $(ULIBDIRS:%=-I%)
 VPATH = . $(CORE_INC) $(ALIBDIRS) $(ULIBDIRS)
@@ -152,9 +152,7 @@ show_variables:
 	$(info [USER_LIBS] : $(USER_LIBS))
 
 dirs:
-	@mkdir -p $(BUILD_OUT)
-	@mkdir -p $(BUILD_OUT)/core
-	@mkdir -p $(BUILD_OUT)/spiffs
+	@mkdir -p $(CORE_DIRS)
 
 clean:
 	rm -rf $(BUILD_OUT)
@@ -166,9 +164,6 @@ libs: dirs $(OBJ_FILES)
 bin: $(BUILD_OUT)/$(TARGET).bin
 
 $(BUILD_OUT)/core/%.o: $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/%.c
-	$(CC) $(DEFINES) $(CORE_INC:%=-I%) $(CFLAGS) -o $@ $<
-
-$(BUILD_OUT)/spiffs/%.o: $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/spiffs/%.c
 	$(CC) $(DEFINES) $(CORE_INC:%=-I%) $(CFLAGS) -o $@ $<
 
 $(BUILD_OUT)/core/%.o: $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/%.cpp
