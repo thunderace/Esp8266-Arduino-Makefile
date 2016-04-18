@@ -2,7 +2,6 @@ TARGET = $(notdir $(realpath .))
 ARCH = $(shell uname)
 ifeq ($(ARCH), Linux)
 	ROOT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
-	EXEC_EXT = ""
 else
 	# The extensa tools cannot use cygwin paths, so convert /cygdrive/c/abc/... to c:/cygwin64/abc/...
 	ROOT_DIR_RAW := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
@@ -115,7 +114,7 @@ DEFINES = $(USER_DEFINE) -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ \
 	-DF_CPU=$(F_CPU) -DARDUINO=$(ARDUINO_VERSION) \
 	-DARDUINO_$(ARDUINO_BOARD) -DESP8266 \
 	-DARDUINO_ARCH_$(shell echo "$(ARDUINO_ARCH)" | tr '[:lower:]' '[:upper:]') \
-	-I$(ESPRESSIF_SDK)/include
+	-I$(ESPRESSIF_SDK)/include -I$(ESPRESSIF_SDK)/lwip/include
 
 CORE_INC = $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH) \
 	$(ARDUINO_HOME)/variants/$(VARIANT)

@@ -1,4 +1,4 @@
-declare ESP8266_VER=2.1.0
+declare ESP8266_VER=2.2.0
 declare MKSPIFFS_VER=0.1.2
 declare ESPTOOL_VER=0.4.8
 
