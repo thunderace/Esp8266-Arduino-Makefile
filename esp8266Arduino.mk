@@ -41,6 +41,8 @@ ESPRESSIF_SDK = $(ARDUINO_HOME)/tools/sdk
 ESPTOOL ?= $(ROOT_DIR)/bin/esptool$(EXEC_EXT)
 ESPOTA ?= $(ARDUINO_HOME)/tools/espota.py
 
+TAG := $(shell date --iso=seconds)
+
 BUILD_OUT = ./build.$(ARDUINO_VARIANT)
 
 CORE_SSRC = $(wildcard $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/*.S)
@@ -68,7 +70,6 @@ ifndef USER_LIBS
         $(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
 endif
 
-
 # arduino libraries
 ALIBDIRS = $(sort $(dir $(wildcard \
 	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/*.c) \
@@ -77,19 +78,24 @@ ALIBDIRS = $(sort $(dir $(wildcard \
 	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/src/*.cpp))))
 
 # user libraries and sketch code
+
 ULIBDIRS = $(sort $(dir $(wildcard \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/*.c) \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*.c) \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*/*.c) \
+	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*/*/*.c) \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/*.cpp) \
-	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*/*.cpp) \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*.cpp) \
+	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*/*.cpp) \
+	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*/*/*.cpp) \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/*.c) \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*.c) \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*/*.c) \
+	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*/*/*.c) \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/*.cpp) \
+	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*.cpp) \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*/*.cpp) \
-	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*.cpp))))
+	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*/*/*.cpp))))
 
 USRCDIRS = .
 # all sources
@@ -110,28 +116,41 @@ LIB_INOSRC = $(wildcard $(addsuffix /*.ino,$(USRCDIRS)))
 # object files
 OBJ_FILES = $(addprefix $(BUILD_OUT)/,$(notdir $(LIB_SRC:.c=.c.o) $(LIB_CXXSRC:.cpp=.cpp.o) $(LIB_INOSRC:.ino=.ino.o) $(USER_SRC:.c=.c.o) $(USER_CXXSRC:.cpp=.cpp.o)))
 
-DEFINES = $(USER_DEFINE) -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ \
+#compiler.cpreprocessor.flags=-D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ "-I{compiler.sdk.path}/include" "-I{compiler.sdk.path}/lwip/include"
+CPREPROCESSOR_FLAGS = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ -I$(ESPRESSIF_SDK)/include -I$(ESPRESSIF_SDK)/lwip/include
+
+DEFINES = $(USER_DEFINE) \
+	$(CPREPROCESSOR_FLAGS) \
 	-DF_CPU=$(F_CPU) -DARDUINO=$(ARDUINO_VERSION) \
 	-DARDUINO_$(ARDUINO_BOARD) -DESP8266 \
 	-DARDUINO_ARCH_$(shell echo "$(ARDUINO_ARCH)" | tr '[:lower:]' '[:upper:]') \
-	-I$(ESPRESSIF_SDK)/include -I$(ESPRESSIF_SDK)/lwip/include
-
+	
 CORE_INC = $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH) \
 	$(ARDUINO_HOME)/variants/$(VARIANT)
 
 INCLUDES = $(CORE_INC:%=-I%) $(ALIBDIRS:%=-I%) $(ULIBDIRS:%=-I%)
 VPATH = . $(CORE_INC) $(ALIBDIRS) $(ULIBDIRS)
 
-ASFLAGS = -c -g -x assembler-with-cpp -MMD $(DEFINES)
+#compiler.S.flags=-c -g -x assembler-with-cpp -MMD -mlongcalls
+ASFLAGS = -c -g -x assembler-with-cpp -MMD -mlongcalls $(DEFINES)
 
+# from 2.2.0 compiler.c.flags=-c {compiler.warning_flags} -Os -g -Wpointer-arith -Wno-implicit-function-declaration -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals -falign-functions=4 -MMD -std=gnu99 -ffunction-sections -fdata-sections
 CFLAGS = -c -Os -Wpointer-arith -Wno-implicit-function-declaration -Wl,-EL \
 	-fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals \
 	-falign-functions=4 -MMD -std=gnu99 -ffunction-sections -fdata-sections
-
+# from 2.2.0 compiler.cpp.flags=-c {compiler.warning_flags} -Os -g -mlongcalls -mtext-section-literals -fno-exceptions -fno-rtti -falign-functions=4 -std=c++11 -MMD -ffunction-sections -fdata-sections
 CXXFLAGS = -c -Os -mlongcalls -mtext-section-literals -fno-exceptions \
-	-fno-rtti -falign-functions=4 -std=c++11 -MMD
+	-fno-rtti -falign-functions=4 -std=c++11 -MMD -ffunction-sections -fdata-sections
 
-LDFLAGS = -nostdlib -Wl,--gc-sections -Wl,--no-check-sections -u call_user_start -Wl,-static -Wl,-wrap,system_restart_local -Wl,-wrap,register_chipv6_phy
+#LDFLAGS = -nostdlib -Wl,--gc-sections -Wl,--no-check-sections -u call_user_start -Wl,-static -Wl,-wrap,system_restart_local -Wl,-wrap,register_chipv6_phy
+
+# from 2.2.0 compiler.c.elf.libs=-lm -lgcc -lhal -lphy -lpp -lnet80211 -lwpa -lcrypto -lmain -lwps -laxtls -lsmartconfig -lmesh -lwpa2 {build.lwip_lib}
+ELFLIBS = -lm -lgcc -lhal -lphy -lpp -lnet80211 -lwpa -lcrypto -lmain -lwps -laxtls -lsmartconfig -lmesh -lwpa2 -llwip
+# from 2.2.0 compiler.c.elf.flags=-g {compiler.warning_flags} -Os -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static "-L{compiler.sdk.path}/lib" "-L{compiler.sdk.path}/ld" "-T{build.flash_ld}" -Wl,--gc-sections -Wl,-wrap,system_restart_local -Wl,-wrap,register_chipv6_phy
+ELFFLAGS = -g -w -Os -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static \
+	-L$(ESPRESSIF_SDK)/lib -L$(ESPRESSIF_SDK)/ld \
+	 -T$(ESPRESSIF_SDK)/ld/eagle.flash.4m.ld \
+	 -Wl,--gc-sections -Wl,-wrap,system_restart_local -Wl,-wrap,register_chipv6_phy
 
 CC := $(XTENSA_TOOLCHAIN)xtensa-lx106-elf-gcc
 CXX := $(XTENSA_TOOLCHAIN)xtensa-lx106-elf-g++
@@ -162,12 +181,6 @@ libs: dirs $(OBJ_FILES)
 
 bin: $(BUILD_OUT)/$(TARGET).bin
 
-$(BUILD_OUT)/core/%.o: $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/%.c
-	$(CC) $(DEFINES) $(CORE_INC:%=-I%) $(CFLAGS) -o $@ $<
-
-$(BUILD_OUT)/core/%.o: $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/%.cpp
-	$(CXX) $(DEFINES) $(CORE_INC:%=-I%) $(CXXFLAGS) -o $@ $<
-
 $(BUILD_OUT)/core/%.S.o: $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/%.S
 	$(CC) $(ASFLAGS) -o $@ $<
 
@@ -175,27 +188,26 @@ $(BUILD_OUT)/core/core.a: $(CORE_OBJS)
 	$(AR) cru $@ $(CORE_OBJS)
 
 $(BUILD_OUT)/core/%.c.o: %.c
-	$(CC) $(DEFINES) $(CFLAGS) $(INCLUDES) -o $@ $<
+	$(CC) $(DEFINES) $(CORE_INC:%=-I%) $(CFLAGS) -o $@ $<
 
 $(BUILD_OUT)/core/%.cpp.o: %.cpp
-	$(CXX) $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@
+	$(CXX) $(DEFINES) $(CORE_INC:%=-I%) $(CXXFLAGS) $< -o $@
 
 $(BUILD_OUT)/%.c.o: %.c
-	$(CC) $(DEFINES) $(CFLAGS) $(INCLUDES) -o $@ $<
+	$(CC) -D_TAG_=\"$(TAG)\"  $(DEFINES) $(CFLAGS) $(INCLUDES) -o $@ $<
 
 $(BUILD_OUT)/%.ino.o: %.ino
-	$(CXX) -x c++ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@
+	$(CXX) -x c++ -D_TAG_=\"$(TAG)\" $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@
 
 $(BUILD_OUT)/%.cpp.o: %.cpp
-	$(CXX) $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@
+	$(CXX) -D_TAG_=\"$(TAG)\" $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@
 
-# ultimately, use our own ld scripts ...
+
+#recipe.c.combine.pattern="{compiler.path}{compiler.c.elf.cmd}" {compiler.c.elf.flags} {compiler.c.elf.extra_flags} -o "{build.path}/{build.project_name}.elf" -Wl,--start-group {object_files} "{build.path}/arduino.ar" {compiler.c.elf.libs} -Wl,--end-group  "-L{build.path}"
 $(BUILD_OUT)/$(TARGET).elf: core libs
-	$(LD) $(LDFLAGS) -L$(ESPRESSIF_SDK)/lib \
-		-L$(ESPRESSIF_SDK)/ld -T$(ESPRESSIF_SDK)/ld/eagle.flash.4m.ld \
-		-o $@ -Wl,--start-group $(OBJ_FILES) $(BUILD_OUT)/core/core.a \
-		-lm -lgcc -lhal -lphy -lnet80211 -llwip -lwpa -lmain -lpp -lsmartconfig \
-		-lwps -lcrypto \
+	$(LD) $(ELFFLAGS) -o $@ \
+		-Wl,--start-group $(OBJ_FILES) $(BUILD_OUT)/core/core.a \
+		$(ELFLIBS) \
 		-Wl,--end-group -L$(BUILD_OUT)
 
 size : $(BUILD_OUT)/$(TARGET).elf
