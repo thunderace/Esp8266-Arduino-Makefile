@@ -47,7 +47,7 @@ Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/20
 - Makefile renamed to esp8266Arduino.mk
 
 ## Installation
-- Clone this repository : `git clone --recursive https://github.com/thunderace/Esp8266-Arduino-Makefile.git`
+- Clone this repository : `git clone https://github.com/thunderace/Esp8266-Arduino-Makefile.git`
 - Install third party tools : for 64 bits linux `cd Esp8266-Arduino-Makefile && chmod+x install-x86_64-pc-linux-gnu.sh && ./install-x86_64-pc-linux-gnu.sh && cd ..` 
                               for 32 bits linux : `cd Esp8266-Arduino-Makefile && chmod+x install-i686-pc-linux-gnu.sh && ./install-i686-pc-linux-gnu.sh && cd ..` 
 - In your sketch directory place a Makefile that defines anything that is project specific and put this line at the end `include /path_to_Esp8266-Arduino-Makefile_directory/esp8266Arduino.mk` (see example)
