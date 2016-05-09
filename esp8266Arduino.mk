@@ -33,7 +33,7 @@ FLASH_FREQ ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.flash_freq)
 UPLOAD_RESETMETHOD = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.resetmethod)
 UPLOAD_SPEED = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.speed)
 
-LOCAL_USER_LIBDIR ?= $(USRCDIRS)/libraries
+LOCAL_USER_LIBDIR ?= ./libraries
 GLOBAL_USER_LIBDIR ?= $(ROOT_DIR)/libraries
 
 XTENSA_TOOLCHAIN ?= $(ROOT_DIR)/xtensa-lx106-elf/bin/
@@ -43,7 +43,7 @@ ESPOTA ?= $(ARDUINO_HOME)/tools/espota.py
 
 TAG := $(shell date --iso=seconds)
 
-BUILD_OUT := ./build.$(ARDUINO_VARIANT)
+BUILD_OUT = ./build.$(ARDUINO_VARIANT)
 
 CORE_SSRC = $(wildcard $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/*.S)
 CORE_SRC = $(wildcard $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/*.c)
@@ -99,10 +99,10 @@ ULIBDIRS = $(sort $(dir $(wildcard \
 
 USRCDIRS = .
 # all sources
-ULIB_SRC = $(wildcard $(addsuffix *.c,$(ULIBDIRS))) 
-ULIB_CXXSRC = $(wildcard $(addsuffix *.cpp,$(ULIBDIRS))) 
-ALIB_SRC = 	$(wildcard $(addsuffix *.c,$(ALIBDIRS)))
-ALIB_CXXSRC = $(wildcard $(addsuffix *.cpp,$(ALIBDIRS)))
+LIB_SRC = $(wildcard $(addsuffix /*.c,$(ULIBDIRS))) \
+	$(wildcard $(addsuffix /*.c,$(ALIBDIRS)))
+LIB_CXXSRC = $(wildcard $(addsuffix /*.cpp,$(ULIBDIRS))) \
+	$(wildcard $(addsuffix /*.cpp,$(ALIBDIRS)))
 
 USER_SRC = $(wildcard $(addsuffix /*.c,$(USRCDIRS)))
 USER_CXXSRC = $(wildcard $(addsuffix /*.cpp,$(USRCDIRS))) \
@@ -114,17 +114,7 @@ USER_HPPSRC = $(wildcard $(addsuffix /*.hpp,$(USRCDIRS)))
 LIB_INOSRC = $(wildcard $(addsuffix /*.ino,$(USRCDIRS)))
 
 # object files
-OBJ_FILES = $(addprefix $(BUILD_OUT)/,$(LIB_INOSRC:.ino=.ino.o) $(USER_SRC:.c=.c.o) $(USER_CXXSRC:.cpp=.cpp.o))
-
-ULIB_OBJ_FILES = $(addprefix $(BUILD_OUT)/libraries/, \
-	$(patsubst $(USRCDIRS)/libraries/%.cpp,%.cpp.o,$(ULIB_CXXSRC)) \
-	$(patsubst $(USRCDIRS)/libraries/%.c,%.c.o,$(ULIB_SRC)))
-
-ALIB_OBJ_FILES = $(addprefix $(BUILD_OUT)/libraries/, \
-	$(patsubst $(ARDUINO_HOME)/libraries/%.cpp,%.cpp.o,$(ALIB_CXXSRC)) \
-	$(patsubst $(ARDUINO_HOME)/libraries/%.c,%.c.o,$(ALIB_SRC)))
-
-LIB_DIRS = $(sort $(dir $(ALIB_OBJ_FILES) $(ULIB_OBJ_FILES)))
+OBJ_FILES = $(addprefix $(BUILD_OUT)/,$(notdir $(LIB_SRC:.c=.c.o) $(LIB_CXXSRC:.cpp=.cpp.o) $(LIB_INOSRC:.ino=.ino.o) $(USER_SRC:.c=.c.o) $(USER_CXXSRC:.cpp=.cpp.o)))
 
 #compiler.cpreprocessor.flags=-D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ "-I{compiler.sdk.path}/include" "-I{compiler.sdk.path}/lwip/include"
 CPREPROCESSOR_FLAGS = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ -I$(ESPRESSIF_SDK)/include -I$(ESPRESSIF_SDK)/lwip/include
@@ -181,54 +171,42 @@ show_variables:
 
 dirs:
 	@mkdir -p $(CORE_DIRS)
-	@mkdir -p $(LIB_DIRS)
 
 clean:
 	rm -rf $(BUILD_OUT)
 
 core: dirs $(BUILD_OUT)/core/core.a
 
-libs: dirs  $(ULIB_OBJ_FILES) $(ALIB_OBJ_FILES) $(OBJ_FILES)
+libs: dirs $(OBJ_FILES)
 
 bin: $(BUILD_OUT)/$(TARGET).bin
 
 $(BUILD_OUT)/core/%.S.o: $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/%.S
 	$(CC) $(ASFLAGS) -o $@ $<
 
+$(BUILD_OUT)/core/core.a: $(CORE_OBJS)
+	$(AR) cru $@ $(CORE_OBJS)
+
 $(BUILD_OUT)/core/%.c.o: %.c
 	$(CC) $(DEFINES) $(CORE_INC:%=-I%) $(CFLAGS) -o $@ $<
 
 $(BUILD_OUT)/core/%.cpp.o: %.cpp
-	$(CXX) $(DEFINES) $(CORE_INC:%=-I%) $(CXXFLAGS) -o $@ $<
-
-$(BUILD_OUT)/core/core.a: $(CORE_OBJS)
-	$(AR) cru $@ $(CORE_OBJS)
-
-$(BUILD_OUT)/libraries/%.c.o: %.c
-	$(CC) $(DEFINES) $(DEFINES) $(CFLAGS) $(INCLUDES) -o $@ $<
-
-$(BUILD_OUT)/libraries/%.cpp.o: %.cpp
-	$(CXX) $(DEFINES) $(CXXFLAGS) $(INCLUDES) -o $@ $<
-
-# awfull i know. But without this I always have a “No rule to make target …” error 
-$(BUILD_OUT)/libraries/%.cpp.o: $(ARDUINO_HOME)/libraries/%.cpp
-	$(CXX) $(DEFINES) $(CXXFLAGS) $(INCLUDES) -o $@ $<
-
+	$(CXX) $(DEFINES) $(CORE_INC:%=-I%) $(CXXFLAGS) $< -o $@
 
 $(BUILD_OUT)/%.c.o: %.c
 	$(CC) -D_TAG_=\"$(TAG)\"  $(DEFINES) $(CFLAGS) $(INCLUDES) -o $@ $<
 
 $(BUILD_OUT)/%.ino.o: %.ino
-	$(CXX) -x c++ -D_TAG_=\"$(TAG)\" $(DEFINES) $(CXXFLAGS) $(INCLUDES) -o $@ $<
+	$(CXX) -x c++ -D_TAG_=\"$(TAG)\" $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@
 
 $(BUILD_OUT)/%.cpp.o: %.cpp
-	$(CXX) -D_TAG_=\"$(TAG)\" $(DEFINES) $(CXXFLAGS) $(INCLUDES) -o $@ $<
+	$(CXX) -D_TAG_=\"$(TAG)\" $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@
 
 
 #recipe.c.combine.pattern="{compiler.path}{compiler.c.elf.cmd}" {compiler.c.elf.flags} {compiler.c.elf.extra_flags} -o "{build.path}/{build.project_name}.elf" -Wl,--start-group {object_files} "{build.path}/arduino.ar" {compiler.c.elf.libs} -Wl,--end-group  "-L{build.path}"
 $(BUILD_OUT)/$(TARGET).elf: core libs
 	$(LD) $(ELFFLAGS) -o $@ \
-		-Wl,--start-group $(OBJ_FILES) $(ULIB_OBJ_FILES) $(ALIB_OBJ_FILES) $(BUILD_OUT)/core/core.a \
+		-Wl,--start-group $(OBJ_FILES) $(BUILD_OUT)/core/core.a \
 		$(ELFLIBS) \
 		-Wl,--end-group -L$(BUILD_OUT)
 
@@ -254,5 +232,3 @@ term:
 print-%: ; @echo $* = $($*)
 
 -include $(OBJ_FILES:.o=.d)
--include $(ULIB_OBJ_FILES:.o=.d)
--include $(ALIB_OBJ_FILES:.o=.d)
