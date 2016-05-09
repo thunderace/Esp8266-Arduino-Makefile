@@ -3,6 +3,11 @@ Makefile to build arduino code for ESP8266 under linux (tested on debian X64).
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
+05/09/2016 :
+- update to esp8266-2.2.0
+- Each lib is build in it's own directory
+- new OTA params : OTA_IP OTA_PORT OTA_AUTH (see example)
+
 03/08/2016 :
 - Handle subdirectories of core uniformly : pull request from surr. Thank you
  
