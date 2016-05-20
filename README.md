@@ -5,7 +5,6 @@ Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/20
 ## Changelog
 05/09/2016 :
 - update to esp8266-2.2.0
-- Each lib is build in it's own directory
 - new OTA params : OTA_IP OTA_PORT OTA_AUTH (see example)
 
 03/08/2016 :
