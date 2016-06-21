@@ -126,7 +126,7 @@ LIB_CXXSRC = $(wildcard $(addsuffix /*.cpp,$(ULIBDIRS))) \
 	$(wildcard $(addsuffix /*.cpp,$(ALIBDIRS)))
 
 # object files
-OBJ_FILES = $(addprefix $(BUILD_OUT)/,$(notdir $(LIB_SRC:.c=.c.o) $(LIB_CXXSRC:.cpp=.cpp.o) $(USER_INOSRC:.ino=.ino.o) $(USER_SRC:.c=.c.o) $(USER_CXXSRC:.cpp=.cpp.o)))
+OBJ_FILES = $(addprefix $(BUILD_OUT)/,$(notdir $(LIB_SRC:.c=.c.o) $(LIB_CXXSRC:.cpp=.cpp.o) $(TARGET).fullino.o $(USER_SRC:.c=.c.o) $(USER_CXXSRC:.cpp=.cpp.o)))
 
 #compiler.cpreprocessor.flags=-D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ "-I{compiler.sdk.path}/include" "-I{compiler.sdk.path}/lwip/include"
 CPREPROCESSOR_FLAGS = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ -I$(ESPRESSIF_SDK)/include -I$(ESPRESSIF_SDK)/lwip/include
@@ -140,7 +140,7 @@ DEFINES = $(USER_DEFINE) \
 CORE_INC = $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH) \
 	$(ARDUINO_HOME)/variants/$(VARIANT)
 
-INCLUDES = $(CORE_INC:%=-I%) $(ALIBDIRS:%=-I%) $(ULIBDIRS:%=-I%) 
+INCLUDES = $(CORE_INC:%=-I%) $(ALIBDIRS:%=-I%) $(ULIBDIRS:%=-I%)  $(USRCDIRS:%=-I%)
 VPATH = . $(CORE_INC) $(ALIBDIRS) $(ULIBDIRS)
 
 #compiler.S.flags=-c -g -x assembler-with-cpp -MMD -mlongcalls
@@ -206,11 +206,14 @@ $(BUILD_OUT)/core/%.cpp.o: %.cpp
 $(BUILD_OUT)/%.c.o: %.c
 	$(CC) -D_TAG_=\"$(TAG)\"  $(DEFINES) $(CFLAGS) $(INCLUDES) -o $@ $<
 
-$(BUILD_OUT)/%.ino.o: %.ino
-	$(CXX) -x c++ -D_TAG_=\"$(TAG)\" $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@
-
 $(BUILD_OUT)/%.cpp.o: %.cpp
-	$(CXX) -D_TAG_=\"$(TAG)\" $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@
+	$(CXX) -D_TAG_=\"$(TAG)\" $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@	
+
+$(BUILD_OUT)/%.fullino: $(USER_INOSRC)
+	-cat $(TARGET).ino $(filter-out $(TARGET).ino,$^) > $@
+
+$(BUILD_OUT)/%.fullino.o: $(BUILD_OUT)/%.fullino
+	$(CXX) -x c++ -D_TAG_=\"$(TAG)\" $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@
 
 $(BUILD_OUT)/$(TARGET).elf: core libs
 	$(LD) $(ELFFLAGS) -o $@ \
