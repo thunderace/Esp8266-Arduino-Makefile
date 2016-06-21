@@ -3,7 +3,7 @@ Makefile to build arduino code for ESP8266 under linux (tested on debian X64).
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
-05/21/2016:
+06/21/2016:
 - new SPIFFS_SIZE param (default to 4M3M mapping) : set it to 1 in your Makefile to use the 4M1M mapping (see Makefile in included example)
 - new SERIAL_BAUD param (default to 115200) : for use with the term command 
 - some change in variables names
