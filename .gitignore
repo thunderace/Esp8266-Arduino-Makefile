@@ -1,4 +1,4 @@
-build-*/
+build.*/
 xtensa-lx106-elf
 bin/espota.py
 bin/mkspiffs
@@ -9,3 +9,5 @@ download
 esp8266
 esp8266-2.0.0
 esp8266-2.2.0
+esp8266-staging
+
