@@ -142,7 +142,7 @@ DEFINES = $(USER_DEFINE) \
 CORE_INC = $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH) \
 	$(ARDUINO_HOME)/variants/$(VARIANT)
 
-INCLUDES = $(CORE_INC:%=-I%) $(ALIBDIRS:%=-I%) $(ULIBDIRS:%=-I%)  $(USRCDIRS:%=-I%)
+INCLUDES = -include Arduino.h $(CORE_INC:%=-I%) $(ALIBDIRS:%=-I%) $(ULIBDIRS:%=-I%)  $(USRCDIRS:%=-I%)
 VPATH = . $(CORE_INC) $(ALIBDIRS) $(ULIBDIRS)
 
 #compiler.S.flags=-c -g -x assembler-with-cpp -MMD -mlongcalls
@@ -206,10 +206,11 @@ $(BUILD_OUT)/core/%.cpp.o: %.cpp
 	$(CXX) $(DEFINES) $(CORE_INC:%=-I%) $(CXXFLAGS) $< -o $@
 
 $(BUILD_OUT)/%.c.o: %.c
-	$(CC) -include Arduino.h -D_TAG_=\"$(TAG)\"  $(DEFINES) $(CFLAGS) $(INCLUDES) -o $@ $<
+	$(CXX) -x c++ -D_TAG_=\"$(TAG)\" $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@	
+#	$(CC) -D_TAG_=\"$(TAG)\" $(DEFINES) $(CFLAGS) $(INCLUDES) -o $@ $<
 
 $(BUILD_OUT)/%.cpp.o: %.cpp
-	$(CXX) -include Arduino.h -D_TAG_=\"$(TAG)\" $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@	
+	$(CXX) -D_TAG_=\"$(TAG)\" $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@	
 
 $(BUILD_OUT)/%.fullino: $(USER_INOSRC)
 	-cat $(TARGET).ino $(filter-out $(TARGET).ino,$^) > $@
