@@ -55,7 +55,9 @@ endif
 
 LOCAL_USER_LIBDIR ?= ./libraries
 GLOBAL_USER_LIBDIR ?= $(ROOT_DIR)/libraries
-TAG ?= $(shell date --iso=seconds)
+ifndef TAG
+TAG := $(shell date --iso=seconds)
+endif
 BUILD_OUT ?= ./build.$(ARDUINO_VARIANT)
 
 
@@ -204,10 +206,10 @@ $(BUILD_OUT)/core/%.cpp.o: %.cpp
 	$(CXX) $(DEFINES) $(CORE_INC:%=-I%) $(CXXFLAGS) $< -o $@
 
 $(BUILD_OUT)/%.c.o: %.c
-	$(CC) -D_TAG_=\"$(TAG)\"  $(DEFINES) $(CFLAGS) $(INCLUDES) -o $@ $<
+	$(CC) -include Arduino.h -D_TAG_=\"$(TAG)\"  $(DEFINES) $(CFLAGS) $(INCLUDES) -o $@ $<
 
 $(BUILD_OUT)/%.cpp.o: %.cpp
-	$(CXX) -D_TAG_=\"$(TAG)\" $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@	
+	$(CXX) -include Arduino.h -D_TAG_=\"$(TAG)\" $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@	
 
 $(BUILD_OUT)/%.fullino: $(USER_INOSRC)
 	-cat $(TARGET).ino $(filter-out $(TARGET).ino,$^) > $@
