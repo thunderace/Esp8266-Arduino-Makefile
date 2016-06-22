@@ -6,12 +6,14 @@
 #include <ESP8266HTTPClient.h>
 #include <ESP8266httpUpdate.h> // for OTA
 #include "other.h"
+#include "other1.h"
 
 ESP8266WebServer httpServer(80);
 
 
 Other other;
 void setup() {
+  other1(8);
   //secondFunction(true);
 }
 
