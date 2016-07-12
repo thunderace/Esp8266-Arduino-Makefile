@@ -13,7 +13,6 @@ SERIAL_PORT ?= /dev/tty.nodemcu
 
 ARDUINO_HOME ?=  $(ROOT_DIR)/esp8266
 ARDUINO_ARCH = esp8266
-ARDUINO_BOARD ?= ESP8266_ESP12
 ARDUINO_VARIANT ?= nodemcu
 ARDUINO_VERSION ?= 10605
 
@@ -22,6 +21,7 @@ PARSE_BOARD = $(ROOT_DIR)/bin/ard-parse-boards
 PARSE_BOARD_OPTS = --boards_txt=$(BOARDS_TXT)
 PARSE_BOARD_CMD = $(PARSE_BOARD) $(PARSE_BOARD_OPTS)
 
+ARDUINO_BOARD = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.board)
 VARIANT = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.variant)
 EAGLE_FILE_4M3M = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.4M3M.build.flash_ld)
 EAGLE_FILE_4M1M = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.4M1M.build.flash_ld)
@@ -46,7 +46,7 @@ get_library_files  = $(if $(and $(wildcard $(1)/src), $(wildcard $(1)/library.pr
                         $(wildcard $(1)/*.$(2) $(1)/utility/*.$(2)))
 
 
-FLASH_LD = $(EAGLE_FILE_4M3M)
+FLASH_LD ?= $(EAGLE_FILE_4M3M)
 ifdef SPIFFS_SIZE
 	ifeq ($(SPIFFS_SIZE),1)
 		FLASH_LD = $(EAGLE_FILE_4M1M)
@@ -58,8 +58,13 @@ GLOBAL_USER_LIBDIR ?= $(ROOT_DIR)/libraries
 ifndef TAG
 TAG := $(shell date --iso=seconds)
 endif
-BUILD_OUT ?= ./build.$(ARDUINO_VARIANT)
 
+
+ifdef NODENAME
+BUILD_OUT ?= ./build.$(ARDUINO_VARIANT).$(NODENAME)
+else
+BUILD_OUT ?= ./build.$(ARDUINO_VARIANT)
+endif
 
 ### ESP8266 CORE
 CORE_SSRC = $(wildcard $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/*.S)
@@ -130,11 +135,9 @@ LIB_CXXSRC = $(wildcard $(addsuffix /*.cpp,$(ULIBDIRS))) \
 # object files
 OBJ_FILES = $(addprefix $(BUILD_OUT)/,$(notdir $(LIB_SRC:.c=.c.o) $(LIB_CXXSRC:.cpp=.cpp.o) $(TARGET).fullino.o $(USER_SRC:.c=.c.o) $(USER_CXXSRC:.cpp=.cpp.o)))
 
-#compiler.cpreprocessor.flags=-D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ "-I{compiler.sdk.path}/include" "-I{compiler.sdk.path}/lwip/include"
 CPREPROCESSOR_FLAGS = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ -I$(ESPRESSIF_SDK)/include -I$(ESPRESSIF_SDK)/lwip/include
 
-DEFINES = $(USER_DEFINE) \
-	$(CPREPROCESSOR_FLAGS) \
+DEFINES = $(CPREPROCESSOR_FLAGS) -DLWIP_OPEN_SRC \
 	-DF_CPU=$(F_CPU) -DARDUINO=$(ARDUINO_VERSION) \
 	-DARDUINO_$(ARDUINO_BOARD) -DESP8266 \
 	-DARDUINO_ARCH_$(shell echo "$(ARDUINO_ARCH)" | tr '[:lower:]' '[:upper:]') \
@@ -145,22 +148,17 @@ CORE_INC = $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH) \
 INCLUDES = -include Arduino.h $(CORE_INC:%=-I%) $(ALIBDIRS:%=-I%) $(ULIBDIRS:%=-I%)  $(USRCDIRS:%=-I%)
 VPATH = . $(CORE_INC) $(ALIBDIRS) $(ULIBDIRS)
 
-#compiler.S.flags=-c -g -x assembler-with-cpp -MMD -mlongcalls
 ASFLAGS = -c -g -x assembler-with-cpp -MMD -mlongcalls $(DEFINES)
 
-# from 2.2.0 compiler.c.flags=-c {compiler.warning_flags} -Os -g -Wpointer-arith -Wno-implicit-function-declaration -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals -falign-functions=4 -MMD -std=gnu99 -ffunction-sections -fdata-sections
 CFLAGS = -c -Os -Wpointer-arith -Wno-implicit-function-declaration -Wl,-EL \
 	-fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals \
 	-falign-functions=4 -MMD -std=gnu99 -ffunction-sections -fdata-sections
-# from 2.2.0 compiler.cpp.flags=-c {compiler.warning_flags} -Os -g -mlongcalls -mtext-section-literals -fno-exceptions -fno-rtti -falign-functions=4 -std=c++11 -MMD -ffunction-sections -fdata-sections
 CXXFLAGS = -c -Os -mlongcalls -mtext-section-literals -fno-exceptions \
 	-fno-rtti -falign-functions=4 -std=c++11 -MMD -ffunction-sections -fdata-sections
 
-#LDFLAGS = -nostdlib -Wl,--gc-sections -Wl,--no-check-sections -u call_user_start -Wl,-static -Wl,-wrap,system_restart_local -Wl,-wrap,register_chipv6_phy
 
-# from 2.2.0 compiler.c.elf.libs=-lm -lgcc -lhal -lphy -lpp -lnet80211 -lwpa -lcrypto -lmain -lwps -laxtls -lsmartconfig -lmesh -lwpa2 {build.lwip_lib}
-ELFLIBS = -lm -lgcc -lhal -lphy -lpp -lnet80211 -lwpa -lcrypto -lmain -lwps -laxtls -lsmartconfig -lmesh -lwpa2 -llwip
-# from 2.2.0 compiler.c.elf.flags=-g {compiler.warning_flags} -Os -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static "-L{compiler.sdk.path}/lib" "-L{compiler.sdk.path}/ld" "-T{build.flash_ld}" -Wl,--gc-sections -Wl,-wrap,system_restart_local -Wl,-wrap,register_chipv6_phy
+ELFLIBS = -lm -lgcc -lhal -lphy -lpp -lnet80211 -lwpa -lcrypto -lmain -lwps -laxtls -lsmartconfig -lmesh -lwpa2 -llwip_gcc -lstdc++
+
 ELFFLAGS = -g -w -Os -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static \
 	-L$(ESPRESSIF_SDK)/lib -L$(ESPRESSIF_SDK)/ld \
 	 -T$(ESPRESSIF_SDK)/ld/$(FLASH_LD) \
@@ -200,23 +198,23 @@ $(BUILD_OUT)/core/core.a: $(CORE_OBJS)
 	$(AR) cru $@ $(CORE_OBJS)
 
 $(BUILD_OUT)/core/%.c.o: %.c
-	$(CC) $(DEFINES) $(CORE_INC:%=-I%) $(CFLAGS) -o $@ $<
+	$(CC) $(CORE_DEFINE) $(DEFINES) $(CORE_INC:%=-I%) $(CFLAGS) -o $@ $<
 
 $(BUILD_OUT)/core/%.cpp.o: %.cpp
-	$(CXX) $(DEFINES) $(CORE_INC:%=-I%) $(CXXFLAGS) $< -o $@
+	$(CXX) $(CORE_DEFINE) $(DEFINES) $(CORE_INC:%=-I%) $(CXXFLAGS) $< -o $@
 
 $(BUILD_OUT)/%.c.o: %.c
-	$(CXX) -x c++ -D_TAG_=\"$(TAG)\" $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@	
+	$(CXX) -x c++ -D_TAG_=\"$(TAG)\" $(USER_DEFINE) $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@	
 #	$(CC) -D_TAG_=\"$(TAG)\" $(DEFINES) $(CFLAGS) $(INCLUDES) -o $@ $<
 
 $(BUILD_OUT)/%.cpp.o: %.cpp
-	$(CXX) -D_TAG_=\"$(TAG)\" $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@	
+	$(CXX) -D_TAG_=\"$(TAG)\" $(USER_DEFINE) $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@	
 
 $(BUILD_OUT)/%.fullino: $(USER_INOSRC)
 	-cat $(TARGET).ino $(filter-out $(TARGET).ino,$^) > $@
 
 $(BUILD_OUT)/%.fullino.o: $(BUILD_OUT)/%.fullino
-	$(CXX) -x c++ -D_TAG_=\"$(TAG)\" $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@
+	$(CXX) -x c++ -D_TAG_=\"$(TAG)\" $(USER_DEFINE) $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@
 
 $(BUILD_OUT)/$(TARGET).elf: core libs
 	$(LD) $(ELFFLAGS) -o $@ \

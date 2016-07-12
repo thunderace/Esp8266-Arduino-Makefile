@@ -14,7 +14,8 @@ ESP8266WebServer httpServer(80);
 Other other;
 void setup() {
   other1(8);
-  //secondFunction(true);
+  myLib("toto");
+//  secondFunction(true);
 }
 
 
