@@ -153,6 +153,7 @@ VPATH = . $(CORE_INC) $(ALIBDIRS) $(ULIBDIRS)
 
 ASFLAGS = -c -g -x assembler-with-cpp -MMD -mlongcalls $(DEFINES)
 
+
 CFLAGS = -c -Os -Wpointer-arith -Wno-implicit-function-declaration -Wl,-EL \
 	-fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals \
 	-falign-functions=4 -MMD -std=gnu99 -ffunction-sections -fdata-sections
@@ -207,8 +208,7 @@ $(BUILD_OUT)/core/%.cpp.o: %.cpp
 	$(CXX) $(CORE_DEFINE) $(DEFINES) $(CORE_INC:%=-I%) $(CXXFLAGS) $< -o $@
 
 $(BUILD_OUT)/%.c.o: %.c
-	$(CXX) -x c++ -D_TAG_=\"$(TAG)\" $(USER_DEFINE) $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@	
-#	$(CC) -D_TAG_=\"$(TAG)\" $(DEFINES) $(CFLAGS) $(INCLUDES) -o $@ $<
+	$(CC) -D_TAG_=\"$(TAG)\" $(DEFINES) $(CFLAGS) $(INCLUDES) -o $@ $<
 
 $(BUILD_OUT)/%.cpp.o: %.cpp
 	$(CXX) -D_TAG_=\"$(TAG)\" $(USER_DEFINE) $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@	
