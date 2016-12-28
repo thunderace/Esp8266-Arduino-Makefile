@@ -3,11 +3,13 @@ Makefile to build arduino code for ESP8266 under linux (tested on debian X64).
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
+12/28/2016:
+- compile c files with gcc not g++ 
+
 12/27/2016:
 - README update 
 - fix for non conventional libraries (Servo for example)
 - add servo test
-
 
 06/22/2016:
 - TAG fix
