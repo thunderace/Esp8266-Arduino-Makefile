@@ -3,6 +3,14 @@ Makefile to build arduino code for ESP8266 under linux (tested on debian X64).
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
+12/28/2016:
+- compile c files with gcc not g++ 
+
+12/27/2016:
+- README update 
+- fix for non conventional libraries (Servo for example)
+- add servo test
+
 06/22/2016:
 - TAG fix
 - add test sketch for ino concatenation
@@ -56,11 +64,19 @@ Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/20
 - autodetect system and user libs used by the sketch
 - Makefile renamed to esp8266Arduino.mk
 
-## Installation
+## Installation and test
 - Clone this repository : `git clone https://github.com/thunderace/Esp8266-Arduino-Makefile.git`
-- Install third party tools : for 64 bits linux `cd Esp8266-Arduino-Makefile && chmod+x install-x86_64-pc-linux-gnu.sh && ./install-x86_64-pc-linux-gnu.sh && cd ..` 
-                              for 32 bits linux : `cd Esp8266-Arduino-Makefile && chmod+x install-i686-pc-linux-gnu.sh && ./install-i686-pc-linux-gnu.sh && cd ..` 
-- In your sketch directory place a Makefile that defines anything that is project specific and put this line at the end `include /path_to_Esp8266-Arduino-Makefile_directory/esp8266Arduino.mk` (see example)
+- install required tools : 
+  - sudo apt-get update
+  - sudo apt-get install libconfig-yaml-perl unzip
+- cd ESP8266-Arduino-Makefile
+- Install third party tools : for 64 bits linux `chmod+x install-x86_64-pc-linux-gnu.sh && ./install-x86_64-pc-linux-gnu.sh` 
+                              for 32 bits linux : `chmod+x install-i686-pc-linux-gnu.sh && ./install-i686-pc-linux-gnu.sh` 
+- cd example/AdvancedWebServer
+- make
+
+## General Usage
+- In your sketch directory place a Makefile that defines anything that is project specific and follow that with a line `include /path_to_Esp8266-Arduino-Makefile_directory/esp8266Arduino.mk` (see example)
 - `make upload` should build your sketch and upload it...
 
 #dependencies
