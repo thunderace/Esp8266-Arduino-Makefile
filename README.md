@@ -1,8 +1,11 @@
-# Esp8266-Arduino-Makefile for Ubuntu and Cygwin/Windows (thx to intrepidor)
-Makefile to build arduino code for ESP8266 under linux (tested on debian X64).
+# Esp8266-Arduino-Makefile for Linux and Cygwin/Windows (thx to intrepidor)
+Makefile to build arduino code for ESP8266 under linux 
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
+01/24/2017:
+- add linux armhf install script (raspberry and others)
+
 12/28/2016:
 - compile c files with gcc not g++ 
 
@@ -70,8 +73,9 @@ Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/20
   - sudo apt-get update
   - sudo apt-get install libconfig-yaml-perl unzip
 - cd ESP8266-Arduino-Makefile
-- Install third party tools : for 64 bits linux `chmod+x install-x86_64-pc-linux-gnu.sh && ./install-x86_64-pc-linux-gnu.sh` 
-                              for 32 bits linux : `chmod+x install-i686-pc-linux-gnu.sh && ./install-i686-pc-linux-gnu.sh` 
+- Install third party tools : for 64 bits linux `chmod +x install-x86_64-pc-linux-gnu.sh && ./install-x86_64-pc-linux-gnu.sh` 
+                              for 32 bits linux : `chmod +x install-i686-pc-linux-gnu.sh && ./install-i686-pc-linux-gnu.sh`
+                              for linux arm hf : `chmod +x install-arm-linux-gnueabihf.sh && ./install-arm-linux-gnueabihf.sh`
 - cd example/AdvancedWebServer
 - make
 
@@ -80,7 +84,7 @@ Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/20
 - `make upload` should build your sketch and upload it...
 
 #dependencies
-- this project install the lastest stable  esp8266/Arduino repository (2.0.0) and the last stagging esptool and xtensa-lx106 toolchain
+- this project install the lastest stable  esp8266/Arduino repository (2.3.0) and the last esptool and xtensa-lx106 toolchain
 
 ## TODO
 - build user libs in their own directory to avoid problems with multiple files with same name.
