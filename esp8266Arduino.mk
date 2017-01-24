@@ -140,8 +140,8 @@ CPREPROCESSOR_FLAGS = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ -I$(ESPRESSIF_S
 DEFINES = $(CPREPROCESSOR_FLAGS) -DLWIP_OPEN_SRC \
 	-DF_CPU=$(F_CPU) -DARDUINO=$(ARDUINO_VERSION) \
 	-DARDUINO_$(ARDUINO_BOARD) -DESP8266 \
-	-DARDUINO_ARCH_$(shell echo "$(ARDUINO_ARCH)" | tr '[:lower:]' '[:upper:]') \
-	
+	-DARDUINO_ARCH_$(shell echo "$(ARDUINO_ARCH)" | tr '[:lower:]' '[:upper:]') 
+
 CORE_INC = $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH) \
 	$(ARDUINO_HOME)/variants/$(VARIANT)
 
