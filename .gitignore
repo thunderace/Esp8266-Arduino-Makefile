@@ -4,9 +4,6 @@ xtensa-esp32-elf
 bin/espota.py
 bin/mkspiffs
 bin/esptool
-example/esp8266/AdvancedWebServer/build.nodemcu/
-example/esp8266/AdvancedWebServer/build.nodemcu/
-example/esp32/SimpleWiFiServer/build.lolin32/
 node_modules
 download
 esp8266

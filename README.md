@@ -6,6 +6,9 @@ Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/20
 07/14/2017:
 - ESP32 support : see below
 
+01/24/2017:
+- add linux armhf install script (raspberry and others)
+
 12/28/2016:
 - compile c files with gcc not g++ 
 
