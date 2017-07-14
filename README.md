@@ -1,10 +1,10 @@
-# Esp8266-Arduino-Makefile for Linux and Cygwin/Windows (thx to intrepidor)
-Makefile to build arduino code for ESP8266 under linux 
+# Esp8266-Arduino-Makefile for Ubuntu and Cygwin/Windows (thx to intrepidor)
+Makefile to build arduino code for ESP8266 under linux (tested on debian X64).
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
-01/24/2017:
-- add linux armhf install script (raspberry and others)
+07/14/2017:
+- ESP32 support : see below
 
 12/28/2016:
 - compile c files with gcc not g++ 
@@ -72,19 +72,30 @@ Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/20
 - install required tools : 
   - sudo apt-get update
   - sudo apt-get install libconfig-yaml-perl unzip
+  - for ESP32 : 
+    -  apt-get install git python
 - cd ESP8266-Arduino-Makefile
-- Install third party tools : for 64 bits linux `chmod +x install-x86_64-pc-linux-gnu.sh && ./install-x86_64-pc-linux-gnu.sh` 
-                              for 32 bits linux : `chmod +x install-i686-pc-linux-gnu.sh && ./install-i686-pc-linux-gnu.sh`
-                              for linux arm hf : `chmod +x install-arm-linux-gnueabihf.sh && ./install-arm-linux-gnueabihf.sh`
-- cd example/AdvancedWebServer
-- make
+- Install third party tools : for 64 bits linux `chmod+x install-x86_64-pc-linux-gnu.sh && ./install-x86_64-pc-linux-gnu.sh` 
+                              for 32 bits linux : `chmod+x esp8266-install-i686-pc-linux-gnu.sh && ./esp8266-install-i686-pc-linux-gnu.sh` 
+                              for esp32 64 bits linux : `chmod+x esp32-install-x86_64-pc-linux-gnu && ./esp32-install-x86_64-pc-linux-gnu` 
+                              for esp32 32 bits linux : `chmod+x esp32-install-i686-pc-linux-gnu && ./esp32-install-i686-pc-linux-gnu` 
+- for esp8266 : 
+  - cd example/AdvancedWebServer
+  - make
+- for esp32 : 
+  - cd example/SimpleWiFiServer
+  - make
 
 ## General Usage
 - In your sketch directory place a Makefile that defines anything that is project specific and follow that with a line `include /path_to_Esp8266-Arduino-Makefile_directory/esp8266Arduino.mk` (see example)
+- set the target : 
+  - ARDUINO_ARCH=esp32 for ESP32
+  - nothing or ARDUINO_ARCH=esp8266 for ESP8266
 - `make upload` should build your sketch and upload it...
 
 #dependencies
-- this project install the lastest stable  esp8266/Arduino repository (2.3.0) and the last esptool and xtensa-lx106 toolchain
+- For esp8266, this project install the lastest stable  esp8266/Arduino repository (2.3.0) and the last stagging esptool and xtensa-lx106 toolchain
+- For esp32, this project install the master of espressif/arduino-esp32 and the xtensa-esp32 toolchain
 
 ## TODO
 - build user libs in their own directory to avoid problems with multiple files with same name.

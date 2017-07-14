@@ -1,9 +1,12 @@
 build.*/
 xtensa-lx106-elf
+xtensa-esp32-elf
 bin/espota.py
 bin/mkspiffs
 bin/esptool
-example/AdvancedWebServer/build.nodemcu/
+example/esp8266/AdvancedWebServer/build.nodemcu/
+example/esp8266/AdvancedWebServer/build.nodemcu/
+example/esp32/SimpleWiFiServer/build.lolin32/
 node_modules
 download
 esp8266
@@ -11,4 +14,5 @@ esp8266-2.0.0
 esp8266-2.2.0
 esp8266-staging
 esp8266-2.3.0
-
+esp32
+arduino-esp32
