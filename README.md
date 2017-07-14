@@ -90,7 +90,7 @@ Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/20
   - make
 
 ## General Usage
-- In your sketch directory place a Makefile that defines anything that is project specific and follow that with a line `include /path_to_Esp8266-Arduino-Makefile_directory/esp8266Arduino.mk` (see example)
+- In your sketch directory place a Makefile that defines anything that is project specific and follow that with a line `include /path_to_Esp8266-Arduino-Makefile_directory/espXArduino.mk` (see example)
 - set the target : 
   - ARDUINO_ARCH=esp32 for ESP32
   - nothing or ARDUINO_ARCH=esp8266 for ESP8266
