@@ -1,0 +1,24 @@
+build.lolin32/core/WString.cpp.o: \
+ /media/data/home/thunder/Esp8266-Arduino-Makefile/esp32/cores/esp32/WString.cpp \
+ /media/data/home/thunder/Esp8266-Arduino-Makefile/esp32/cores/esp32/WString.h \
+ /media/data/home/thunder/Esp8266-Arduino-Makefile/esp32/tools/sdk/include/newlib/stdlib.h \
+ /media/data/home/thunder/Esp8266-Arduino-Makefile/esp32/tools/sdk/include/newlib/machine/ieeefp.h \
+ /media/data/home/thunder/Esp8266-Arduino-Makefile/esp32/tools/sdk/include/newlib/_ansi.h \
+ /media/data/home/thunder/Esp8266-Arduino-Makefile/esp32/tools/sdk/include/newlib/newlib.h \
+ /media/data/home/thunder/Esp8266-Arduino-Makefile/esp32/tools/sdk/include/newlib/sys/config.h \
+ /media/data/home/thunder/Esp8266-Arduino-Makefile/esp32/tools/sdk/include/newlib/sys/features.h \
+ /media/data/home/thunder/Esp8266-Arduino-Makefile/esp32/tools/sdk/include/esp32/xtensa/config/core-isa.h \
+ /media/data/home/thunder/Esp8266-Arduino-Makefile/esp32/tools/sdk/include/newlib/sys/reent.h \
+ /media/data/home/thunder/Esp8266-Arduino-Makefile/esp32/tools/sdk/include/newlib/_ansi.h \
+ /media/data/home/thunder/Esp8266-Arduino-Makefile/esp32/tools/sdk/include/newlib/sys/_types.h \
+ /media/data/home/thunder/Esp8266-Arduino-Makefile/esp32/tools/sdk/include/newlib/machine/_types.h \
+ /media/data/home/thunder/Esp8266-Arduino-Makefile/esp32/tools/sdk/include/newlib/machine/_default_types.h \
+ /media/data/home/thunder/Esp8266-Arduino-Makefile/esp32/tools/sdk/include/newlib/sys/lock.h \
+ /media/data/home/thunder/Esp8266-Arduino-Makefile/esp32/tools/sdk/include/newlib/sys/cdefs.h \
+ /media/data/home/thunder/Esp8266-Arduino-Makefile/esp32/tools/sdk/include/newlib/machine/stdlib.h \
+ /media/data/home/thunder/Esp8266-Arduino-Makefile/esp32/tools/sdk/include/newlib/alloca.h \
+ /media/data/home/thunder/Esp8266-Arduino-Makefile/esp32/tools/sdk/include/newlib/string.h \
+ /media/data/home/thunder/Esp8266-Arduino-Makefile/esp32/tools/sdk/include/newlib/sys/string.h \
+ /media/data/home/thunder/Esp8266-Arduino-Makefile/esp32/tools/sdk/include/newlib/ctype.h \
+ /media/data/home/thunder/Esp8266-Arduino-Makefile/esp32/cores/esp32/pgmspace.h \
+ /media/data/home/thunder/Esp8266-Arduino-Makefile/esp32/cores/esp32/stdlib_noniso.h
