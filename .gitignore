@@ -1,3 +1,4 @@
+build.*/
 xtensa-lx106-elf
 xtensa-esp32-elf
 bin/espota.py
