@@ -37,12 +37,9 @@
 
 void drawGraph();  
 
-
 const char *ssid = _SSID_;
 const char *password = _WIFI_PASSWORD_;
 MDNSResponder mdns;
-
-
 
 ESP8266WebServer server ( 80 );
 
