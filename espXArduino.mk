@@ -97,11 +97,11 @@ LOCAL_SRCS = $(USER_SRC) $(USER_CXXSRC) $(USER_INOSRC) $(USER_HSRC) $(USER_HPPSR
 
 
 #autodetect arduino libs and user libs
-ifndef ARDUINO_LIBS
+#ifndef ARDUINO_LIBS
     # automatically determine included libraries
-    ARDUINO_LIBS = $(sort $(filter $(notdir $(wildcard $(ARDUINO_HOME)/libraries/*)), \
+    ARDUINO_LIBS += $(sort $(filter $(notdir $(wildcard $(ARDUINO_HOME)/libraries/*)), \
         $(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
-endif
+#endif
 
 ifndef USER_LIBS
     # automatically determine included user libraries
@@ -316,5 +316,20 @@ term:
 	minicom -D $(SERIAL_PORT) -b $(SERIAL_BAUD)
 
 print-%: ; @echo $* = $($*)
+
+help:
+	@echo ""
+	@echo "Makefile for building Arduino esp8266 and esp32 projects"
+	@echo "This file must be included from anaothe Makefile (see README)"
+	@echo ""
+	@echo "Targets available:"
+	@echo "  all                  (default) Build the application"
+	@echo "  clean                Remove all intermediate build files"
+	@echo "  upload               Build and flash the project application"
+	@echo "  ota                  Build and flash via OTA"
+	@echo "                          Params: OAT_IP, OTA_PORT and OTA_AUTH"
+	@echo "  term                 Open a the serial console on ESP port"
+	@echo "  print-VAR            Display the makefile VAR content. Replace VAR by the variable name"
+	@echo ""
 
 -include $(OBJ_FILES:.o=.d)
