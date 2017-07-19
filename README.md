@@ -3,6 +3,9 @@ Makefile to build arduino code for ESP8266 under linux (tested on debian X64).
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
+07/19/2017:
+- Use generic installers (with embedded tool get)
+
 07/14/2017:
 - ESP32 support : see below
 
@@ -78,16 +81,16 @@ Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/20
   - for ESP32 : 
     -  apt-get install git python
 - cd ESP8266-Arduino-Makefile
-- Install third party tools : for 64 bits linux `chmod+x install-x86_64-pc-linux-gnu.sh && ./install-x86_64-pc-linux-gnu.sh` 
-                              for 32 bits linux : `chmod+x esp8266-install-i686-pc-linux-gnu.sh && ./esp8266-install-i686-pc-linux-gnu.sh` 
-                              for esp32 64 bits linux : `chmod+x esp32-install-x86_64-pc-linux-gnu && ./esp32-install-x86_64-pc-linux-gnu` 
-                              for esp32 32 bits linux : `chmod+x esp32-install-i686-pc-linux-gnu && ./esp32-install-i686-pc-linux-gnu` 
+- Install third party tools : for esp8266 `chmod +x esp8266-install.sh && ./esp8266-install.sh` 
+                              for esp32   `chmod +x esp32-install.sh && ./esp32-install.sh` 
 - for esp8266 : 
   - cd example/AdvancedWebServer
   - make
 - for esp32 : 
   - cd example/SimpleWiFiServer
   - make
+- update esp32 arduino core :
+  `cd esp32 && git pull`
 
 ## General Usage
 - In your sketch directory place a Makefile that defines anything that is project specific and follow that with a line `include /path_to_Esp8266-Arduino-Makefile_directory/espXArduino.mk` (see example)
@@ -97,8 +100,8 @@ Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/20
 - `make upload` should build your sketch and upload it...
 
 #dependencies
-- For esp8266, this project install the lastest stable  esp8266/Arduino repository (2.3.0) and the last stagging esptool and xtensa-lx106 toolchain
-- For esp32, this project install the master of espressif/arduino-esp32 and the xtensa-esp32 toolchain
+- For esp8266, this project install the lastest stable esp8266/Arduino repository (2.3.0)
+- For esp32, this project install the master of espressif/arduino-esp32
 
 ## TODO
 - build user libs in their own directory to avoid problems with multiple files with same name.
