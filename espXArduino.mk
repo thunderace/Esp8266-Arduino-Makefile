@@ -9,6 +9,9 @@ else
 	EXEC_EXT = ".exe"
 endif
 
+CAT	:= cat$(EXEC_EXT)
+SED := sed$(EXEC_EXT)
+
 SERIAL_PORT ?= /dev/tty.nodemcu
 
 ARDUINO_ARCH ?= esp8266
@@ -17,10 +20,16 @@ ARDUINO_VARIANT ?= nodemcu
 ARDUINO_VERSION ?= 10605
 
 BOARDS_TXT  = $(ARDUINO_HOME)/boards.txt
+PLATFORM_TXT  = $(ARDUINO_HOME)/platform.txt
 PARSE_BOARD = $(ROOT_DIR)/bin/ard-parse-boards
+PARSE_PLATFORM = $(ROOT_DIR)/bin/ard-parse-platform
 PARSE_BOARD_OPTS = --boards_txt=$(BOARDS_TXT)
 PARSE_BOARD_CMD = $(PARSE_BOARD) $(PARSE_BOARD_OPTS)
+PARSE_PLATFORM_OPTS = --platform_txt=$(PLATFORM_TXT)
+PARSE_PLATFORM_CMD = $(PARSE_PLATFORM) $(PARSE_PLATFORM_OPTS)
 
+#ARDUINO_CORE_VERSION = $(shell $(SED) -n -e '/version=/ s/.*\= *//p' $(PLATFORM_TXT))
+ARDUINO_CORE_VERSION = $(shell $(PARSE_PLATFORM_CMD) version)
 ARDUINO_BOARD = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.board)
 VARIANT = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.variant)
 EAGLE_FILE_4M3M = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.4M3M.build.flash_ld)
@@ -47,8 +56,6 @@ ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool.py
 endif
 ESPRESSIF_SDK = $(ARDUINO_HOME)/tools/sdk
 ESPOTA ?= $(ARDUINO_HOME)/tools/espota.py
-CAT	:= cat$(EXEC_EXT)
-SED := sed$(EXEC_EXT)
 
 rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
 get_library_files  = $(if $(and $(wildcard $(1)/src), $(wildcard $(1)/library.properties)), \
@@ -97,19 +104,16 @@ LOCAL_SRCS = $(USER_SRC) $(USER_CXXSRC) $(USER_INOSRC) $(USER_HSRC) $(USER_HPPSR
 
 
 #autodetect arduino libs and user libs
-#ifndef ARDUINO_LIBS
-    # automatically determine included libraries
-    ARDUINO_LIBS += $(sort $(filter $(notdir $(wildcard $(ARDUINO_HOME)/libraries/*)), \
-        $(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
+# automatically determine included libraries
+ARDUINO_LIBS += $(sort $(filter $(notdir $(wildcard $(ARDUINO_HOME)/libraries/*)), \
+	$(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
 #endif
 
-ifndef USER_LIBS
-    # automatically determine included user libraries
-    USER_LIBS = $(sort $(filter $(notdir $(wildcard $(LOCAL_USER_LIBDIR)/*)), \
-        $(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
-    USER_LIBS += $(sort $(filter $(notdir $(wildcard $(GLOBAL_USER_LIBDIR)/*)), \
-        $(shell $(SED)  -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
-endif
+# automatically determine included user libraries
+USER_LIBS += $(sort $(filter $(notdir $(wildcard $(LOCAL_USER_LIBDIR)/*)), \
+    $(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
+USER_LIBS += $(sort $(filter $(notdir $(wildcard $(GLOBAL_USER_LIBDIR)/*)), \
+    $(shell $(SED)  -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
 
 # arduino libraries
 ALIBDIRS = $(sort $(dir $(wildcard \
@@ -140,15 +144,19 @@ ULIBDIRS = $(sort $(dir $(wildcard \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*/*.cpp) \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*/*/*.cpp))))
 
-LIB_SRC = $(wildcard $(addsuffix /*.c,$(ULIBDIRS))) \
+
+LIB_CSRC = $(wildcard $(addsuffix /*.c,$(ULIBDIRS))) \
 	$(wildcard $(addsuffix /*.c,$(ALIBDIRS)))
 LIB_CXXSRC = $(wildcard $(addsuffix /*.cpp,$(ULIBDIRS))) \
 	$(wildcard $(addsuffix /*.cpp,$(ALIBDIRS)))
 
 # object files
-OBJ_FILES = $(addprefix $(BUILD_OUT)/,$(notdir $(LIB_SRC:.c=.c.o) $(LIB_CXXSRC:.cpp=.cpp.o) $(TARGET).fullino.o $(USER_SRC:.c=.c.o) $(USER_CXXSRC:.cpp=.cpp.o)))
+OBJ_FILES = $(addprefix $(BUILD_OUT)/,$(notdir $(LIB_CSRC:.c=.c.o) $(LIB_CXXSRC:.cpp=.cpp.o) $(TARGET).fullino.o $(USER_SRC:.c=.c.o) $(USER_CXXSRC:.cpp=.cpp.o)))
 ifeq ($(ARDUINO_ARCH),esp8266)
 	CPREPROCESSOR_FLAGS = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ -I$(ESPRESSIF_SDK)/include -I$(ESPRESSIF_SDK)/lwip/include
+	ifeq ($(ARDUINO_CORE_VERSION), 2.4.0)
+		CPREPROCESSOR_FLAGS += -I$(ESPRESSIF_SDK)/libc/xtensa-lx106-elf
+	endif
 else
 	CPREPROCESSOR_FLAGS = -DESP_PLATFORM -DMBEDTLS_CONFIG_FILE="mbedtls/esp_config.h" -DHAVE_CONFIG_H -I$(ESPRESSIF_SDK)/include/config \
 					-I$(ESPRESSIF_SDK)/include/bluedroid -I$(ESPRESSIF_SDK)/include/app_update -I$(ESPRESSIF_SDK)/include/bootloader_support \
@@ -182,17 +190,24 @@ VPATH = . $(CORE_INC) $(ALIBDIRS) $(ULIBDIRS)
 
 ifeq ($(ARDUINO_ARCH),esp8266)
 	ASFLAGS = -c -g -x assembler-with-cpp -MMD -mlongcalls $(DEFINES)
-	CFLAGS = -c -Os -Wpointer-arith -Wno-implicit-function-declaration -Wl,-EL \
+	CFLAGS = -c -Os -g -Wpointer-arith -Wno-implicit-function-declaration -Wl,-EL \
 		-fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals \
 		-falign-functions=4 -MMD -std=gnu99 -ffunction-sections -fdata-sections
-	CXXFLAGS = -c -Os -mlongcalls -mtext-section-literals -fno-exceptions \
+	CXXFLAGS = -c -Os -g -mlongcalls -mtext-section-literals -fno-exceptions \
 		-fno-rtti -falign-functions=4 -std=c++11 -MMD -ffunction-sections -fdata-sections
 	ELFLIBS = -lm -lgcc -lhal -lphy -lpp -lnet80211 -lwpa -lcrypto -lmain -lwps -laxtls -lsmartconfig -lmesh -lwpa2 -llwip_gcc -lstdc++
-	
-	ELFFLAGS = -g -w -Os -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static \
-		-L$(ESPRESSIF_SDK)/lib -L$(ESPRESSIF_SDK)/ld \
-		 -T$(ESPRESSIF_SDK)/ld/$(FLASH_LD) \
-		 -Wl,--gc-sections -Wl,-wrap,system_restart_local -Wl,-wrap,register_chipv6_phy
+	ifeq ($(ARDUINO_CORE_VERSION), 2.4.0)
+		ELFLIBS += -lespnow -lc
+		ELFFLAGS = -g -w -Os -nostdlib -Wl,--no-check-sections -u call_user_start -u _printf_float -u _scanf_float -Wl,-static \
+			-L$(ESPRESSIF_SDK)/lib -L$(ESPRESSIF_SDK)/ld -L$(ESPRESSIF_SDK)/libc/xtensa-lx106-elf/lib \
+			 -T$(ESPRESSIF_SDK)/ld/$(FLASH_LD) \
+			 -Wl,--gc-sections -Wl,-wrap,system_restart_local -Wl,-wrap,spi_flash_read
+	else	
+		ELFFLAGS = -g -w -Os -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static \
+			-L$(ESPRESSIF_SDK)/lib -L$(ESPRESSIF_SDK)/ld \
+			 -T$(ESPRESSIF_SDK)/ld/$(FLASH_LD) \
+			 -Wl,--gc-sections -Wl,-wrap,system_restart_local -Wl,-wrap,register_chipv6_phy
+	endif
 else	
 	ASFLAGS = -c -g3 -x assembler-with-cpp -MMD -mlongcalls
 	CFLAGS = -std=gnu99 -Os -g3 -ffunction-sections -fdata-sections -fstrict-volatile-bitfields -mlongcalls \
