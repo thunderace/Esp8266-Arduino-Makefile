@@ -5,6 +5,7 @@ Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/20
 ## Changelog
 07/19/2017:
 - Use generic installers (with embedded tool get)
+- support for ESP8266 arduino core version 2.4.0 (not released yet) with autodetection
 
 07/14/2017:
 - ESP32 support : see below
@@ -77,7 +78,7 @@ Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/20
 - Clone this repository : `git clone https://github.com/thunderace/Esp8266-Arduino-Makefile.git`
 - install required tools : 
   - sudo apt-get update
-  - sudo apt-get install libconfig-yaml-perl unzip
+  - sudo apt-get install libconfig-yaml-perl unzip sed
   - for ESP32 : 
     -  apt-get install git python
 - cd ESP8266-Arduino-Makefile
