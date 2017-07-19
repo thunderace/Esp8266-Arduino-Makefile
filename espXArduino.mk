@@ -39,10 +39,10 @@ endif
 UPLOAD_RESETMETHOD = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.resetmethod)
 UPLOAD_SPEED = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.speed)
 ifeq ($(ARDUINO_ARCH),esp8266)
-XTENSA_TOOLCHAIN ?= $(ROOT_DIR)/xtensa-lx106-elf/bin/
-ESPTOOL ?= $(ROOT_DIR)/bin/esptool$(EXEC_EXT)
+XTENSA_TOOLCHAIN ?= $(ARDUINO_HOME)/tools/xtensa-lx106-elf/bin/
+ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool/esptool$(EXEC_EXT)
 else
-XTENSA_TOOLCHAIN ?= $(ROOT_DIR)/xtensa-esp32-elf/bin/
+XTENSA_TOOLCHAIN ?= $(ARDUINO_HOME)/tools/xtensa-esp32-elf/bin/
 ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool.py
 endif
 ESPRESSIF_SDK = $(ARDUINO_HOME)/tools/sdk
