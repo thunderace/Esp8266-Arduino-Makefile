@@ -12,6 +12,7 @@ endif
 CAT	:= cat$(EXEC_EXT)
 SED := sed$(EXEC_EXT)
 
+
 SERIAL_PORT ?= /dev/tty.nodemcu
 
 ARDUINO_ARCH ?= esp8266
@@ -28,7 +29,10 @@ PARSE_BOARD_CMD = $(PARSE_BOARD) $(PARSE_BOARD_OPTS)
 PARSE_PLATFORM_OPTS = --platform_txt=$(PLATFORM_TXT)
 PARSE_PLATFORM_CMD = $(PARSE_PLATFORM) $(PARSE_PLATFORM_OPTS)
 
-#ARDUINO_CORE_VERSION = $(shell $(SED) -n -e '/version=/ s/.*\= *//p' $(PLATFORM_TXT))
+#PLATFORM = $(shell sed -e '/^\#/ d;/^\s*$/d;s/{/$$(/g;s/}/)/g'  $(ARDUINO_HOME)/platform.txt)
+#sed -e 's/\({\)\(.*\)\(}\)/\1\U\2\E\3/;/^#/ d;/^\s*$/d;s/{/$(/g;s/}/)/g' esp8266/platform.txt > bin/esp8266/platform.txt
+#include  $(PLATFORM)
+
 ARDUINO_CORE_VERSION = $(shell $(PARSE_PLATFORM_CMD) version)
 ARDUINO_BOARD = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.board)
 VARIANT = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.variant)
