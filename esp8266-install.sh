@@ -8,6 +8,7 @@ wget --no-clobber https://github.com/esp8266/Arduino/releases/download/$ESP8266_
 unzip $DOWNLOAD_CACHE/esp8266-$ESP8266_VER.zip
 rm -f esp8266
 ln -s esp8266-$ESP8266_VER esp8266
+cp -R bin/package esp8266
 cd esp8266/tools && ./get.py
 
 #cleanup
