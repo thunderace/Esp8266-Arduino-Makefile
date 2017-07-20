@@ -42,7 +42,17 @@ else
     
 	  die "The $tag entry isn't defined, "
 	    unless $db->{$tag};
-    print $db->{$tag}, "\n";
+	 ## remove all "
+	 ## replace { by $(
+	 ## replace } by )
+	 ## replace all . between ( ) by _
+	 $db->{$tag} =~ s/"//g;
+	 $db->{$tag} =~ s/\}/')'/g;
+	 $db->{$tag} =~ s/\{/'\$('/g;
+	 $db->{$tag} =~ s/\./_/g;
+    ##$val = s/\{/\$(/r;
+	 print $db->{$tag};
+   ## print $db->{$tag}, "\n";
 	## dump_data($db->{$tag});
   }
 
