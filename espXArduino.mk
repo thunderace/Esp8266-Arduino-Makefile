@@ -110,13 +110,15 @@ LOCAL_SRCS = $(USER_SRC) $(USER_CXXSRC) $(USER_INOSRC) $(USER_HSRC) $(USER_HPPSR
 # automatically determine included libraries
 ARDUINO_LIBS += $(sort $(filter $(notdir $(wildcard $(ARDUINO_HOME)/libraries/*)), \
 	$(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
-#endif
 
 # automatically determine included user libraries
 USER_LIBS += $(sort $(filter $(notdir $(wildcard $(LOCAL_USER_LIBDIR)/*)), \
     $(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
 USER_LIBS += $(sort $(filter $(notdir $(wildcard $(GLOBAL_USER_LIBDIR)/*)), \
     $(shell $(SED)  -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
+
+#remove duplicate Arduino libs
+ARDUINO_LIBS := $(sort $(ARDUINO_LIBS))
 
 # arduino libraries
 ALIBDIRS = $(sort $(dir $(wildcard \
@@ -148,9 +150,9 @@ ULIBDIRS = $(sort $(dir $(wildcard \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*/*/*.cpp))))
 
 
-LIB_CSRC = $(wildcard $(addsuffix /*.c,$(ULIBDIRS))) \
+LIB_CSRC := $(wildcard $(addsuffix /*.c,$(ULIBDIRS))) \
 	$(wildcard $(addsuffix /*.c,$(ALIBDIRS)))
-LIB_CXXSRC = $(wildcard $(addsuffix /*.cpp,$(ULIBDIRS))) \
+LIB_CXXSRC := $(wildcard $(addsuffix /*.cpp,$(ULIBDIRS))) \
 	$(wildcard $(addsuffix /*.cpp,$(ALIBDIRS)))
 
 # object files
