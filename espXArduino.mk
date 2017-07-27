@@ -1,6 +1,6 @@
 TARGET = $(notdir $(realpath .))
 ARCH = $(shell uname)
-ifeq ($(ARCH), Windows)
+ifneq ($(findstring CYGWIN,$(shell uname -s)),)
 	# The extensa tools cannot use cygwin paths, so convert /cygdrive/c/abc/... to c:/cygwin64/abc/...
 	ROOT_DIR_RAW := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 	ROOT_DIR := $(shell cygpath -m $(ROOT_DIR_RAW))
