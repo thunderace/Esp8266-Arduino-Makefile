@@ -1,12 +1,12 @@
 TARGET = $(notdir $(realpath .))
 ARCH = $(shell uname)
-ifeq ($(ARCH), Linux)
-	ROOT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
-else
+ifneq ($(findstring CYGWIN,$(shell uname -s)),)
 	# The extensa tools cannot use cygwin paths, so convert /cygdrive/c/abc/... to c:/cygwin64/abc/...
 	ROOT_DIR_RAW := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 	ROOT_DIR := $(shell cygpath -m $(ROOT_DIR_RAW))
 	EXEC_EXT = ".exe"
+else
+	ROOT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 endif
 
 CAT	:= cat$(EXEC_EXT)
@@ -76,7 +76,7 @@ endif
 LOCAL_USER_LIBDIR ?= ./libraries
 GLOBAL_USER_LIBDIR ?= $(ROOT_DIR)/libraries
 ifndef TAG
-TAG := $(shell date --iso=seconds)
+TAG := $(shell date +'%Y-%m-%dT%H:%M:%S%z' | $(SED) -E 's/(..)$$/:\1/')
 endif
 
 
@@ -241,7 +241,7 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 	C_COMBINE_PATTERN = -Wl,--start-group $(OBJ_FILES) $(BUILD_OUT)/core/core.a \
 		$(ELFLIBS) -Wl,--end-group -L$(BUILD_OUT)
 	SIZE_REGEX_DATA = '^(?:\.data|\.rodata|\.bss)\s+([0-9]+).*'
-	SIZE_REGEX = '^(?:\.irom0\.text|\.text|\.data|\.rodata|)\s+([0-9]+).*'
+	SIZE_REGEX = '^(?:\.irom0\.text|\.text|\.data|\.rodata)?\s+([0-9]+).*'
 	SIZE_REGEX_EEPROM = '^(?:\.eeprom)\s+([0-9]+).*'
 	UPLOAD_PATTERN = $(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cb $(UPLOAD_SPEED) -cp $(SERIAL_PORT) -ca 0x00000 -cf $(BUILD_OUT)/$(TARGET).bin
 else
