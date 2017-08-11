@@ -6,7 +6,7 @@ else
 	# The extensa tools cannot use cygwin paths, so convert /cygdrive/c/abc/... to c:/cygwin64/abc/...
 	ROOT_DIR_RAW := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 	ROOT_DIR := $(shell cygpath -m $(ROOT_DIR_RAW))
-	EXEC_EXT = ".exe"
+	EXEC_EXT = .exe
 endif
 
 CAT	:= cat$(EXEC_EXT)
@@ -55,7 +55,7 @@ XTENSA_TOOLCHAIN ?= $(ARDUINO_HOME)/tools/xtensa-lx106-elf/bin/
 ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool/esptool$(EXEC_EXT)
 else
 XTENSA_TOOLCHAIN ?= $(ARDUINO_HOME)/tools/xtensa-esp32-elf/bin/
-ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool.py
+ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool$(EXEC_EXT)
 endif
 ESPRESSIF_SDK = $(ARDUINO_HOME)/tools/sdk
 ESPOTA ?= $(ARDUINO_HOME)/tools/espota.py
@@ -166,7 +166,7 @@ else
 	CPREPROCESSOR_FLAGS = -DESP_PLATFORM -DMBEDTLS_CONFIG_FILE="mbedtls/esp_config.h" -DHAVE_CONFIG_H -I$(ESPRESSIF_SDK)/include/config \
 					-I$(ESPRESSIF_SDK)/include/bluedroid -I$(ESPRESSIF_SDK)/include/app_update -I$(ESPRESSIF_SDK)/include/bootloader_support \
 					-I$(ESPRESSIF_SDK)/include/bt -I$(ESPRESSIF_SDK)/include/driver -I$(ESPRESSIF_SDK)/include/esp32 -I$(ESPRESSIF_SDK)/include/ethernet \
-					-I$(ESPRESSIF_SDK)/include/fatfs -I$(ESPRESSIF_SDK)/include/freertos -I$(ESPRESSIF_SDK)/include/jsmn -I$(ESPRESSIF_SDK)/include/log \
+					-I$(ESPRESSIF_SDK)/include/fatfs -I$(ESPRESSIF_SDK)/include/freertos -I$(ESPRESSIF_SDK)/include/heap -I$(ESPRESSIF_SDK)/include/jsmn -I$(ESPRESSIF_SDK)/include/log \
 					-I$(ESPRESSIF_SDK)/include/mdns -I$(ESPRESSIF_SDK)/include/mbedtls -I$(ESPRESSIF_SDK)/include/mbedtls_port -I$(ESPRESSIF_SDK)/include/newlib \
 					-I$(ESPRESSIF_SDK)/include/nvs_flash -I$(ESPRESSIF_SDK)/include/openssl	-I$(ESPRESSIF_SDK)/include/soc -I$(ESPRESSIF_SDK)/include/spi_flash \
 					-I$(ESPRESSIF_SDK)/include/sdmmc -I$(ESPRESSIF_SDK)/include/tcpip_adapter -I$(ESPRESSIF_SDK)/include/ulp -I$(ESPRESSIF_SDK)/include/vfs \
@@ -221,8 +221,8 @@ else
 	CXXFLAGS = -std=gnu++11 -fno-exceptions -fno-rtti -Os -g3 -Wpointer-arith -ffunction-sections -fdata-sections -fstrict-volatile-bitfields \
 		-mlongcalls -nostdlib -w -Wno-error=unused-function -Wno-error=unused-but-set-variable -Wno-error=unused-variable -Wno-error=deprecated-declarations \
 		-Wno-unused-parameter -Wno-sign-compare -fno-rtti -MMD -c
-	ELFLIBS = -lgcc -lstdc++ -lapp_update -lbootloader_support -lbt -lbtdm_app -lc -lc_nano -lcoap -lcoexist -lcore -lcxx -ldriver -lesp32 -lethernet -lexpat \
-		-lfatfs -lfreertos -lhal -ljsmn -ljson -llog -llwip -lm -lmbedtls -lmdns -lmicro-ecc -lnet80211 -lnewlib -lnghttp -lnvs_flash -lopenssl -lphy -lpp -lrtc \
+		ELFLIBS = -lgcc -lstdc++ -lapp_trace -lapp_update -lbootloader_support -lbt -lbtdm_app -lc -lc_nano -lcoap -lcoexist -lcore -lcxx -ldriver -lesp32 -lethernet -lexpat \
+		-lfatfs -lfreertos -lhal -lheap -ljsmn -ljson -llog -llwip -lm -lmbedtls -lmdns -lmicro-ecc -lnet80211 -lnewlib -lnghttp -lnvs_flash -lopenssl -lphy -lpp -lrtc \
 		-lsdmmc -lsmartconfig -lsoc -lspi_flash -ltcpip_adapter -lulp -lvfs -lwear_levelling -lwpa -lwpa2 -lwpa_supplicant -lwps -lxtensa-debug-module 
 	ELFFLAGS = -nostdlib -L$(ESPRESSIF_SDK)/lib -L$(ESPRESSIF_SDK)/ld -T esp32_out.ld -T esp32.common.ld -T esp32.rom.ld -T esp32.peripherals.ld \
 		-u call_user_start_cpu0 -Wl,--gc-sections -Wl,-static -Wl,--undefined=uxTopUsedPriority
