@@ -1,10 +1,15 @@
-# Esp8266/Esp32-Arduino-Makefile for Linux and Cygwin/Windows (thx to intrepidor)
-Makefile to build arduino code for ESP8266 under linux (tested on debian X64, raspberry).
+# Esp8266/Esp32-Arduino-Makefile for Linux and Cygwin/Windows
+Makefile to build arduino code for ESP8266 under linux and Cygwin (tested on debian X64, raspberry, CYGWIN_NT-10.0).
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
+08/11/2017:
+- fix cygwin support for both esp8266 and esp32
+- ESP32 : update compiler flags and libs
+
 07/20/2017:
 - Replace cat by $(CAT)
+
 07/19/2017:
 - Use generic installers (with embedded tool get)
 - support for ESP8266 arduino core version 2.4.0 (not released yet) with autodetection
