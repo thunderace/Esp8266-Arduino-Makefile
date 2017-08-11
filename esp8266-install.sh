@@ -20,5 +20,5 @@ if [[ "$OSTYPE" == "cygwin" ]]; then
 	chmod +x ./esp8266/tools/mkspiffs/mkspiffs.exe
 fi
 #cleanup
-#rm -fr $DOWNLOAD_CACHE
+rm -fr $DOWNLOAD_CACHE
 
