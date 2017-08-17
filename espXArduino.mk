@@ -55,7 +55,7 @@ XTENSA_TOOLCHAIN ?= $(ARDUINO_HOME)/tools/xtensa-lx106-elf/bin/
 ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool/esptool$(EXEC_EXT)
 else
 XTENSA_TOOLCHAIN ?= $(ARDUINO_HOME)/tools/xtensa-esp32-elf/bin/
-ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool$(EXEC_EXT)
+ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool.py
 endif
 ESPRESSIF_SDK = $(ARDUINO_HOME)/tools/sdk
 ESPOTA ?= $(ARDUINO_HOME)/tools/espota.py
@@ -241,7 +241,7 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 	C_COMBINE_PATTERN = -Wl,--start-group $(OBJ_FILES) $(BUILD_OUT)/core/core.a \
 		$(ELFLIBS) -Wl,--end-group -L$(BUILD_OUT)
 	SIZE_REGEX_DATA = '^(?:\.data|\.rodata|\.bss)\s+([0-9]+).*'
-	SIZE_REGEX = '^(?:\.irom0\.text|\.text|\.data|\.rodata|)\s+([0-9]+).*'
+	SIZE_REGEX = '^(?:\.irom0\.text|\.text|\.data|\.rodata)\s+([0-9]+).*'
 	SIZE_REGEX_EEPROM = '^(?:\.eeprom)\s+([0-9]+).*'
 	UPLOAD_PATTERN = $(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cb $(UPLOAD_SPEED) -cp $(SERIAL_PORT) -ca 0x00000 -cf $(BUILD_OUT)/$(TARGET).bin
 else
@@ -258,7 +258,7 @@ else
 	C_COMBINE_PATTERN = -Wl,--start-group $(OBJ_FILES) $(BUILD_OUT)/core/core.a \
 		$(ELFLIBS) -Wl,--end-group -Wl,-EL
 	SIZE_REGEX_DATA =  '^(?:\.dram0\.data|\.dram0\.bss)\s+([0-9]+).*'
-	SIZE_REGEX = '^(?:\.iram0\.text|\.dram0\.text|\.flash\.text|\.dram0\.data|\.flash\.rodata|)\s+([0-9]+).*'
+	SIZE_REGEX = '^(?:\.iram0\.text|\.dram0\.text|\.flash\.text|\.dram0\.data|\.flash\.rodata)\s+([0-9]+).*'
 	UPLOAD_SPEED = 115200
 	UPLOAD_PATTERN = --chip esp32 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED)  --before default_reset --after hard_reset write_flash -z \
 		--flash_freq $(FLASH_FREQ) --flash_mode $(FLASH_MODE) --flash_size $(FLASH_SIZE) 0x1000  $(ARDUINO_HOME)/tools/sdk/bin/bootloader.bin 0x8000 \
