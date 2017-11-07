@@ -54,12 +54,13 @@ UPLOAD_SPEED = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.speed)
 ifeq ($(ARDUINO_ARCH),esp8266)
 XTENSA_TOOLCHAIN ?= $(ARDUINO_HOME)/tools/xtensa-lx106-elf/bin/
 ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool/esptool$(EXEC_EXT)
+ESPOTA ?= $(ARDUINO_HOME)/tools/espota.py
 else
 XTENSA_TOOLCHAIN ?= $(ARDUINO_HOME)/tools/xtensa-esp32-elf/bin/
-ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool.py
+ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool$(EXEC_EXT)
+ESPOTA ?= $(ARDUINO_HOME)/tools/espota$(EXEC_EXT)
 endif
 ESPRESSIF_SDK = $(ARDUINO_HOME)/tools/sdk
-ESPOTA ?= $(ARDUINO_HOME)/tools/espota.py
 
 rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
 get_library_files  = $(if $(and $(wildcard $(1)/src), $(wildcard $(1)/library.properties)), \
