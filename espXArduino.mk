@@ -11,6 +11,7 @@ endif
 
 CAT	:= cat$(EXEC_EXT)
 SED := sed$(EXEC_EXT)
+GREP := grep$(EXEC_EXT)
 
 #DUMMY := $(shell $(ROOT_DIR)/bin/generate_platform.sh $(ARDUINO_HOME)/platform.txt $(ROOT_DIR)/bin/$(ARDUINO_ARCH)/platform.txt)
 #runtime.platform.path = $(ARDUINO_HOME)
@@ -315,8 +316,8 @@ $(BUILD_OUT)/$(TARGET).elf: core libs
 	$(LD) $(ELFFLAGS) -o $@ $(C_COMBINE_PATTERN)
 
 size: $(BUILD_OUT)/$(TARGET).elf
-	@$(SIZE) -A $(BUILD_OUT)/$(TARGET).elf | grep -E $(SIZE_REGEX)
-	@$(SIZE) -A $(BUILD_OUT)/$(TARGET).elf | grep -E $(SIZE_REGEX_DATA)
+	@$(SIZE) -A $(BUILD_OUT)/$(TARGET).elf | $(GREP) -E $(SIZE_REGEX) | $(SED) -e "s/[[:space:]]\+/ /g" | $(SED) -e "s/\ /\t/g"
+	@$(SIZE) -A $(BUILD_OUT)/$(TARGET).elf | $(GREP) -E $(SIZE_REGEX_DATA) | $(SED) -e "s/[[:space:]]\+/ /g" | $(SED) -e "s/\ /\t/g"
 
 ifeq ($(ARDUINO_ARCH),esp8266)
 eep:
@@ -336,6 +337,10 @@ ota: $(BUILD_OUT)/$(TARGET).bin
 
 term:
 	minicom -D $(SERIAL_PORT) -b $(SERIAL_BAUD)
+
+monitor:
+	minicom -D $(SERIAL_PORT) -b $(SERIAL_BAUD)
+
 
 print-%: ; @echo $* = $($*)
 
