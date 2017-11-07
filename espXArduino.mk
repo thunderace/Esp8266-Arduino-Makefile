@@ -243,7 +243,7 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 	C_COMBINE_PATTERN = -Wl,--start-group $(OBJ_FILES) $(BUILD_OUT)/core/core.a \
 		$(ELFLIBS) -Wl,--end-group -L$(BUILD_OUT)
 	SIZE_REGEX_DATA = '^(?:\.data|\.rodata|\.bss)\s+([0-9]+).*'
-	SIZE_REGEX = '^(?:\.irom0\.text|\.text|\.data|\.rodata)\s+([0-9]+).*'
+	SIZE_REGEX = '^(?:\.irom0\.text|\.text|\.data)\s+([0-9]+).*'
 	SIZE_REGEX_EEPROM = '^(?:\.eeprom)\s+([0-9]+).*'
 	UPLOAD_PATTERN = $(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cb $(UPLOAD_SPEED) -cp $(SERIAL_PORT) -ca 0x00000 -cf $(BUILD_OUT)/$(TARGET).bin
 else
