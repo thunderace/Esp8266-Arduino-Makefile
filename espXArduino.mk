@@ -19,8 +19,9 @@ GREP := grep$(EXEC_EXT)
 
 SERIAL_PORT ?= /dev/tty.nodemcu
 
+ESP8266_VERSION ?= -2.3.0
 ARDUINO_ARCH ?= esp8266
-ARDUINO_HOME ?=  $(ROOT_DIR)/$(ARDUINO_ARCH)
+ARDUINO_HOME ?=  $(ROOT_DIR)/$(ARDUINO_ARCH)$(ESP8266_VERSION)
 ARDUINO_VARIANT ?= nodemcu
 ARDUINO_VERSION ?= 10605
 
@@ -36,21 +37,41 @@ PARSE_PLATFORM_CMD = $(PARSE_PLATFORM) $(PARSE_PLATFORM_OPTS)
 ARDUINO_CORE_VERSION = $(shell $(PARSE_PLATFORM_CMD) version)
 ARDUINO_BOARD = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.board)
 VARIANT = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.variant)
-EAGLE_FILE_4M3M = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.4M3M.build.flash_ld)
-EAGLE_FILE_4M1M = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.4M1M.build.flash_ld)
-MCU   = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.mcu)
+
+FLASH_PARTITION ?= 4M1M
+
+MCU = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.mcu)
 SERIAL_BAUD   ?= 115200
-F_CPU = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.f_cpu)
-FLASH_SIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.flash_size)
-FLASH_MODE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.flash_mode)
 ifeq ($(ARDUINO_ARCH),esp8266)
+	CPU_FREQ ?= 80
+	DEFAULT_FLASH_FREQ = 40
 	FLASH_FREQ ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.flash_freq)
+	ifeq ($(FLASH_FREQ), none)
+		FLASH_FREQ = $(DEFAULT_FLASH_FREQ)
+	endif
 else
-	FLASH_FREQ ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashFreq.40.build.flash_freq)
+	CPU_FREQ ?= 40
+	FLASH_FREQ ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashFreq.$(CPU_FREQ).build.flash_freq)
 endif
 
-UPLOAD_RESETMETHOD = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.resetmethod)
+FLASH_MODE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.flash_mode)
+ifeq ($(FLASH_MODE), none)
+	FLASH_MODE = qio
+endif
+
+UPLOAD_RESETMETHOD ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.resetmethod)
 UPLOAD_SPEED = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.speed)
+
+FLASH_LD ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).build.flash_ld)
+
+ifeq ($(ARDUINO_ARCH),esp8266)
+	F_CPU = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.CpuFrequency.$(CPU_FREQ).build.f_cpu)
+	FLASH_SIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).build.flash_size)
+else
+	F_CPU = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.f_cpu)
+	FLASH_SIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.flash_size)
+endif
+
 ifeq ($(ARDUINO_ARCH),esp8266)
 XTENSA_TOOLCHAIN ?= $(ARDUINO_HOME)/tools/xtensa-lx106-elf/bin/
 ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool/esptool$(EXEC_EXT)
@@ -67,14 +88,6 @@ get_library_files  = $(if $(and $(wildcard $(1)/src), $(wildcard $(1)/library.pr
                         $(call rwildcard,$(1)/src/,*.$(2)), \
                         $(wildcard $(1)/*.$(2) $(1)/utility/*.$(2)))
 
-
-FLASH_LD ?= $(EAGLE_FILE_4M3M)
-ifdef SPIFFS_SIZE
-	ifeq ($(SPIFFS_SIZE),1)
-		FLASH_LD = $(EAGLE_FILE_4M1M)
-	endif
-endif
-
 LOCAL_USER_LIBDIR ?= ./libraries
 GLOBAL_USER_LIBDIR ?= $(ROOT_DIR)/libraries
 ifndef TAG
@@ -83,9 +96,9 @@ endif
 
 
 ifdef NODENAME
-BUILD_OUT ?= ./build.$(ARDUINO_VARIANT).$(NODENAME)
+BUILD_OUT ?= ./build.$(ARDUINO_VARIANT).$(NODENAME)$(ESP8266_VERSION)
 else
-BUILD_OUT ?= ./build.$(ARDUINO_VARIANT)
+BUILD_OUT ?= ./build.$(ARDUINO_VARIANT)$(ESP8266_VERSION)
 endif
 
 ### ESP8266 CORE

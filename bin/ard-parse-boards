@@ -47,17 +47,23 @@ else
     
     if (my $key = shift @ARGV)
       {
-	die "$key isn't defined for the $tag board, "
-	  unless $db->{$tag} && exists $db->{$tag}->{$key};
-
-	print $db->{$tag}->{$key}, "\n";
+	      #die "$key isn't defined for the $tag board, "
+	      #unless $db->{$tag} && exists $db->{$tag}->{$key};
+        if ($db->{$tag} && exists $db->{$tag}->{$key})
+          {
+            print $db->{$tag}->{$key}, "\n";
+          }
+        else
+          {
+            print "none\n";
+          }
       }
     else
       {
-	die "The $tag board isn't defined, "
-	  unless $db->{$tag};
+	      die "The $tag board isn't defined, "
+	      unless $db->{$tag};
 
-	dump_data("The $tag board:", $db->{$tag});
+	      dump_data("The $tag board:", $db->{$tag});
       }
   }
 
@@ -80,10 +86,10 @@ sub parse_boards
 
     while(<$fh>)
       {
-	my ($board, $key, $value) = /^\s*(\S+?)\.(\S+?)\s*=\s*(.+?)\s*$/
-	  or next;
+	      my ($board, $key, $value) = /^\s*(\S+?)\.(\S+?)\s*=\s*(.+?)\s*$/
+	      or next;
 
-	$b{$board}->{$key} = $value;
+	      $b{$board}->{$key} = $value;
       }
 
     return \%b;
@@ -100,11 +106,11 @@ sub find_data
     my %hit;
     foreach my $b (keys %$db)
       {
-	foreach my $k (keys %{$db->{$b}})
-	  {
-	    my $v = $db->{$b}->{$k};
-	    $hit{$b}->{$k} = $v if !grep { $v !~ /$_/i } @q;
-	  }
+	      foreach my $k (keys %{$db->{$b}})
+	        {
+	          my $v = $db->{$b}->{$k};
+	          $hit{$b}->{$k} = $v if !grep { $v !~ /$_/i } @q;
+	        }
       }
 
     dump_data("Matches for $q:", \%hit);
@@ -119,8 +125,8 @@ sub dump_boards
     my $max_l = 0;
     foreach my $b (keys %$db)
       {
-	$name{$b} = $db->{$b}->{name} || 'Anonymous';
-	$max_l    = length($b) if $max_l < length($b);
+	      $name{$b} = $db->{$b}->{name} || 'Anonymous';
+	      $max_l    = length($b) if $max_l < length($b);
       }
 
     my $fmt = sprintf("%%-%ds %%s\n", $max_l + 2);
@@ -128,7 +134,7 @@ sub dump_boards
     printf $fmt, "Tag", "Board Name";
     foreach my $b (sort keys %name)
       {
-	printf $fmt, $b, $name{$b};
+	      printf $fmt, $b, $name{$b};
       }
   }
 
