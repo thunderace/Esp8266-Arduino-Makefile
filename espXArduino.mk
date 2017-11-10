@@ -246,6 +246,7 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 	SIZE_REGEX = '^(?:\.irom0\.text|\.text|\.data)\s+([0-9]+).*'
 	SIZE_REGEX_EEPROM = '^(?:\.eeprom)\s+([0-9]+).*'
 	UPLOAD_PATTERN = $(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cb $(UPLOAD_SPEED) -cp $(SERIAL_PORT) -ca 0x00000 -cf $(BUILD_OUT)/$(TARGET).bin
+	RESET_PATTERN = $(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cp $(SERIAL_PORT) -cr
 else
 	CC := $(XTENSA_TOOLCHAIN)xtensa-esp32-elf-gcc
 	CXX := $(XTENSA_TOOLCHAIN)xtensa-esp32-elf-g++
@@ -267,6 +268,8 @@ else
 		--flash_size detect 0xe000 $(ARDUINO_HOME)/tools/partitions/boot_app0.bin 0x1000  \
 		$(ARDUINO_HOME)/tools/sdk/bin/bootloader.bin 0x10000 \
 		$(BUILD_OUT)/$(TARGET).bin 0X8000 $(BUILD_OUT)/$(TARGET).partitions.bin  
+	# WARNING : NOT TESTED TODO : TEST
+	RESET_PATTERN = --chip esp32 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED)  --before hard_reset 
 endif
 
 .PHONY: all dirs clean upload
@@ -329,6 +332,9 @@ endif
 
 $(BUILD_OUT)/$(TARGET).bin: $(BUILD_OUT)/$(TARGET).elf
 	$(ESPTOOL) $(OBJCOPY_HEX_PATTERN)
+	
+reset: 
+	$(ESPTOOL) $(RESET_PATTERN)
 
 upload: $(BUILD_OUT)/$(TARGET).bin size
 	$(ESPTOOL) $(UPLOAD_PATTERN)
