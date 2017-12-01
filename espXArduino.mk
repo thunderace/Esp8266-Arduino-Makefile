@@ -135,6 +135,7 @@ ALIBDIRS = $(sort $(dir $(wildcard \
 # user libraries and sketch code
 ULIBDIRS = $(sort $(dir $(wildcard \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/*.c) \
+	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/*.h) \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*.c) \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*/*.c) \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*/*/*.c) \
