@@ -140,24 +140,6 @@ USER_LIBS += $(sort $(filter $(notdir $(wildcard $(LOCAL_USER_LIBDIR)/*)), \
 USER_LIBS += $(sort $(filter $(notdir $(wildcard $(GLOBAL_USER_LIBDIR)/*)), \
     $(shell $(SED)  -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
 
-
-#autodetect arduino libs and user libs
-ARDUINO_LIBS += $(sort $(filter $(notdir $(wildcard $(ARDUINO_HOME)/libraries/*)), \
-	$(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
-
-#remove duplicate Arduino libs
-ARDUINO_LIBS := $(sort $(ARDUINO_LIBS))
-
-# arduino libraries
-ALIBDIRS = $(sort $(dir $(wildcard \
-	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/*.c) \
-	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/*.cpp) \
-	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/src/*/*.c) \
-	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/src/*/*.cpp) \
-	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/src/*.h) \
-	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/src/*.c) \
-	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/src/*.cpp))))
-
 # user libraries and sketch code
 ULIBDIRS = $(sort $(dir $(wildcard \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/*.c) \
@@ -182,14 +164,35 @@ ULIBDIRS = $(sort $(dir $(wildcard \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*/*/*.cpp))))
 
 
-LIB_CSRC := $(wildcard $(addsuffix /*.c,$(ULIBDIRS))) \
-	$(wildcard $(addsuffix /*.c,$(ALIBDIRS)))
-LIB_CXXSRC := $(wildcard $(addsuffix /*.cpp,$(ULIBDIRS))) \
-	$(wildcard $(addsuffix /*.cpp,$(ALIBDIRS)))
+ULIB_CSRC := $(wildcard $(addsuffix /*.c,$(ULIBDIRS)))
+ULIB_CXXSRC := $(wildcard $(addsuffix /*.cpp,$(ULIBDIRS)))
+
+ULIB := $(sort $(filter $(notdir $(wildcard $(ARDUINO_HOME)/libraries/*)), \
+    $(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(ULIB_CSRC) $(ULIB_CXXSRC))))
+
+#autodetect arduino libs and user libs
+ARDUINO_LIBS += $(sort $(filter $(notdir $(wildcard $(ARDUINO_HOME)/libraries/*)), \
+	$(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
+
+#remove duplicate Arduino libs
+ARDUINO_LIBS := $(sort $(ARDUINO_LIBS) $(ULIB))
+
+# arduino libraries
+ALIBDIRS = $(sort $(dir $(wildcard \
+	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/*.c) \
+	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/*.cpp) \
+	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/src/*/*.c) \
+	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/src/*/*.cpp) \
+	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/src/*.h) \
+	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/src/*.c) \
+	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/src/*.cpp))))
+ALIB_CSRC := $(wildcard $(addsuffix /*.c,$(ALIBDIRS)))
+ALIB_CXXSRC := $(wildcard $(addsuffix /*.cpp,$(ALIBDIRS)))
+
 
 FS_IMAGE=spiffs.bin
 # object files
-OBJ_FILES = $(addprefix $(BUILD_OUT)/,$(notdir $(LIB_CSRC:.c=.c.o) $(LIB_CXXSRC:.cpp=.cpp.o) $(TARGET).fullino.o $(USER_SRC:.c=.c.o) $(USER_CXXSRC:.cpp=.cpp.o)))
+OBJ_FILES = $(addprefix $(BUILD_OUT)/,$(notdir $(ULIB_CSRC:.c=.c.o) $(ALIB_CSRC:.c=.c.o) $(ULIB_CXXSRC:.cpp=.cpp.o) $(ALIB_CXXSRC:.cpp=.cpp.o) $(TARGET).fullino.o $(USER_SRC:.c=.c.o) $(USER_CXXSRC:.cpp=.cpp.o)))
 ifeq ($(ARDUINO_ARCH),esp8266)
 	CPREPROCESSOR_FLAGS = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ -I$(ESPRESSIF_SDK)/include -I$(ESPRESSIF_SDK)/lwip/include
 	ifeq ($(ARDUINO_CORE_VERSION), 2_4_0)
@@ -312,6 +315,10 @@ endif
 .PHONY: all dirs clean upload
 
 all: show_variables dirs core libs fs bin eep size
+
+THUNDER_LIBS := $(shell perl -e 'use File::Find;@d = split(" ", shift);while (<>) {$$f{"$$1"} = 1 if /^\s*\#include\s+[<"]([^>"]+)/;}find(sub {if ($$f{$$_}){print $$File::Find::dir," ";$$f{$$_}=0;}}, @d);' \
+	                        "$(USER_LIBS) $(ARDUINO_LIBS)" $(LOCAL_SRCS))
+
 
 show_variables:
 	$(info [ARDUINO_LIBS] : $(ARDUINO_LIBS))
