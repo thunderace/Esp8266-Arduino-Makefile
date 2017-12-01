@@ -1,3 +1,4 @@
+#SHELL=/bin/bash
 TARGET = $(notdir $(realpath .))
 ARCH = $(shell uname)
 ifneq ($(findstring CYGWIN,$(shell uname -s)),)
@@ -18,12 +19,16 @@ GREP := grep$(EXEC_EXT)
 #include $(ROOT_DIR)/bin/$(ARDUINO_ARCH)/platform.txt
 
 SERIAL_PORT ?= /dev/tty.nodemcu
-
-ESP8266_VERSION ?= -2.3.0
 ARDUINO_ARCH ?= esp8266
+ifeq ($(ARDUINO_ARCH),esp8266)
+	ESP8266_VERSION ?= -2.3.0
+else
+	ESP8266_VERSION=
+endif
+
 ARDUINO_HOME ?=  $(ROOT_DIR)/$(ARDUINO_ARCH)$(ESP8266_VERSION)
 ARDUINO_VARIANT ?= nodemcu
-ARDUINO_VERSION ?= 10605
+ARDUINO_VERSION ?= 10805
 
 BOARDS_TXT  = $(ARDUINO_HOME)/boards.txt
 PLATFORM_TXT  = $(ARDUINO_HOME)/platform.txt
@@ -67,21 +72,31 @@ FLASH_LD ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH
 ifeq ($(ARDUINO_ARCH),esp8266)
 	F_CPU = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.CpuFrequency.$(CPU_FREQ).build.f_cpu)
 	FLASH_SIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).build.flash_size)
+	SPIFFS_PAGESIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).build.spiffs_pagesize)
+	SPIFFS_START ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).build.spiffs_start)
+	SPIFFS_END ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).build.spiffs_end)
+	SPIFFS_BLOCKSIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).build.spiffs_blocksize)
+	SPIFFS_SIZE ?= $(shell echo $$(( $(SPIFFS_END) - $(SPIFFS_START) ))) 
+	
 else
 	F_CPU = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.f_cpu)
 	FLASH_SIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.flash_size)
+	BOOT ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.boot)
 endif
 
-ifeq ($(ARDUINO_ARCH),esp8266)
-XTENSA_TOOLCHAIN ?= $(ARDUINO_HOME)/tools/xtensa-lx106-elf/bin/
-ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool/esptool$(EXEC_EXT)
-ESPOTA ?= $(ARDUINO_HOME)/tools/espota.py
-else
-XTENSA_TOOLCHAIN ?= $(ARDUINO_HOME)/tools/xtensa-esp32-elf/bin/
-ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool$(EXEC_EXT)
-ESPOTA ?= $(ARDUINO_HOME)/tools/espota$(EXEC_EXT)
-endif
+
 ESPRESSIF_SDK = $(ARDUINO_HOME)/tools/sdk
+FS_DIR ?= ./data
+
+MKSPIFFS=$(ARDUINO_HOME)/tools/mkspiffs/mkspiffs$(EXEC_EXT)
+ESPOTA ?= $(ARDUINO_HOME)/tools/espota.py
+ifeq ($(ARDUINO_ARCH),esp8266)
+	XTENSA_TOOLCHAIN ?= $(ARDUINO_HOME)/tools/xtensa-lx106-elf/bin/
+	ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool/esptool$(EXEC_EXT)
+else
+	XTENSA_TOOLCHAIN ?= $(ARDUINO_HOME)/tools/xtensa-esp32-elf/bin/
+	ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool.py
+endif
 
 rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
 get_library_files  = $(if $(and $(wildcard $(1)/src), $(wildcard $(1)/library.properties)), \
@@ -90,15 +105,13 @@ get_library_files  = $(if $(and $(wildcard $(1)/src), $(wildcard $(1)/library.pr
 
 LOCAL_USER_LIBDIR ?= ./libraries
 GLOBAL_USER_LIBDIR ?= $(ROOT_DIR)/libraries
-ifndef TAG
-TAG := $(shell date +'%Y-%m-%dT%H:%M:%S%z' | $(SED) -E 's/(..)$$/:\1/')
-endif
+TAG ?= $(shell date +'%Y-%m-%dT%H:%M:%S%z' | $(SED) -E 's/(..)$$/:\1/')
 
 
 ifdef NODENAME
-BUILD_OUT ?= ./build.$(ARDUINO_VARIANT).$(NODENAME)$(ESP8266_VERSION)
+	BUILD_OUT ?= ./build.$(ARDUINO_VARIANT).$(NODENAME)$(ESP8266_VERSION)
 else
-BUILD_OUT ?= ./build.$(ARDUINO_VARIANT)$(ESP8266_VERSION)
+	BUILD_OUT ?= ./build.$(ARDUINO_VARIANT)$(ESP8266_VERSION)
 endif
 
 ### ESP8266 CORE
@@ -111,7 +124,6 @@ CORE_OBJS = $(addprefix $(BUILD_OUT)/core/, \
 	$(addprefix $(BUILD_OUT)/core/, $(patsubst $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/%.c,%.c.o,$(CORE_SRC)))
 CORE_DIRS = $(sort $(dir $(CORE_OBJS)))
 
-
 USRCDIRS = .
 USER_SRC := $(wildcard $(addsuffix /*.c,$(USRCDIRS)))
 USER_CXXSRC := $(wildcard $(addsuffix /*.cpp,$(USRCDIRS)))
@@ -121,16 +133,17 @@ USER_INOSRC := $(wildcard $(addsuffix /*.ino,$(USRCDIRS)))
 LOCAL_SRCS = $(USER_SRC) $(USER_CXXSRC) $(USER_INOSRC) $(USER_HSRC) $(USER_HPPSRC)
 
 
-#autodetect arduino libs and user libs
-# automatically determine included libraries
-ARDUINO_LIBS += $(sort $(filter $(notdir $(wildcard $(ARDUINO_HOME)/libraries/*)), \
-	$(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
 
 # automatically determine included user libraries
 USER_LIBS += $(sort $(filter $(notdir $(wildcard $(LOCAL_USER_LIBDIR)/*)), \
     $(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
 USER_LIBS += $(sort $(filter $(notdir $(wildcard $(GLOBAL_USER_LIBDIR)/*)), \
     $(shell $(SED)  -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
+
+
+#autodetect arduino libs and user libs
+ARDUINO_LIBS += $(sort $(filter $(notdir $(wildcard $(ARDUINO_HOME)/libraries/*)), \
+	$(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
 
 #remove duplicate Arduino libs
 ARDUINO_LIBS := $(sort $(ARDUINO_LIBS))
@@ -151,6 +164,8 @@ ULIBDIRS = $(sort $(dir $(wildcard \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*.c) \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*/*.c) \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*/*/*.c) \
+	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/*.h) \
+	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*.h) \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/*.cpp) \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*.cpp) \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*/*.cpp) \
@@ -159,6 +174,8 @@ ULIBDIRS = $(sort $(dir $(wildcard \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*.c) \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*/*.c) \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*/*/*.c) \
+	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/*.h) \
+	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*.h) \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/*.cpp) \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*.cpp) \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*/*.cpp) \
@@ -170,6 +187,7 @@ LIB_CSRC := $(wildcard $(addsuffix /*.c,$(ULIBDIRS))) \
 LIB_CXXSRC := $(wildcard $(addsuffix /*.cpp,$(ULIBDIRS))) \
 	$(wildcard $(addsuffix /*.cpp,$(ALIBDIRS)))
 
+FS_IMAGE=spiffs.bin
 # object files
 OBJ_FILES = $(addprefix $(BUILD_OUT)/,$(notdir $(LIB_CSRC:.c=.c.o) $(LIB_CXXSRC:.cpp=.cpp.o) $(TARGET).fullino.o $(USER_SRC:.c=.c.o) $(USER_CXXSRC:.cpp=.cpp.o)))
 ifeq ($(ARDUINO_ARCH),esp8266)
@@ -193,7 +211,7 @@ endif
 ifeq ($(ARDUINO_ARCH),esp8266)
 DEFINES = $(CPREPROCESSOR_FLAGS) -DLWIP_OPEN_SRC \
 	-DF_CPU=$(F_CPU) -DARDUINO=$(ARDUINO_VERSION) \
-	-DARDUINO_$(ARDUINO_BOARD) -DESP8266 \
+	-DARDUINO_$(ARDUINO_BOARD) -DARDUINO_BOARD=\"$(ARDUINO_BOARD)\" -DESP8266 \
 	-DARDUINO_ARCH_$(shell echo "$(ARDUINO_ARCH)" | tr '[:lower:]' '[:upper:]') 
 else
 DEFINES = $(CPREPROCESSOR_FLAGS)  \
@@ -230,15 +248,19 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 	endif
 else	
 	ASFLAGS = -c -g3 -x assembler-with-cpp -MMD -mlongcalls
-	CFLAGS = -std=gnu99 -Os -g3 -ffunction-sections -fdata-sections -fstrict-volatile-bitfields -mlongcalls \
+	CFLAGS = -std=gnu99 -Os -g3 -fstack-protector -ffunction-sections -fdata-sections -fstrict-volatile-bitfields -mlongcalls \
 		-nostdlib -Wpointer-arith -w -Wno-error=unused-function -Wno-error=unused-but-set-variable \
 		-Wno-error=unused-variable -Wno-error=deprecated-declarations -Wno-unused-parameter -Wno-sign-compare -Wno-old-style-declaration -MMD -c
-	CXXFLAGS = -std=gnu++11 -fno-exceptions -fno-rtti -Os -g3 -Wpointer-arith -ffunction-sections -fdata-sections -fstrict-volatile-bitfields \
+	CXXFLAGS = -std=gnu++11 -fno-exceptions -Os -g3 -Wpointer-arith -fstack-protector -ffunction-sections -fdata-sections -fstrict-volatile-bitfields \
 		-mlongcalls -nostdlib -w -Wno-error=unused-function -Wno-error=unused-but-set-variable -Wno-error=unused-variable -Wno-error=deprecated-declarations \
 		-Wno-unused-parameter -Wno-sign-compare -fno-rtti -MMD -c
-	ELFLIBS = -lgcc -lcxx -lstdc++ -lapp_trace -lapp_update -lbootloader_support -lbt -lbtdm_app -lc -lc_nano -lcoap -lcoexist -lconsole -lcore -ldriver -lesp32 -lethernet -lexpat \
-		-lfatfs -lfreertos -lhal -lheap -ljsmn -ljson -llog -llwip -lm -lmbedtls -lmdns -lmicro-ecc -lnet80211 -lnewlib -lnghttp -lnvs_flash -lopenssl -lphy -lpp -lpthread -lrtc \
-		-lsdmmc -lsmartconfig -lsoc -lspi_flash -lspiffs -ltcpip_adapter -lulp -lvfs -lwear_levelling -lwpa -lwpa2 -lwpa_supplicant -lwps -lxtensa-debug-module 
+	ELFLIBS = -lgcc -lopenssl -lbtdm_app -lfatfs -lwps -lcoexist -lwear_levelling -lhal -lnewlib -ldriver -lbootloader_support -lpp -lsmartconfig -ljsmn -lwpa -lethernet \
+		-lphy -lapp_trace -lconsole -lulp -lwpa_supplicant -lfreertos -lbt -lmicro-ecc -lcxx -lxtensa-debug-module -lmdns -lvfs -lsoc -lcore -lsdmmc -lcoap -ltcpip_adapter \
+		-lc_nano -lrtc -lspi_flash -lwpa2 -lesp32 -lapp_update -lnghttp -lspiffs -lespnow -lnvs_flash -lesp_adc_cal -llog -lexpat -lm -lc -lheap -lmbedtls -llwip \
+		-lnet80211 -lpthread -ljson  -lstdc++
+#	ELFLIBS = -lgcc -lcxx -lstdc++ -lapp_trace -lapp_update -lbootloader_support -lbt -lbtdm_app -lc -lc_nano -lcoap -lcoexist -lconsole -lcore -ldriver -lesp32 -lethernet -lexpat \
+#		-lfatfs -lfreertos -lhal -lheap -ljsmn -ljson -llog -llwip -lm -lmbedtls -lmdns -lmicro-ecc -lnet80211 -lnewlib -lnghttp -lnvs_flash -lopenssl -lphy -lpp -lpthread -lrtc \
+#		-lsdmmc -lsmartconfig -lsoc -lspi_flash -lspiffs -ltcpip_adapter -lulp -lvfs -lwear_levelling -lwpa -lwpa2 -lwpa_supplicant -lwps -lxtensa-debug-module 
 	ELFFLAGS = -nostdlib -L$(ESPRESSIF_SDK)/lib -L$(ESPRESSIF_SDK)/ld -T esp32_out.ld -T esp32.common.ld -T esp32.rom.ld -T esp32.peripherals.ld -T esp32.rom.spiram_incompatible_fns.ld\
 		-u ld_include_panic_highint_hdl -u call_user_start_cpu0 -Wl,--gc-sections -Wl,-static -Wl,--undefined=uxTopUsedPriority -u __cxa_guard_dummy
 endif		
@@ -260,6 +282,8 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 	SIZE_REGEX_EEPROM = '^(?:\.eeprom)\s+([0-9]+).*'
 	UPLOAD_PATTERN = $(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cb $(UPLOAD_SPEED) -cp $(SERIAL_PORT) -ca 0x00000 -cf $(BUILD_OUT)/$(TARGET).bin
 	RESET_PATTERN = $(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cp $(SERIAL_PORT) -cr
+	FS_UPLOAD_PATTERN = $(ESPTOOL_VERBOSE)  --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED) -a soft_reset write_flash $(SPIFFS_START) 
+	MKSPIFFS_PATTERN = -c $(FS_DIR) -b $(SPIFFS_BLOCKSIZE) -p $(SPIFFS_PAGESIZE) -s $(SPIFFS_SIZE) $(BUILD_OUT)/$(FS_IMAGE)
 else
 	CC := $(XTENSA_TOOLCHAIN)xtensa-esp32-elf-gcc
 	CXX := $(XTENSA_TOOLCHAIN)xtensa-esp32-elf-g++
@@ -279,7 +303,7 @@ else
 	UPLOAD_PATTERN = --chip esp32 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED)  --before default_reset --after hard_reset write_flash -z \
 		--flash_mode $(FLASH_MODE) --flash_freq $(FLASH_FREQ) \
 		--flash_size detect 0xe000 $(ARDUINO_HOME)/tools/partitions/boot_app0.bin 0x1000  \
-		$(ARDUINO_HOME)/tools/sdk/bin/bootloader.bin 0x10000 \
+		$(ARDUINO_HOME)/tools/sdk/bin/bootloader_$(BOOT)_$(FLASH_FREQ).bin 0x10000 \
 		$(BUILD_OUT)/$(TARGET).bin 0X8000 $(BUILD_OUT)/$(TARGET).partitions.bin  
 	# WARNING : NOT TESTED TODO : TEST
 	RESET_PATTERN = --chip esp32 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED)  --before hard_reset 
@@ -287,7 +311,7 @@ endif
 
 .PHONY: all dirs clean upload
 
-all: show_variables dirs core libs bin eep size
+all: show_variables dirs core libs fs bin eep size
 
 show_variables:
 	$(info [ARDUINO_LIBS] : $(ARDUINO_LIBS))
@@ -336,10 +360,8 @@ size: $(BUILD_OUT)/$(TARGET).elf
 	@$(SIZE) -A $(BUILD_OUT)/$(TARGET).elf | $(GREP) -E $(SIZE_REGEX) | $(SED) -e "s/[[:space:]]\+/ /g" | $(SED) -e "s/\ /\t/g"
 	@$(SIZE) -A $(BUILD_OUT)/$(TARGET).elf | $(GREP) -E $(SIZE_REGEX_DATA) | $(SED) -e "s/[[:space:]]\+/ /g" | $(SED) -e "s/\ /\t/g"
 
-ifeq ($(ARDUINO_ARCH),esp8266)
 eep:
-else
-eep:
+ifeq ($(ARDUINO_ARCH),esp32)
 	$(OBJCOPY_EEP_PATTERN)
 endif
 
@@ -351,6 +373,24 @@ reset:
 
 upload: $(BUILD_OUT)/$(TARGET).bin size
 	$(ESPTOOL) $(UPLOAD_PATTERN)
+
+
+fs: $(BUILD_OUT)/$(FS_IMAGE)
+
+$(BUILD_OUT)/$(FS_IMAGE): $(wildcard $(FS_DIR)/*)
+ifneq "$(wildcard $(FS_DIR) )" ""
+	$(MKSPIFFS) $(MKSPIFFS_PATTERN)
+else
+	@echo "MKSPIFFS : not input file(s)"
+endif
+
+upload_fs: $(BUILD_OUT)/$(FS_IMAGE)
+ifeq ($(ARDUINO_ARCH),esp8266)
+	$(ESPTOOL) $(FS_UPLOAD_PATTERN) $(BUILD_OUT)/$(FS_IMAGE)
+else
+	@echo upload_fs : No SPIFFS function available for $(ARDUINO_ARCH)
+endif
+
 
 ota: $(BUILD_OUT)/$(TARGET).bin
 	$(ESPOTA) -i $(OTA_IP) -p $(OTA_PORT) -a $(OTA_AUTH) -f $(BUILD_OUT)/$(TARGET).bin

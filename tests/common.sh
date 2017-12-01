@@ -3,15 +3,20 @@
 
 function build_sketches()
 {
-    set +e
+    #set +e
     local srcpath=$1
     local build_arg=$2
-    local build_cmd="make ESP8266_VERSION=$build_arg "
+    
     local makefiles=$(find $srcpath -name Makefile*)
-    export ARDUINO_IDE_PATH=$arduino
+    echo $makefiles
     for makefile in $makefiles; do
-        echo "$build_cmd -f $makefile"
-        time ($build_cmd -f $makefile >build.log)
+        local dir=`dirname "$makefile"`;
+        local file=`basename "$makefile"`;
+        
+        local build_cmd="cd `dirname \"$makefile\"` && make -f `basename \"$makefile\"` ESP8266_VERSION=$build_arg"
+        echo $build_cmd
+        $build_cmd clean
+        time ($build_cmd >build.log)
         local result=$?
         if [ $result -ne 0 ]; then
             echo "Build failed ($1)"
@@ -22,7 +27,7 @@ function build_sketches()
         fi
         rm build.log
     done
-    set -e
+    #set -e
 }
 
 function install_cores()
@@ -38,23 +43,7 @@ function install_cores()
     python get.py
 }
 
-function run_travis_ci_build()
-{
-    # Install ESP8266 cores 2.3.0 and git versions
-    echo -e "travis_fold:start:sketch_test_env_prepare"
-    cd $TRAVIS_BUILD_DIR
-    install_cores
-    echo -e "travis_fold:end:sketch_test_env_prepare"
-
-    # Compile sketches
-    echo -e "travis_fold:start:sketch_test"
-    build_sketches $HOME/examples/esp8266
-    echo -e "travis_fold:end:sketch_test"
-}
-
 set -e
 
-if [ "$BUILD_TYPE" = "build" ]; then
-    run_travis_ci_build
-fi
-
+build_sketches ../example/esp8266 -2.3.0
+build_sketches ../example/esp8266 .git
