@@ -77,7 +77,6 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 	SPIFFS_END ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).build.spiffs_end)
 	SPIFFS_BLOCKSIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).build.spiffs_blocksize)
 	SPIFFS_SIZE ?= $(shell echo $$(( $(SPIFFS_END) - $(SPIFFS_START) ))) 
-	
 else
 	F_CPU = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.f_cpu)
 	FLASH_SIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.flash_size)
@@ -90,6 +89,8 @@ FS_DIR ?= ./data
 
 MKSPIFFS=$(ARDUINO_HOME)/tools/mkspiffs/mkspiffs$(EXEC_EXT)
 ESPOTA ?= $(ARDUINO_HOME)/tools/espota.py
+# for FS upload
+ESPTOOL_PY ?= $(shell which esptool.py)
 ifeq ($(ARDUINO_ARCH),esp8266)
 	XTENSA_TOOLCHAIN ?= $(ARDUINO_HOME)/tools/xtensa-lx106-elf/bin/
 	ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool/esptool$(EXEC_EXT)
@@ -143,20 +144,19 @@ USER_LIBS += $(sort $(filter $(notdir $(wildcard $(GLOBAL_USER_LIBDIR)/*)), \
 # user libraries and sketch code
 ULIBDIRS = $(sort $(dir $(wildcard \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/*.c) \
+	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/*.h) \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*.c) \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*/*.c) \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*/*/*.c) \
-	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/*.h) \
-	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*.h) \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/*.cpp) \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*.cpp) \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*/*.cpp) \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*/*/*.cpp) \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/*.c) \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*.c) \
+	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*.h) \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*/*.c) \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*/*/*.c) \
-	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/*.h) \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*.h) \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/*.cpp) \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*.cpp) \
@@ -164,14 +164,16 @@ ULIBDIRS = $(sort $(dir $(wildcard \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*/*/*.cpp))))
 
 
-ULIB_CSRC := $(wildcard $(addsuffix /*.c,$(ULIBDIRS)))
-ULIB_CXXSRC := $(wildcard $(addsuffix /*.cpp,$(ULIBDIRS)))
+ULIB_CSRC := $(wildcard $(addsuffix *.c,$(ULIBDIRS)))
+ULIB_CXXSRC := $(wildcard $(addsuffix *.cpp,$(ULIBDIRS)))
 
-ULIB := $(sort $(filter $(notdir $(wildcard $(ARDUINO_HOME)/libraries/*)), \
-    $(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(ULIB_CSRC) $(ULIB_CXXSRC))))
+ifneq ($(ULIBDIRS),)
+	ULIB := $(sort $(filter $(notdir $(wildcard $(ARDUINO_HOME)/libraries/*)), \
+		$(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(ULIB_CSRC) $(ULIB_CXXSRC))))
+endif
 
 #autodetect arduino libs and user libs
-ARDUINO_LIBS += $(sort $(filter $(notdir $(wildcard $(ARDUINO_HOME)/libraries/*)), \
+ARDUINO_LIBS = $(sort $(filter $(notdir $(wildcard $(ARDUINO_HOME)/libraries/*)), \
 	$(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
 
 #remove duplicate Arduino libs
@@ -194,9 +196,10 @@ FS_IMAGE=spiffs.bin
 # object files
 OBJ_FILES = $(addprefix $(BUILD_OUT)/,$(notdir $(ULIB_CSRC:.c=.c.o) $(ALIB_CSRC:.c=.c.o) $(ULIB_CXXSRC:.cpp=.cpp.o) $(ALIB_CXXSRC:.cpp=.cpp.o) $(TARGET).fullino.o $(USER_SRC:.c=.c.o) $(USER_CXXSRC:.cpp=.cpp.o)))
 ifeq ($(ARDUINO_ARCH),esp8266)
-	CPREPROCESSOR_FLAGS = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ -I$(ESPRESSIF_SDK)/include -I$(ESPRESSIF_SDK)/lwip/include
 	ifeq ($(ARDUINO_CORE_VERSION), 2_4_0)
-		CPREPROCESSOR_FLAGS += -I$(ESPRESSIF_SDK)/libc/xtensa-lx106-elf
+		CPREPROCESSOR_FLAGS = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ -I$(ESPRESSIF_SDK)/include -I$(ESPRESSIF_SDK)/lwip2/include -I$(ESPRESSIF_SDK)/libc/xtensa-lx106-elf/include
+	else
+		CPREPROCESSOR_FLAGS = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ -I$(ESPRESSIF_SDK)/include -I$(ESPRESSIF_SDK)/lwip/include
 	endif
 else
 	CPREPROCESSOR_FLAGS = -DESP_PLATFORM -DMBEDTLS_CONFIG_FILE="mbedtls/esp_config.h" -DHAVE_CONFIG_H -I$(ESPRESSIF_SDK)/include/config \
@@ -231,19 +234,20 @@ VPATH = . $(CORE_INC) $(ALIBDIRS) $(ULIBDIRS)
 
 ifeq ($(ARDUINO_ARCH),esp8266)
 	ASFLAGS = -c -g -x assembler-with-cpp -MMD -mlongcalls $(DEFINES)
-	CFLAGS = -c -Os -g -Wpointer-arith -Wno-implicit-function-declaration -Wl,-EL \
+	CFLAGS = -c -w -Os -g -Wpointer-arith -Wno-implicit-function-declaration -Wl,-EL \
 		-fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals \
 		-falign-functions=4 -MMD -std=gnu99 -ffunction-sections -fdata-sections
-	CXXFLAGS = -c -Os -g -mlongcalls -mtext-section-literals -fno-exceptions \
+	CXXFLAGS = -c -w -Os -g -mlongcalls -mtext-section-literals -fno-exceptions \
 		-fno-rtti -falign-functions=4 -std=c++11 -MMD -ffunction-sections -fdata-sections
-	ELFLIBS = -lm -lgcc -lhal -lphy -lpp -lnet80211 -lwpa -lcrypto -lmain -lwps -laxtls -lsmartconfig -lmesh -lwpa2 -llwip_gcc -lstdc++
+	ELFLIBS = -lm -lgcc -lhal -lphy -lpp -lnet80211 -lwpa -lcrypto -lmain -lwps -laxtls -lsmartconfig -lmesh -lwpa2 -lstdc++
 	ifeq ($(ARDUINO_CORE_VERSION), 2_4_0)
-		ELFLIBS += -lespnow -lc
+		ELFLIBS += -lespnow -lc -lairkiss -llwip2
 		ELFFLAGS = -g -w -Os -nostdlib -Wl,--no-check-sections -u call_user_start -u _printf_float -u _scanf_float -Wl,-static \
 			-L$(ESPRESSIF_SDK)/lib -L$(ESPRESSIF_SDK)/ld -L$(ESPRESSIF_SDK)/libc/xtensa-lx106-elf/lib \
 			 -T$(ESPRESSIF_SDK)/ld/$(FLASH_LD) \
 			 -Wl,--gc-sections -Wl,-wrap,system_restart_local -Wl,-wrap,spi_flash_read
-	else	
+	else
+	ELFLIBS += -llwip_gcc 
 		ELFFLAGS = -g -w -Os -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static \
 			-L$(ESPRESSIF_SDK)/lib -L$(ESPRESSIF_SDK)/ld \
 			 -T$(ESPRESSIF_SDK)/ld/$(FLASH_LD) \
@@ -316,9 +320,6 @@ endif
 
 all: show_variables dirs core libs fs bin eep size
 
-THUNDER_LIBS := $(shell perl -e 'use File::Find;@d = split(" ", shift);while (<>) {$$f{"$$1"} = 1 if /^\s*\#include\s+[<"]([^>"]+)/;}find(sub {if ($$f{$$_}){print $$File::Find::dir," ";$$f{$$_}=0;}}, @d);' \
-	                        "$(USER_LIBS) $(ARDUINO_LIBS)" $(LOCAL_SRCS))
-
 
 show_variables:
 	$(info [ARDUINO_LIBS] : $(ARDUINO_LIBS))
@@ -329,6 +330,9 @@ dirs:
 
 clean:
 	rm -rf $(BUILD_OUT)
+
+uclean:
+	@find $(BUILD_OUT) -maxdepth 1 -type f -exec rm -f {} \;
 
 core: dirs $(BUILD_OUT)/core/core.a
 
@@ -391,9 +395,13 @@ else
 	@echo "MKSPIFFS : not input file(s)"
 endif
 
+
 upload_fs: $(BUILD_OUT)/$(FS_IMAGE)
 ifeq ($(ARDUINO_ARCH),esp8266)
-	$(ESPTOOL) $(FS_UPLOAD_PATTERN) $(BUILD_OUT)/$(FS_IMAGE)
+	#sysExec(new String[]{esptool.getAbsolutePath(), "-cd", resetMethod, "-cb", uploadSpeed, "-cp", serialPort, "-ca", uploadAddress, "-cf", imagePath});
+	$(ESPTOOL) 	$(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cb $(UPLOAD_SPEED) -cp $(SERIAL_PORT) -ca $(SPIFFS_START) -cf $(BUILD_OUT)/$(FS_IMAGE)
+
+	#$(ESPTOOL_PY) $(FS_UPLOAD_PATTERN) $(BUILD_OUT)/$(FS_IMAGE)
 else
 	@echo upload_fs : No SPIFFS function available for $(ARDUINO_ARCH)
 endif
