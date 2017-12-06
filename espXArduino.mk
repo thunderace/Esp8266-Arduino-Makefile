@@ -192,14 +192,14 @@ ALIB_CSRC := $(wildcard $(addsuffix /*.c,$(ALIBDIRS)))
 ALIB_CXXSRC := $(wildcard $(addsuffix /*.cpp,$(ALIBDIRS)))
 
 
-FS_IMAGE=spiffs.bin
+FS_IMAGE=$(BUILD_OUT)/spiffs/spiffs.bin
 # object files
-OBJ_FILES = $(addprefix $(BUILD_OUT)/,$(notdir $(ULIB_CSRC:.c=.c.o) $(ALIB_CSRC:.c=.c.o) $(ULIB_CXXSRC:.cpp=.cpp.o) $(ALIB_CXXSRC:.cpp=.cpp.o) $(TARGET).fullino.o $(USER_SRC:.c=.c.o) $(USER_CXXSRC:.cpp=.cpp.o)))
+OBJ_FILES = $(addprefix $(BUILD_OUT)/,$(notdir $(TARGET).ino.cpp.o $(USER_SRC:.c=.c.o) $(USER_CXXSRC:.cpp=.cpp.o) $(ULIB_CSRC:.c=.c.o) $(ALIB_CSRC:.c=.c.o) $(ULIB_CXXSRC:.cpp=.cpp.o) $(ALIB_CXXSRC:.cpp=.cpp.o) ))
 ifeq ($(ARDUINO_ARCH),esp8266)
 	ifeq ($(ARDUINO_CORE_VERSION), 2_4_0)
-		CPREPROCESSOR_FLAGS = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ -I$(ESPRESSIF_SDK)/include -I$(ESPRESSIF_SDK)/lwip2/include -I$(ESPRESSIF_SDK)/libc/xtensa-lx106-elf/include
+		CPREPROCESSOR_FLAGS = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ -I$(ESPRESSIF_SDK)/include -I$(ESPRESSIF_SDK)/lwip2/include -I$(ESPRESSIF_SDK)/libc/xtensa-lx106-elf/include -I$(BUILD_OUT)/core
 	else
-		CPREPROCESSOR_FLAGS = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ -I$(ESPRESSIF_SDK)/include -I$(ESPRESSIF_SDK)/lwip/include
+		CPREPROCESSOR_FLAGS = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ -I$(ESPRESSIF_SDK)/include -I$(ESPRESSIF_SDK)/lwip/include -I$(BUILD_OUT)/core
 	endif
 else
 	CPREPROCESSOR_FLAGS = -DESP_PLATFORM -DMBEDTLS_CONFIG_FILE="mbedtls/esp_config.h" -DHAVE_CONFIG_H -I$(ESPRESSIF_SDK)/include/config \
@@ -215,13 +215,12 @@ else
 endif
 
 ifeq ($(ARDUINO_ARCH),esp8266)
-DEFINES = $(CPREPROCESSOR_FLAGS) -DLWIP_OPEN_SRC \
-	-DF_CPU=$(F_CPU) -DARDUINO=$(ARDUINO_VERSION) \
-	-DARDUINO_$(ARDUINO_BOARD) -DARDUINO_BOARD=\"$(ARDUINO_BOARD)\" -DESP8266 \
-	-DARDUINO_ARCH_$(shell echo "$(ARDUINO_ARCH)" | tr '[:lower:]' '[:upper:]') 
+DEFINES = -DF_CPU=$(F_CPU) -DLWIP_OPEN_SRC -DARDUINO=$(ARDUINO_VERSION) \
+	-DARDUINO_$(ARDUINO_BOARD) -DARDUINO_ARCH_$(shell echo "$(ARDUINO_ARCH)" | tr '[:lower:]' '[:upper:]') \
+	-DARDUINO_BOARD=\"$(ARDUINO_BOARD)\" -DESP8266 \
+	
 else
-DEFINES = $(CPREPROCESSOR_FLAGS)  \
-	-DF_CPU=$(F_CPU) -DARDUINO=$(ARDUINO_VERSION) \
+DEFINES = -DF_CPU=$(F_CPU) -DARDUINO=$(ARDUINO_VERSION) \
 	-DARDUINO_$(ARDUINO_BOARD) -DESP32 \
 	-DARDUINO_ARCH_$(shell echo "$(ARDUINO_ARCH)" | tr '[:lower:]' '[:upper:]') 
 endif
@@ -233,24 +232,23 @@ INCLUDES = -include Arduino.h $(CORE_INC:%=-I%) $(ALIBDIRS:%=-I%) $(ULIBDIRS:%=-
 VPATH = . $(CORE_INC) $(ALIBDIRS) $(ULIBDIRS)
 
 ifeq ($(ARDUINO_ARCH),esp8266)
-	ASFLAGS = -c -g -x assembler-with-cpp -MMD -mlongcalls $(DEFINES)
-	CFLAGS = -c -w -Os -g -Wpointer-arith -Wno-implicit-function-declaration -Wl,-EL \
+	ASFLAGS = -c -g -x assembler-with-cpp -MMD -mlongcalls
+	CFLAGS = -c -Os -g -Wpointer-arith -Wno-implicit-function-declaration -Wl,-EL \
 		-fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals \
 		-falign-functions=4 -MMD -std=gnu99 -ffunction-sections -fdata-sections
-	CXXFLAGS = -c -w -Os -g -mlongcalls -mtext-section-literals -fno-exceptions \
+	CXXFLAGS = -c -Os -g -mlongcalls -mtext-section-literals -fno-exceptions \
 		-fno-rtti -falign-functions=4 -std=c++11 -MMD -ffunction-sections -fdata-sections
-	ELFLIBS = -lm -lgcc -lhal -lphy -lpp -lnet80211 -lwpa -lcrypto -lmain -lwps -laxtls -lsmartconfig -lmesh -lwpa2 -lstdc++
 	ifeq ($(ARDUINO_CORE_VERSION), 2_4_0)
-		ELFLIBS += -lespnow -lc -lairkiss -llwip2
-		ELFFLAGS = -g -w -Os -nostdlib -Wl,--no-check-sections -u call_user_start -u _printf_float -u _scanf_float -Wl,-static \
+		ELFLIBS = -lhal -lphy -lpp -lnet80211 -llwip2 -lwpa -lcrypto -lmain -lwps -laxtls -lespnow -lsmartconfig -lairkiss -lmesh -lwpa2 -lstdc++ -lm -lc -lgcc
+		ELFFLAGS = -g -Os -nostdlib -Wl,--no-check-sections -u call_user_start -u _printf_float -u _scanf_float -Wl,-static \
 			-L$(ESPRESSIF_SDK)/lib -L$(ESPRESSIF_SDK)/ld -L$(ESPRESSIF_SDK)/libc/xtensa-lx106-elf/lib \
-			 -T$(ESPRESSIF_SDK)/ld/$(FLASH_LD) \
+			 -T$(FLASH_LD) \
 			 -Wl,--gc-sections -Wl,-wrap,system_restart_local -Wl,-wrap,spi_flash_read
 	else
-	ELFLIBS += -llwip_gcc 
-		ELFFLAGS = -g -w -Os -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static \
+		ELFLIBS = -lm -lgcc -lhal -lphy -lpp -lnet80211 -lwpa -lcrypto -lmain -lwps -laxtls -lsmartconfig -lmesh -lwpa2 -lstdc++ -llwip_gcc 
+		ELFFLAGS = -g -Os -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static \
 			-L$(ESPRESSIF_SDK)/lib -L$(ESPRESSIF_SDK)/ld \
-			 -T$(ESPRESSIF_SDK)/ld/$(FLASH_LD) \
+			 -T$(FLASH_LD) \
 			 -Wl,--gc-sections -Wl,-wrap,system_restart_local -Wl,-wrap,register_chipv6_phy
 	endif
 else	
@@ -290,7 +288,7 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 	UPLOAD_PATTERN = $(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cb $(UPLOAD_SPEED) -cp $(SERIAL_PORT) -ca 0x00000 -cf $(BUILD_OUT)/$(TARGET).bin
 	RESET_PATTERN = $(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cp $(SERIAL_PORT) -cr
 	FS_UPLOAD_PATTERN = $(ESPTOOL_VERBOSE)  --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED) -a soft_reset write_flash $(SPIFFS_START) 
-	MKSPIFFS_PATTERN = -c $(FS_DIR) -b $(SPIFFS_BLOCKSIZE) -p $(SPIFFS_PAGESIZE) -s $(SPIFFS_SIZE) $(BUILD_OUT)/$(FS_IMAGE)
+	MKSPIFFS_PATTERN = -c $(FS_DIR) -b $(SPIFFS_BLOCKSIZE) -p $(SPIFFS_PAGESIZE) -s $(SPIFFS_SIZE) $(FS_IMAGE)
 else
 	CC := $(XTENSA_TOOLCHAIN)xtensa-esp32-elf-gcc
 	CXX := $(XTENSA_TOOLCHAIN)xtensa-esp32-elf-g++
@@ -318,7 +316,7 @@ endif
 
 .PHONY: all dirs clean upload
 
-all: show_variables dirs core libs fs bin eep size
+all: show_variables libs core bin eep size
 
 
 show_variables:
@@ -327,6 +325,7 @@ show_variables:
 
 dirs:
 	@mkdir -p $(CORE_DIRS)
+	@mkdir -p $(BUILD_OUT)/spiffs
 
 clean:
 	rm -rf $(BUILD_OUT)
@@ -341,28 +340,29 @@ libs: dirs $(OBJ_FILES)
 bin: $(BUILD_OUT)/$(TARGET).bin
 
 $(BUILD_OUT)/core/%.S.o: $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/%.S
-	$(CC) $(ASFLAGS) -o $@ $<
+	$(CC) $(CPREPROCESSOR_FLAGS) $(ASFLAGS) $(DEFINES) $(CORE_INC:%=-I%) -o $@ $<
 
 $(BUILD_OUT)/core/core.a: $(CORE_OBJS)
+	@echo Creating core archive...
 	$(AR) cru $@ $(CORE_OBJS)
 
 $(BUILD_OUT)/core/%.c.o: %.c
-	$(CC) $(CORE_DEFINE) $(DEFINES) $(CORE_INC:%=-I%) $(CFLAGS) -o $@ $<
+	$(CC) $(CORE_DEFINE) $(CPREPROCESSOR_FLAGS) $(CFLAGS) $(DEFINES) $(CORE_INC:%=-I%) -o $@ $<
 
 $(BUILD_OUT)/core/%.cpp.o: %.cpp
-	$(CXX) $(CORE_DEFINE) $(DEFINES) $(CORE_INC:%=-I%) $(CXXFLAGS) $< -o $@
+	$(CXX) $(CORE_DEFINE) $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(DEFINES) $(CORE_INC:%=-I%)  $< -o $@
 
 $(BUILD_OUT)/%.c.o: %.c
-	$(CC) -D_TAG_=\"$(TAG)\" $(DEFINES) $(CFLAGS) $(INCLUDES) -o $@ $<
+	$(CC) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CFLAGS) $(DEFINES)  $(INCLUDES) -o $@ $<
 
 $(BUILD_OUT)/%.cpp.o: %.cpp
-	$(CXX) -D_TAG_=\"$(TAG)\" $(USER_DEFINE) $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@	
+	$(CXX) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(USER_DEFINE) $(DEFINES) $(INCLUDES) $< -o $@	
 
-$(BUILD_OUT)/%.fullino: $(USER_INOSRC)
+$(BUILD_OUT)/%.ino.cpp: $(USER_INOSRC)
 	-$(CAT) $(TARGET).ino $(filter-out $(TARGET).ino,$^) > $@
 
-$(BUILD_OUT)/%.fullino.o: $(BUILD_OUT)/%.fullino
-	$(CXX) -x c++ -D_TAG_=\"$(TAG)\" $(USER_DEFINE) $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< -o $@
+$(BUILD_OUT)/%.ino.cpp.o: $(BUILD_OUT)/%.ino.cpp
+	$(CXX) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(USER_DEFINE) $(DEFINES) $(INCLUDES) $< -o $@
 
 $(BUILD_OUT)/$(TARGET).elf: core libs
 	$(LD) $(ELFFLAGS) -o $@ $(C_COMBINE_PATTERN)
@@ -385,10 +385,9 @@ reset:
 upload: $(BUILD_OUT)/$(TARGET).bin size
 	$(ESPTOOL) $(UPLOAD_PATTERN)
 
+fs: $(FS_IMAGE)
 
-fs: $(BUILD_OUT)/$(FS_IMAGE)
-
-$(BUILD_OUT)/$(FS_IMAGE): $(wildcard $(FS_DIR)/*)
+$(FS_IMAGE): $(wildcard $(FS_DIR)/*)
 ifneq "$(wildcard $(FS_DIR) )" ""
 	$(MKSPIFFS) $(MKSPIFFS_PATTERN)
 else
@@ -396,12 +395,9 @@ else
 endif
 
 
-upload_fs: $(BUILD_OUT)/$(FS_IMAGE)
+upload_fs: $(FS_IMAGE)
 ifeq ($(ARDUINO_ARCH),esp8266)
-	#sysExec(new String[]{esptool.getAbsolutePath(), "-cd", resetMethod, "-cb", uploadSpeed, "-cp", serialPort, "-ca", uploadAddress, "-cf", imagePath});
-	$(ESPTOOL) 	$(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cb $(UPLOAD_SPEED) -cp $(SERIAL_PORT) -ca $(SPIFFS_START) -cf $(BUILD_OUT)/$(FS_IMAGE)
-
-	#$(ESPTOOL_PY) $(FS_UPLOAD_PATTERN) $(BUILD_OUT)/$(FS_IMAGE)
+	$(ESPTOOL) 	$(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cb $(UPLOAD_SPEED) -cp $(SERIAL_PORT) -ca $(SPIFFS_START) -cf $(FS_IMAGE)
 else
 	@echo upload_fs : No SPIFFS function available for $(ARDUINO_ARCH)
 endif
