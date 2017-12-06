@@ -163,21 +163,54 @@ ULIBDIRS = $(sort $(dir $(wildcard \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*/*.cpp) \
 	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*/*/*.cpp))))
 
+ULIB_CSRC := $(wildcard $(addsuffix *.c,$(ULIBDIRS)))
+ULIB_CXXSRC := $(wildcard $(addsuffix *.cpp,$(ULIBDIRS)))
+ULIB_HSRC := $(wildcard $(addsuffix *.h,$(ULIBDIRS)))
+ULIB_HPPSRC := $(wildcard $(addsuffix *.hpp,$(ULIBDIRS)))
+
+ifneq ($(ULIBDIRS),)
+	UALIB := $(sort $(filter $(notdir $(wildcard $(ARDUINO_HOME)/libraries/*)), \
+		$(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(ULIB_CSRC) $(ULIB_CXXSRC) $(ULIB_HSRC) $(ULIB_HPPSRC))))
+	UGLIB := $(sort $(filter $(notdir $(wildcard $(GLOBAL_USER_LIBDIR)/*)), \
+		$(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(ULIB_CSRC) $(ULIB_CXXSRC) $(ULIB_HSRC) $(ULIB_HPPSRC))))
+	ULLIB := $(sort $(filter $(notdir $(wildcard $(LOCAL_USER_LIBDIR)/*)), \
+		$(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(ULIB_CSRC) $(ULIB_CXXSRC) $(ULIB_HSRC) $(ULIB_HPPSRC))))
+endif
+
+#remove duplicate Arduino libs
+USER_LIBS := $(sort $(USER_LIBS) $(UGLIB) $(ULLIB))
+
+#and again
+ULIBDIRS = $(sort $(dir $(wildcard \
+	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/*.c) \
+	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/*.h) \
+	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*.c) \
+	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*/*.c) \
+	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*/*/*.c) \
+	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/*.cpp) \
+	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*.cpp) \
+	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*/*.cpp) \
+	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/src/*/*/*.cpp) \
+	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/*.c) \
+	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*.c) \
+	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*.h) \
+	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*/*.c) \
+	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*/*/*.c) \
+	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*.h) \
+	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/*.cpp) \
+	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*.cpp) \
+	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*/*.cpp) \
+	$(USER_LIBS:%=$(GLOBAL_USER_LIBDIR)/%/src/*/*/*.cpp))))
 
 ULIB_CSRC := $(wildcard $(addsuffix *.c,$(ULIBDIRS)))
 ULIB_CXXSRC := $(wildcard $(addsuffix *.cpp,$(ULIBDIRS)))
 
-ifneq ($(ULIBDIRS),)
-	ULIB := $(sort $(filter $(notdir $(wildcard $(ARDUINO_HOME)/libraries/*)), \
-		$(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(ULIB_CSRC) $(ULIB_CXXSRC))))
-endif
-
-#autodetect arduino libs and user libs
+#autodetect arduino libs
 ARDUINO_LIBS = $(sort $(filter $(notdir $(wildcard $(ARDUINO_HOME)/libraries/*)), \
 	$(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
 
 #remove duplicate Arduino libs
-ARDUINO_LIBS := $(sort $(ARDUINO_LIBS) $(ULIB))
+ARDUINO_LIBS := $(sort $(ARDUINO_LIBS) $(UALIB))
 
 # arduino libraries
 ALIBDIRS = $(sort $(dir $(wildcard \
