@@ -1,4 +1,4 @@
-#SHELL=/bin/bash
+SHELL=/bin/bash
 TARGET = $(notdir $(realpath .))
 ARCH = $(shell uname)
 ifneq ($(findstring CYGWIN,$(shell uname -s)),)
@@ -77,15 +77,21 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 	SPIFFS_END ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).build.spiffs_end)
 	SPIFFS_BLOCKSIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).build.spiffs_blocksize)
 	SPIFFS_SIZE ?= $(shell echo $$(( $(SPIFFS_END) - $(SPIFFS_START) ))) 
+	UPLOAD_MAXIMUM_SIZE ?=  $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).upload.maximum_size) 
+	UPLOAD_MAXIMUM_DATA_SIZE ?=  $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.maximum_data_size) 
 else
 	F_CPU = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.f_cpu)
 	FLASH_SIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.flash_size)
 	BOOT ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.boot)
+	UPLOAD_MAXIMUM_SIZE ?=  $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.maximum_size) 
+	UPLOAD_MAXIMUM_DATA_SIZE ?=  $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.maximum_data_size) 
 endif
 
 
 ESPRESSIF_SDK = $(ARDUINO_HOME)/tools/sdk
 FS_DIR ?= ./data
+FS_IMAGE=$(BUILD_OUT)/spiffs/spiffs.bin
+FS_FILES=$(wildcard $(FS_DIR)/*)
 
 MKSPIFFS=$(ARDUINO_HOME)/tools/mkspiffs/mkspiffs$(EXEC_EXT)
 ESPOTA ?= $(ARDUINO_HOME)/tools/espota.py
@@ -225,9 +231,12 @@ ALIB_CSRC := $(wildcard $(addsuffix /*.c,$(ALIBDIRS)))
 ALIB_CXXSRC := $(wildcard $(addsuffix /*.cpp,$(ALIBDIRS)))
 
 
-FS_IMAGE=$(BUILD_OUT)/spiffs/spiffs.bin
 # object files
-OBJ_FILES = $(addprefix $(BUILD_OUT)/,$(notdir $(TARGET).ino.cpp.o $(USER_SRC:.c=.c.o) $(USER_CXXSRC:.cpp=.cpp.o) $(ULIB_CSRC:.c=.c.o) $(ALIB_CSRC:.c=.c.o) $(ULIB_CXXSRC:.cpp=.cpp.o) $(ALIB_CXXSRC:.cpp=.cpp.o) ))
+#OBJ_FILES = $(addprefix $(BUILD_OUT)/,$(notdir $(TARGET).ino.cpp.o $(USER_SRC:.c=.c.o) $(USER_CXXSRC:.cpp=.cpp.o) $(ULIB_CSRC:.c=.c.o) $(ALIB_CSRC:.c=.c.o) $(ULIB_CXXSRC:.cpp=.cpp.o) $(ALIB_CXXSRC:.cpp=.cpp.o) ))
+OBJ_FILES = $(addprefix $(BUILD_OUT)/,$(notdir $(TARGET).ino.cpp.o $(USER_SRC:.c=.c.o) $(USER_CXXSRC:.cpp=.cpp.o) ))
+LIB_OBJ_FILES = $(addprefix $(BUILD_OUT)/libraries/,$(notdir $(ULIB_CSRC:.c=.c.o) $(ALIB_CSRC:.c=.c.o) $(ULIB_CXXSRC:.cpp=.cpp.o) $(ALIB_CXXSRC:.cpp=.cpp.o) ))
+
+
 ifeq ($(ARDUINO_ARCH),esp8266)
 	ifeq ($(ARDUINO_CORE_VERSION), 2_4_0)
 		CPREPROCESSOR_FLAGS = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ -I$(ESPRESSIF_SDK)/include -I$(ESPRESSIF_SDK)/lwip2/include -I$(ESPRESSIF_SDK)/libc/xtensa-lx106-elf/include -I$(BUILD_OUT)/core
@@ -313,7 +322,7 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 	OBJCOPY_HEX_PATTERN = -eo $(ARDUINO_HOME)/bootloaders/eboot/eboot.elf -bo $(BUILD_OUT)/$(TARGET).bin \
 		-bm $(FLASH_MODE) -bf $(FLASH_FREQ) -bz $(FLASH_SIZE) \
 		-bs .text -bp 4096 -ec -eo $(BUILD_OUT)/$(TARGET).elf -bs .irom0.text -bs .text -bs .data -bs .rodata -bc -ec
-	C_COMBINE_PATTERN = -Wl,--start-group $(OBJ_FILES) $(BUILD_OUT)/core/core.a \
+	C_COMBINE_PATTERN = -Wl,--start-group $(OBJ_FILES) $(LIB_OBJ_FILES) $(BUILD_OUT)/core/core.a \
 		$(ELFLIBS) -Wl,--end-group -L$(BUILD_OUT)
 	SIZE_REGEX_DATA = '^(?:\.data|\.rodata|\.bss)\s+([0-9]+).*'
 	SIZE_REGEX = '^(?:\.irom0\.text|\.text|\.data)\s+([0-9]+).*'
@@ -333,7 +342,7 @@ else
 	OBJCOPY_HEX_PATTERN = --chip esp32 elf2image --flash_mode $(FLASH_MODE) --flash_freq $(FLASH_FREQ) --flash_size $(FLASH_SIZE) \
 		-o $(BUILD_OUT)/$(TARGET).bin $(BUILD_OUT)/$(TARGET).elf
 	OBJCOPY_EEP_PATTERN = $(ARDUINO_HOME)/tools/gen_esp32part.py -q $(ARDUINO_HOME)/tools/partitions/default.csv $(BUILD_OUT)/$(TARGET).partitions.bin
-	C_COMBINE_PATTERN = -Wl,--start-group $(OBJ_FILES) $(BUILD_OUT)/core/core.a \
+	C_COMBINE_PATTERN = -Wl,--start-group $(OBJ_FILES) $(LIB_OBJ_FILES) $(BUILD_OUT)/core/core.a \
 		$(ELFLIBS) -Wl,--end-group -Wl,-EL
 	SIZE_REGEX_DATA =  '^(?:\.dram0\.data|\.dram0\.bss)\s+([0-9]+).*'
 	SIZE_REGEX = '^(?:\.iram0\.text|\.dram0\.text|\.flash\.text|\.dram0\.data|\.flash\.rodata)\s+([0-9]+).*'
@@ -349,7 +358,7 @@ endif
 
 .PHONY: all dirs clean upload
 
-all: show_variables libs core bin eep size
+all: show_variables sketch libs core bin eep size
 
 
 show_variables:
@@ -358,7 +367,7 @@ show_variables:
 
 dirs:
 	@mkdir -p $(CORE_DIRS)
-	@mkdir -p $(BUILD_OUT)/spiffs
+	@mkdir -p $(BUILD_OUT)/libraries
 
 clean:
 	rm -rf $(BUILD_OUT)
@@ -368,7 +377,9 @@ uclean:
 
 core: dirs $(BUILD_OUT)/core/core.a
 
-libs: dirs $(OBJ_FILES)
+sketch: dirs $(OBJ_FILES)
+
+libs: dirs $(LIB_OBJ_FILES)
 
 bin: $(BUILD_OUT)/$(TARGET).bin
 
@@ -381,6 +392,14 @@ $(BUILD_OUT)/core/core.a: $(CORE_OBJS)
 
 $(BUILD_OUT)/core/%.c.o: %.c
 	$(CC) $(CORE_DEFINE) $(CPREPROCESSOR_FLAGS) $(CFLAGS) $(DEFINES) $(CORE_INC:%=-I%) -o $@ $<
+
+
+$(BUILD_OUT)/libraries/%.c.o: %.c
+	$(CC) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CFLAGS) $(DEFINES)  $(INCLUDES) -o $@ $<
+
+$(BUILD_OUT)/libraries/%.cpp.o: %.cpp
+	$(CXX) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(USER_DEFINE) $(DEFINES) $(INCLUDES) $< -o $@	
+
 
 $(BUILD_OUT)/core/%.cpp.o: %.cpp
 	$(CXX) $(CORE_DEFINE) $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(DEFINES) $(CORE_INC:%=-I%)  $< -o $@
@@ -400,9 +419,16 @@ $(BUILD_OUT)/%.ino.cpp.o: $(BUILD_OUT)/%.ino.cpp
 $(BUILD_OUT)/$(TARGET).elf: core libs
 	$(LD) $(ELFFLAGS) -o $@ $(C_COMBINE_PATTERN)
 
+
+plus = $1 $2
+
 size: $(BUILD_OUT)/$(TARGET).elf
-	@$(SIZE) -A $(BUILD_OUT)/$(TARGET).elf | $(GREP) -E $(SIZE_REGEX) | $(SED) -e "s/[[:space:]]\+/ /g" | $(SED) -e "s/\ /\t/g"
-	@$(SIZE) -A $(BUILD_OUT)/$(TARGET).elf | $(GREP) -E $(SIZE_REGEX_DATA) | $(SED) -e "s/[[:space:]]\+/ /g" | $(SED) -e "s/\ /\t/g"
+	$(eval SKETCH_SIZE := $(shell $(SIZE) -A $(BUILD_OUT)/$(TARGET).elf | $(GREP) -E $(SIZE_REGEX)))
+	$(eval SKETCH_DATA_SIZE := $(shell $(SIZE) -A $(BUILD_OUT)/$(TARGET).elf | $(GREP) -E $(SIZE_REGEX_DATA)))
+	$(eval text_size = $$$$(($(word 2, $(subst /, ,$(SKETCH_SIZE))) +      $(word 5, $(subst /, ,$(SKETCH_SIZE))))))
+	$(eval data_size = $$$$(($(word 2, $(subst /, ,$(SKETCH_DATA_SIZE))) +      $(word 5, $(subst /, ,$(SKETCH_DATA_SIZE))))))
+	@echo Sketch uses $(text_size) bytes of program storage space. Maximum is $(UPLOAD_MAXIMUM_SIZE) bytes.
+	@echo Global variables use $(data_size) bytes of dynamic memory. Maximum is $(UPLOAD_MAXIMUM_DATA_SIZE) bytes.
 
 eep:
 ifeq ($(ARDUINO_ARCH),esp32)
@@ -418,23 +444,19 @@ reset:
 upload: $(BUILD_OUT)/$(TARGET).bin size
 	$(ESPTOOL) $(UPLOAD_PATTERN)
 
-fs: $(FS_IMAGE)
-
-$(FS_IMAGE): $(wildcard $(FS_DIR)/*)
-ifneq "$(wildcard $(FS_DIR) )" ""
+upload_fs:
+ifneq ($(FS_FILES),)
+	@rm -f $(FS_IMAGE)
+	@mkdir -p $(BUILD_OUT)/spiffs
 	$(MKSPIFFS) $(MKSPIFFS_PATTERN)
 else
 	@echo "MKSPIFFS : not input file(s)"
 endif
-
-
-upload_fs: $(FS_IMAGE)
 ifeq ($(ARDUINO_ARCH),esp8266)
-	$(ESPTOOL) 	$(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cb $(UPLOAD_SPEED) -cp $(SERIAL_PORT) -ca $(SPIFFS_START) -cf $(FS_IMAGE)
+	$(ESPTOOL) $(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cb $(UPLOAD_SPEED) -cp $(SERIAL_PORT) -ca $(SPIFFS_START) -cf $(FS_IMAGE)
 else
 	@echo upload_fs : No SPIFFS function available for $(ARDUINO_ARCH)
 endif
-
 
 ota: $(BUILD_OUT)/$(TARGET).bin
 	$(ESPOTA) -i $(OTA_IP) -p $(OTA_PORT) -a $(OTA_AUTH) -f $(BUILD_OUT)/$(TARGET).bin
@@ -444,7 +466,6 @@ term:
 
 monitor:
 	minicom -D $(SERIAL_PORT) -b $(SERIAL_BAUD)
-
 
 print-%: ; @echo $* = $($*)
 
@@ -456,7 +477,11 @@ help:
 	@echo "Targets available:"
 	@echo "  all                  (default) Build the application"
 	@echo "  clean                Remove all intermediate build files"
+	@echo "  uclean               Remove all intermediate build files except core"
+	@echo "  sketch               Build sketch files"
+	@echo "  fs                   Build SPIFFS file"
 	@echo "  upload               Build and flash the project application"
+	@echo "  upload_fs            Build and flash SPIFFS file"
 	@echo "  ota                  Build and flash via OTA"
 	@echo "                          Params: OAT_IP, OTA_PORT and OTA_AUTH"
 	@echo "  term                 Open a the serial console on ESP port"
@@ -464,3 +489,4 @@ help:
 	@echo ""
 
 -include $(OBJ_FILES:.o=.d)
+-include $(LIB_OBJ_FILES:.o=.d)
