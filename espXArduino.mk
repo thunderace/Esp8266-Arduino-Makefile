@@ -137,7 +137,7 @@ USER_CXXSRC := $(wildcard $(addsuffix /*.cpp,$(USRCDIRS)))
 USER_HSRC := $(wildcard $(addsuffix /*.h,$(USRCDIRS)))
 USER_HPPSRC := $(wildcard $(addsuffix /*.hpp,$(USRCDIRS)))
 USER_INOSRC := $(wildcard $(addsuffix /*.ino,$(USRCDIRS)))
-LOCAL_SRCS = $(USER_SRC) $(USER_CXXSRC) $(USER_INOSRC) $(USER_HSRC) $(USER_HPPSRC)
+LOCAL_SRCS = $(USER_INOSRC)$(USER_SRC) $(USER_CXXSRC)  $(USER_HSRC) $(USER_HPPSRC)
 
 
 
@@ -416,11 +416,8 @@ $(BUILD_OUT)/%.ino.cpp: $(USER_INOSRC)
 $(BUILD_OUT)/%.ino.cpp.o: $(BUILD_OUT)/%.ino.cpp
 	$(CXX) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(USER_DEFINE) $(DEFINES) $(INCLUDES) $< -o $@
 
-$(BUILD_OUT)/$(TARGET).elf: core libs
+$(BUILD_OUT)/$(TARGET).elf: sketch core libs
 	$(LD) $(ELFFLAGS) -o $@ $(C_COMBINE_PATTERN)
-
-
-plus = $1 $2
 
 size: $(BUILD_OUT)/$(TARGET).elf
 	$(eval SKETCH_SIZE := $(shell $(SIZE) -A $(BUILD_OUT)/$(TARGET).elf | $(GREP) -E $(SIZE_REGEX)))
