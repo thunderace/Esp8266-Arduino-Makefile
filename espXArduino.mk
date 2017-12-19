@@ -314,7 +314,7 @@ else
 #		-lfatfs -lfreertos -lhal -lheap -ljsmn -ljson -llog -llwip -lm -lmbedtls -lmdns -lmicro-ecc -lnet80211 -lnewlib -lnghttp -lnvs_flash -lopenssl -lphy -lpp -lpthread -lrtc \
 #		-lsdmmc -lsmartconfig -lsoc -lspi_flash -lspiffs -ltcpip_adapter -lulp -lvfs -lwear_levelling -lwpa -lwpa2 -lwpa_supplicant -lwps -lxtensa-debug-module 
 	ELFFLAGS = -nostdlib -L$(ESPRESSIF_SDK)/lib -L$(ESPRESSIF_SDK)/ld -T esp32_out.ld -T esp32.common.ld -T esp32.rom.ld -T esp32.peripherals.ld -T esp32.rom.spiram_incompatible_fns.ld\
-		-u ld_include_panic_highint_hdl -u call_user_start_cpu0 -Wl,--gc-sections -Wl,-static -Wl,--undefined=uxTopUsedPriority -u __cxa_guard_dummy
+		-u ld_include_panic_highint_hdl -u call_user_start_cpu0 -Wl,--gc-sections -Wl,-static -Wl,--undefined=uxTopUsedPriority -u __cxa_guard_dummy -u __cxx_fatal_exception
 endif		
 
 ifeq ($(ARDUINO_ARCH),esp8266)
@@ -427,11 +427,12 @@ $(BUILD_OUT)/$(TARGET).elf: sketch core libs
 size: $(BUILD_OUT)/$(TARGET).elf
 	$(eval SKETCH_SIZE := $(shell $(SIZE) -A $(BUILD_OUT)/$(TARGET).elf | $(GREP) -E $(SIZE_REGEX)))
 	$(eval SKETCH_DATA_SIZE := $(shell $(SIZE) -A $(BUILD_OUT)/$(TARGET).elf | $(GREP) -E $(SIZE_REGEX_DATA)))
-	$(eval text_size = $$$$(($(word 2, $(subst /, ,$(SKETCH_SIZE))) +      $(word 5, $(subst /, ,$(SKETCH_SIZE))))))
-	$(eval data_size = $$$$(($(word 2, $(subst /, ,$(SKETCH_DATA_SIZE))) +      $(word 5, $(subst /, ,$(SKETCH_DATA_SIZE))))))
+	$(eval text_size = $$$$(($(word 2, $(subst /, ,$(SKETCH_SIZE))) + $(word 5, $(subst /, ,$(SKETCH_SIZE))))))
+	$(eval data_size = $$$$(($(word 2, $(subst /, ,$(SKETCH_DATA_SIZE))) + $(word 5, $(subst /, ,$(SKETCH_DATA_SIZE))))))
 	@echo Sketch uses $(text_size) bytes of program storage space. Maximum is $(UPLOAD_MAXIMUM_SIZE) bytes.
+ifeq ($(ARDUINO_ARCH),esp8266)
 	@echo Global variables use $(data_size) bytes of dynamic memory. Maximum is $(UPLOAD_MAXIMUM_DATA_SIZE) bytes.
-
+endif
 eep:
 ifeq ($(ARDUINO_ARCH),esp32)
 	$(OBJCOPY_EEP_PATTERN)
