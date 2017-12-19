@@ -57,8 +57,8 @@ ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool/esptool$(EXEC_EXT)
 ESPOTA ?= $(ARDUINO_HOME)/tools/espota.py
 else
 XTENSA_TOOLCHAIN ?= $(ARDUINO_HOME)/tools/xtensa-esp32-elf/bin/
-ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool$(EXEC_EXT)
-ESPOTA ?= $(ARDUINO_HOME)/tools/espota$(EXEC_EXT)
+ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool.py
+ESPOTA ?= $(ARDUINO_HOME)/tools/espota.py
 endif
 ESPRESSIF_SDK = $(ARDUINO_HOME)/tools/sdk
 
