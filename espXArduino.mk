@@ -65,9 +65,14 @@ ifeq ($(FLASH_MODE), none)
 endif
 
 UPLOAD_RESETMETHOD ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.resetmethod)
-UPLOAD_SPEED = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.speed)
+UPLOAD_SPEED ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.speed)
 
 FLASH_LD ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).build.flash_ld)
+
+#ifeq ($(FLASH_LD),none)
+	#directly select the ld file from FLASH_PARTITION
+#	FLASH_LD := eagle.flash.$(shell echo $(FLASH_PARTITION) | tr '[:upper:]' '[:lower:]').ld
+#endif
 
 ifeq ($(ARDUINO_ARCH),esp8266)
 	F_CPU = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.CpuFrequency.$(CPU_FREQ).build.f_cpu)
