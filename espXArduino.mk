@@ -100,8 +100,6 @@ FS_FILES=$(wildcard $(FS_DIR)/*)
 
 MKSPIFFS=$(ARDUINO_HOME)/tools/mkspiffs/mkspiffs$(EXEC_EXT)
 ESPOTA ?= $(ARDUINO_HOME)/tools/espota.py
-# for FS upload
-ESPTOOL_PY ?= $(shell which esptool.py)
 ifeq ($(ARDUINO_ARCH),esp8266)
 	XTENSA_TOOLCHAIN ?= $(ARDUINO_HOME)/tools/xtensa-lx106-elf/bin/
 	ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool/esptool$(EXEC_EXT)
@@ -363,7 +361,7 @@ endif
 
 .PHONY: all dirs clean upload
 
-all: show_variables sketch libs core bin eep size
+all: show_variables sketch libs core bin size
 
 
 show_variables:
@@ -425,20 +423,12 @@ $(BUILD_OUT)/$(TARGET).elf: sketch core libs
 	$(LD) $(ELFFLAGS) -o $@ $(C_COMBINE_PATTERN)
 
 size: $(BUILD_OUT)/$(TARGET).elf
-	$(eval SKETCH_SIZE := $(shell $(SIZE) -A $(BUILD_OUT)/$(TARGET).elf | $(GREP) -E $(SIZE_REGEX)))
-	$(eval SKETCH_DATA_SIZE := $(shell $(SIZE) -A $(BUILD_OUT)/$(TARGET).elf | $(GREP) -E $(SIZE_REGEX_DATA)))
-	$(eval text_size = $$$$(($(word 2, $(subst /, ,$(SKETCH_SIZE))) + $(word 5, $(subst /, ,$(SKETCH_SIZE))))))
-	$(eval data_size = $$$$(($(word 2, $(subst /, ,$(SKETCH_DATA_SIZE))) + $(word 5, $(subst /, ,$(SKETCH_DATA_SIZE))))))
-	@echo Sketch uses $(text_size) bytes of program storage space. Maximum is $(UPLOAD_MAXIMUM_SIZE) bytes.
-ifeq ($(ARDUINO_ARCH),esp8266)
-	@echo Global variables use $(data_size) bytes of dynamic memory. Maximum is $(UPLOAD_MAXIMUM_DATA_SIZE) bytes.
-endif
-eep:
+	$(SIZE) -A $(BUILD_OUT)/$(TARGET).elf | perl -e "$$MEM_USAGE" $(SIZE_REGEX) $(SIZE_REGEX_DATA)
+
+$(BUILD_OUT)/$(TARGET).bin: $(BUILD_OUT)/$(TARGET).elf
 ifeq ($(ARDUINO_ARCH),esp32)
 	$(OBJCOPY_EEP_PATTERN)
 endif
-
-$(BUILD_OUT)/$(TARGET).bin: $(BUILD_OUT)/$(TARGET).elf
 	$(ESPTOOL) $(OBJCOPY_HEX_PATTERN)
 	
 reset: 
@@ -493,3 +483,15 @@ help:
 
 -include $(OBJ_FILES:.o=.d)
 -include $(LIB_OBJ_FILES:.o=.d)
+
+define MEM_USAGE
+$$fp = shift;
+$$rp = shift;
+while (<>) {
+  $$r += $$1 if /$$rp/;
+  $$f += $$1 if /$$fp/;
+}
+print "\nMemory usage\n";
+print sprintf("  %-6s %6d bytes\n" x 2 ."\n", "Ram:", $$r, "Flash:", $$f);
+endef
+export MEM_USAGE
