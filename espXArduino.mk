@@ -21,7 +21,7 @@ GREP := grep$(EXEC_EXT)
 SERIAL_PORT ?= /dev/tty.nodemcu
 ARDUINO_ARCH ?= esp8266
 ifeq ($(ARDUINO_ARCH),esp8266)
-	ESP8266_VERSION ?= -2.3.0
+	ESP8266_VERSION ?= -2.4.0
 else
 	ESP8266_VERSION=
 endif
@@ -43,6 +43,7 @@ ARDUINO_CORE_VERSION = $(shell $(PARSE_PLATFORM_CMD) version)
 ARDUINO_BOARD = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.board)
 VARIANT = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.variant)
 
+CONCATENATE_USER_FILES ?= yes
 FLASH_PARTITION ?= 4M1M
 
 MCU = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.mcu)
@@ -235,7 +236,6 @@ ALIB_CXXSRC := $(wildcard $(addsuffix /*.cpp,$(ALIBDIRS)))
 
 
 # object files
-#OBJ_FILES = $(addprefix $(BUILD_OUT)/,$(notdir $(TARGET).ino.cpp.o $(USER_SRC:.c=.c.o) $(USER_CXXSRC:.cpp=.cpp.o) $(ULIB_CSRC:.c=.c.o) $(ALIB_CSRC:.c=.c.o) $(ULIB_CXXSRC:.cpp=.cpp.o) $(ALIB_CXXSRC:.cpp=.cpp.o) ))
 OBJ_FILES = $(addprefix $(BUILD_OUT)/,$(notdir $(TARGET).ino.cpp.o $(USER_SRC:.c=.c.o) $(USER_CXXSRC:.cpp=.cpp.o) ))
 LIB_OBJ_FILES = $(addprefix $(BUILD_OUT)/libraries/,$(notdir $(ULIB_CSRC:.c=.c.o) $(ALIB_CSRC:.c=.c.o) $(ULIB_CXXSRC:.cpp=.cpp.o) $(ALIB_CXXSRC:.cpp=.cpp.o) ))
 
@@ -361,7 +361,7 @@ endif
 
 .PHONY: all dirs clean upload
 
-all: show_variables sketch libs core bin size
+all: sketch libs core bin size
 
 
 show_variables:
@@ -380,7 +380,7 @@ uclean:
 
 core: dirs $(BUILD_OUT)/core/core.a
 
-sketch: dirs $(OBJ_FILES)
+sketch: show_variables dirs $(OBJ_FILES)
 
 libs: dirs $(LIB_OBJ_FILES)
 
@@ -414,7 +414,11 @@ $(BUILD_OUT)/%.cpp.o: %.cpp
 	$(CXX) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(USER_DEFINE) $(DEFINES) $(INCLUDES) $< -o $@	
 
 $(BUILD_OUT)/%.ino.cpp: $(USER_INOSRC)
+ifeq ($(CONCATENATE_USER_FILES), yes)
 	-$(CAT) $(TARGET).ino $(filter-out $(TARGET).ino,$^) > $@
+else
+	ln -s ../$(TARGET).ino $@
+endif
 
 $(BUILD_OUT)/%.ino.cpp.o: $(BUILD_OUT)/%.ino.cpp
 	$(CXX) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(USER_DEFINE) $(DEFINES) $(INCLUDES) $< -o $@
@@ -423,7 +427,7 @@ $(BUILD_OUT)/$(TARGET).elf: sketch core libs
 	$(LD) $(ELFFLAGS) -o $@ $(C_COMBINE_PATTERN)
 
 size: $(BUILD_OUT)/$(TARGET).elf
-	$(SIZE) -A $(BUILD_OUT)/$(TARGET).elf | perl -e "$$MEM_USAGE" $(SIZE_REGEX) $(SIZE_REGEX_DATA)
+	@$(SIZE) -A $(BUILD_OUT)/$(TARGET).elf | perl -e "$$MEM_USAGE" $(SIZE_REGEX) $(SIZE_REGEX_DATA)
 
 $(BUILD_OUT)/$(TARGET).bin: $(BUILD_OUT)/$(TARGET).elf
 ifeq ($(ARDUINO_ARCH),esp32)
