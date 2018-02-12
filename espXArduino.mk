@@ -251,22 +251,21 @@ else
 					-I$(ESPRESSIF_SDK)/include/bt -I$(ESPRESSIF_SDK)/include/driver -I$(ESPRESSIF_SDK)/include/esp32 -I$(ESPRESSIF_SDK)/include/esp_adc_cal -I$(ESPRESSIF_SDK)/include/ethernet \
 					-I$(ESPRESSIF_SDK)/include/fatfs -I$(ESPRESSIF_SDK)/include/freertos -I$(ESPRESSIF_SDK)/include/heap -I$(ESPRESSIF_SDK)/include/jsmn -I$(ESPRESSIF_SDK)/include/log \
 					-I$(ESPRESSIF_SDK)/include/mdns -I$(ESPRESSIF_SDK)/include/mbedtls -I$(ESPRESSIF_SDK)/include/mbedtls_port -I$(ESPRESSIF_SDK)/include/newlib \
-					-I$(ESPRESSIF_SDK)/include/nvs_flash -I$(ESPRESSIF_SDK)/include/openssl	-I$(ESPRESSIF_SDK)/include/soc -I$(ESPRESSIF_SDK)/include/spi_flash \
+					-I$(ESPRESSIF_SDK)/include/nvs_flash -I$(ESPRESSIF_SDK)/include/openssl	-I$(ESPRESSIF_SDK)/include/spi_flash \
 					-I$(ESPRESSIF_SDK)/include/sdmmc -I$(ESPRESSIF_SDK)/include/spiffs -I$(ESPRESSIF_SDK)/include/tcpip_adapter -I$(ESPRESSIF_SDK)/include/ulp -I$(ESPRESSIF_SDK)/include/vfs \
-					-I$(ESPRESSIF_SDK)/include/wear_levelling -I$(ESPRESSIF_SDK)/include/xtensa-debug-module -I$(ESPRESSIF_SDK)/include/console -I$(ESPRESSIF_SDK)/include/newlib \
-					-I$(ESPRESSIF_SDK)/include/coap -I$(ESPRESSIF_SDK)/include/wpa_supplicant -I$(ESPRESSIF_SDK)/include/expat -I$(ESPRESSIF_SDK)/include/json \
-					-I$(ESPRESSIF_SDK)/include/nghttp -I$(ESPRESSIF_SDK)/include/lwip
+					-I$(ESPRESSIF_SDK)/include/wear_levelling -I$(ESPRESSIF_SDK)/include/xtensa-debug-module -I$(ESPRESSIF_SDK)/include/coap -I$(ESPRESSIF_SDK)/include/console \
+					-I$(ESPRESSIF_SDK)/include/expat -I$(ESPRESSIF_SDK)/include/json -I$(ESPRESSIF_SDK)/include/lwip \
+					-I$(ESPRESSIF_SDK)/include/newlib -I$(ESPRESSIF_SDK)/include/nghttp -I$(ESPRESSIF_SDK)/include/soc -I$(ESPRESSIF_SDK)/include/wpa_supplicant   
 endif
 
 ifeq ($(ARDUINO_ARCH),esp8266)
-DEFINES = -DF_CPU=$(F_CPU) -DLWIP_OPEN_SRC -DARDUINO=$(ARDUINO_VERSION) \
-	-DARDUINO_$(ARDUINO_BOARD) -DARDUINO_ARCH_$(shell echo "$(ARDUINO_ARCH)" | tr '[:lower:]' '[:upper:]') \
-	-DARDUINO_BOARD=\"$(ARDUINO_BOARD)\" -DESP8266 \
-	
+	DEFINES = -DF_CPU=$(F_CPU) -DLWIP_OPEN_SRC -DARDUINO=$(ARDUINO_VERSION) \
+		-DARDUINO_$(ARDUINO_BOARD) -DARDUINO_ARCH_$(shell echo "$(ARDUINO_ARCH)" | tr '[:lower:]' '[:upper:]') \
+		-DARDUINO_BOARD=\"$(ARDUINO_BOARD)\" -DESP8266 
 else
-DEFINES = -DF_CPU=$(F_CPU) -DARDUINO=$(ARDUINO_VERSION) \
-	-DARDUINO_$(ARDUINO_BOARD) -DESP32 \
-	-DARDUINO_ARCH_$(shell echo "$(ARDUINO_ARCH)" | tr '[:lower:]' '[:upper:]') 
+	DEFINES = -DF_CPU=$(F_CPU) -DARDUINO=$(ARDUINO_VERSION) \
+		-DARDUINO_$(ARDUINO_BOARD) -DARDUINO_ARCH_$(shell echo "$(ARDUINO_ARCH)" | tr '[:lower:]' '[:upper:]') \
+		-DARDUINO_BOARD=\"$(ARDUINO_BOARD)\" -DARDUINO_VARIANT=\"$(ARDUINO_VARIANT)\" -DESP32
 endif
 
 CORE_INC = $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH) \
