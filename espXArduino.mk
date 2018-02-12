@@ -241,11 +241,7 @@ LIB_OBJ_FILES = $(addprefix $(BUILD_OUT)/libraries/,$(notdir $(ULIB_CSRC:.c=.c.o
 
 
 ifeq ($(ARDUINO_ARCH),esp8266)
-	ifeq ($(ARDUINO_CORE_VERSION), 2_4_0)
-		CPREPROCESSOR_FLAGS = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ -I$(ESPRESSIF_SDK)/include -I$(ESPRESSIF_SDK)/lwip2/include -I$(ESPRESSIF_SDK)/libc/xtensa-lx106-elf/include -I$(BUILD_OUT)/core
-	else
-		CPREPROCESSOR_FLAGS = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ -I$(ESPRESSIF_SDK)/include -I$(ESPRESSIF_SDK)/lwip/include -I$(BUILD_OUT)/core
-	endif
+	CPREPROCESSOR_FLAGS = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ -I$(ESPRESSIF_SDK)/include -I$(ESPRESSIF_SDK)/lwip/include -I$(ESPRESSIF_SDK)/libc/xtensa-lx106-elf/include -I$(BUILD_OUT)/core
 else
 	CPREPROCESSOR_FLAGS = -DESP_PLATFORM -DMBEDTLS_CONFIG_FILE="mbedtls/esp_config.h" -DHAVE_CONFIG_H -I$(ESPRESSIF_SDK)/include/config \
 					-I$(ESPRESSIF_SDK)/include/bluedroid -I$(ESPRESSIF_SDK)/include/app_trace -I$(ESPRESSIF_SDK)/include/app_update -I$(ESPRESSIF_SDK)/include/bootloader_support \
@@ -283,19 +279,11 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 		-falign-functions=4 -MMD -std=gnu99 -ffunction-sections -fdata-sections
 	CXXFLAGS = -c -Os -g -mlongcalls -mtext-section-literals -fno-exceptions \
 		-fno-rtti -falign-functions=4 -std=c++11 -MMD -ffunction-sections -fdata-sections
-	ifeq ($(ARDUINO_CORE_VERSION), 2_4_0)
-		ELFLIBS = -lhal -lphy -lpp -lnet80211 -llwip2 -lwpa -lcrypto -lmain -lwps -laxtls -lespnow -lsmartconfig -lairkiss -lmesh -lwpa2 -lstdc++ -lm -lc -lgcc
-		ELFFLAGS = -g -Os -nostdlib -Wl,--no-check-sections -u call_user_start -u _printf_float -u _scanf_float -Wl,-static \
+	ELFLIBS = -lhal -lphy -lpp -lnet80211 -llwip_gcc -lwpa -lcrypto -lmain -lwps -laxtls -lespnow -lsmartconfig -lairkiss -lmesh -lwpa2 -lstdc++ -lm -lc -lgcc
+	ELFFLAGS = -g -Os -nostdlib -Wl,--no-check-sections -u call_user_start -u _printf_float -u _scanf_float -Wl,-static \
 			-L$(ESPRESSIF_SDK)/lib -L$(ESPRESSIF_SDK)/ld -L$(ESPRESSIF_SDK)/libc/xtensa-lx106-elf/lib \
 			 -T$(FLASH_LD) \
 			 -Wl,--gc-sections -Wl,-wrap,system_restart_local -Wl,-wrap,spi_flash_read
-	else
-		ELFLIBS = -lm -lgcc -lhal -lphy -lpp -lnet80211 -lwpa -lcrypto -lmain -lwps -laxtls -lsmartconfig -lmesh -lwpa2 -lstdc++ -llwip_gcc 
-		ELFFLAGS = -g -Os -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static \
-			-L$(ESPRESSIF_SDK)/lib -L$(ESPRESSIF_SDK)/ld \
-			 -T$(FLASH_LD) \
-			 -Wl,--gc-sections -Wl,-wrap,system_restart_local -Wl,-wrap,register_chipv6_phy
-	endif
 else	
 	ASFLAGS = -c -g3 -x assembler-with-cpp -MMD -mlongcalls
 	CFLAGS = -std=gnu99 -Os -g3 -fstack-protector -ffunction-sections -fdata-sections -fstrict-volatile-bitfields -mlongcalls \
@@ -436,7 +424,7 @@ endif
 	$(ESPTOOL) $(OBJCOPY_HEX_PATTERN)
 	
 reset: 
-	$(ESPTOOL) $(RESET_PATTERN)
+	-$(ESPTOOL) $(RESET_PATTERN)
 
 upload: $(BUILD_OUT)/$(TARGET).bin size
 	$(ESPTOOL) $(UPLOAD_PATTERN)
@@ -481,7 +469,8 @@ help:
 	@echo "  upload_fs            Build and flash SPIFFS file"
 	@echo "  ota                  Build and flash via OTA"
 	@echo "                          Params: OAT_IP, OTA_PORT and OTA_AUTH"
-	@echo "  term                 Open a the serial console on ESP port"
+	@echo "  term/monitor         Open a the serial console on ESP port"
+	@echo "  reset                Reset the board"
 	@echo "  print-VAR            Display the makefile VAR content. Replace VAR by the variable name"
 	@echo ""
 
