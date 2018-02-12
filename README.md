@@ -3,8 +3,11 @@ Makefile to build arduino code for ESP8266 under linux and Cygwin (tested on deb
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
-12/06/2017
+02/12/2018
+- Add reset target
+- ESP8266 : update for the last git commit (use lwip_gcc)
 
+12/06/2017
 - ESP8266 : fix 'section .text will not fit in region iram1_0_seg' with big sketches
 12/01/2017:
 - ESP32 : update for 46d1b17 git commit
