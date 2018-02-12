@@ -3,6 +3,24 @@ Makefile to build arduino code for ESP8266 under linux and Cygwin (tested on deb
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
+02/12/2018
+- Add reset target
+- ESP8266 : update for the last git commit (use lwip_gcc)
+
+12/06/2017
+- ESP8266 : fix 'section .text will not fit in region iram1_0_seg' with big sketches
+12/01/2017:
+- ESP32 : update for 46d1b17 git commit
+- ESP32 : update installation script
+- ESP32 & ESP8266 : 
+  - auto detect core esp libraries used by user libraries
+  - auto detect user libraries used by user libraries
+  - fix ArduinoJson user lib no detection
+  - many enhancements
+- ESP8266 : add mkspiffs support (create and upload)
+- ESP8266 : new option to use 2.3.0 stable version  (default) or git esp8266 arduino version : set ESP8266_VERSION=.git in the calling makefile (see AdvancedWebServer makefile)
+- ESP8266 : update for last git commit
+
 10/05/2017:
 - ESP32 : UPDATE FOR LAST esp32 Git commit
 - ESP32 : use esptool.exe on windows platforms
