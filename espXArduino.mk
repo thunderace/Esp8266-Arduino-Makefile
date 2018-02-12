@@ -116,7 +116,10 @@ get_library_files  = $(if $(and $(wildcard $(1)/src), $(wildcard $(1)/library.pr
 
 LOCAL_USER_LIBDIR ?= ./libraries
 GLOBAL_USER_LIBDIR ?= $(ROOT_DIR)/libraries
-TAG ?= $(shell date +'%Y-%m-%dT%H:%M:%S%z' | $(SED) -E 's/(..)$$/:\1/')
+
+ifeq ($(origin TAG), undefined)
+	TAG := $(shell date +'%Y-%m-%dT%H:%M:%S%z' | $(SED) -E 's/(..)$$/:\1/')
+endif
 
 
 ifdef NODENAME
