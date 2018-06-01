@@ -434,8 +434,10 @@ ifeq ($(ARDUINO_ARCH),esp32)
 	$(OBJCOPY_EEP_PATTERN)
 endif
 	$(ESPTOOL) $(OBJCOPY_HEX_PATTERN)
+ifeq ($(ESP8266_VERSION), .git)
 	@rm $(ESPRESSIF_SDK)/ld/eagle.app.v6.common.ld
-	
+endif
+
 reset: 
 	-$(ESPTOOL) $(RESET_PATTERN)
 
