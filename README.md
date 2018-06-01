@@ -3,10 +3,15 @@ Makefile to build arduino code for ESP8266 under linux and Cygwin (tested on deb
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
+06/01/2018
+- ESP8266-git version : Workaround for SD.h not found -> add 'ARDUINO_LIBS=SD SPI' to your Makefile
+- ESP8266-git version : Generation of the eagle.app.v6.common.ld file
+ 
 04/17/2018
 - Add option to log serial outputs to file (set LOG_SERIAL_TO_FILE=yes in your makefile. The out file is serial.log)
 - ESP8266 : Swicth to lwip V2 low memory by default
 - ESP32 : update for last git commit
+
 02/12/2018
 - Add reset target
 - ESP8266 : update for the last git commit (use lwip_gcc)
