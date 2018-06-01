@@ -222,7 +222,7 @@ ULIB_CSRC := $(wildcard $(addsuffix *.c,$(ULIBDIRS)))
 ULIB_CXXSRC := $(wildcard $(addsuffix *.cpp,$(ULIBDIRS)))
 
 #autodetect arduino libs
-ARDUINO_LIBS = $(sort $(filter $(notdir $(wildcard $(ARDUINO_HOME)/libraries/*)), \
+ARDUINO_LIBS += $(sort $(filter $(notdir $(wildcard $(ARDUINO_HOME)/libraries/*)), \
 	$(shell $(SED) -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS))))
 
 #remove duplicate Arduino libs
@@ -379,6 +379,13 @@ libs: dirs $(LIB_OBJ_FILES)
 
 bin: $(BUILD_OUT)/$(TARGET).bin
 
+VTABLE_FLAGS=-DVTABLES_IN_FLASH
+
+prelink:
+ifeq ($(ESP8266_VERSION), .git)
+	$(CC) $(VTABLE_FLAGS) -CC -E -P  $(ESPRESSIF_SDK)/ld/eagle.app.v6.common.ld.h -o $(ESPRESSIF_SDK)/ld/eagle.app.v6.common.ld
+endif
+
 $(BUILD_OUT)/core/%.S.o: $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/%.S
 	$(CC) $(CPREPROCESSOR_FLAGS) $(ASFLAGS) $(DEFINES) $(CORE_INC:%=-I%) -o $@ $<
 
@@ -416,7 +423,7 @@ endif
 $(BUILD_OUT)/%.ino.cpp.o: $(BUILD_OUT)/%.ino.cpp
 	$(CXX) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(USER_DEFINE) $(DEFINES) $(INCLUDES) $< -o $@
 
-$(BUILD_OUT)/$(TARGET).elf: sketch core libs
+$(BUILD_OUT)/$(TARGET).elf: sketch prelink core libs
 	$(LD) $(ELFFLAGS) -o $@ $(C_COMBINE_PATTERN)
 
 size: $(BUILD_OUT)/$(TARGET).elf
@@ -427,6 +434,7 @@ ifeq ($(ARDUINO_ARCH),esp32)
 	$(OBJCOPY_EEP_PATTERN)
 endif
 	$(ESPTOOL) $(OBJCOPY_HEX_PATTERN)
+	@rm $(ESPRESSIF_SDK)/ld/eagle.app.v6.common.ld
 	
 reset: 
 	-$(ESPTOOL) $(RESET_PATTERN)
