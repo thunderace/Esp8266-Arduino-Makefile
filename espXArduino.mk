@@ -444,9 +444,7 @@ reset:
 upload: $(BUILD_OUT)/$(TARGET).bin size
 	$(ESPTOOL) $(UPLOAD_PATTERN)
 
-fs: $(FS_IMAGE)
-
-$(FS_IMAGE):
+fs:
 ifneq ($(FS_FILES),)
 	@rm -f $(FS_IMAGE)
 	@mkdir -p $(BUILD_OUT)/spiffs
@@ -455,7 +453,7 @@ else
 	@echo "MKSPIFFS : not input file(s)"
 endif
 
-upload_fs: $(FS_IMAGE)
+upload_fs: fs
 ifeq ($(ARDUINO_ARCH),esp8266)
 	$(ESPTOOL) $(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cb $(UPLOAD_SPEED) -cp $(SERIAL_PORT) -ca $(SPIFFS_START) -cf $(FS_IMAGE)
 else
