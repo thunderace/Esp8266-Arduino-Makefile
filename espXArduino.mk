@@ -355,7 +355,7 @@ else
 	RESET_PATTERN = --chip esp32 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED)  --before hard_reset 
 endif
 
-.PHONY: all dirs clean upload
+.PHONY: all dirs clean upload fs upload_fs
 
 all: sketch libs core bin size
 
@@ -452,7 +452,7 @@ reset:
 upload: $(BUILD_OUT)/$(TARGET).bin size
 	$(ESPTOOL) $(UPLOAD_PATTERN)
 
-upload_fs:
+fs:
 ifneq ($(FS_FILES),)
 	@rm -f $(FS_IMAGE)
 	@mkdir -p $(BUILD_OUT)/spiffs
@@ -460,6 +460,8 @@ ifneq ($(FS_FILES),)
 else
 	@echo "MKSPIFFS : not input file(s)"
 endif
+
+upload_fs: fs
 ifeq ($(ARDUINO_ARCH),esp8266)
 	$(ESPTOOL) $(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cb $(UPLOAD_SPEED) -cp $(SERIAL_PORT) -ca $(SPIFFS_START) -cf $(FS_IMAGE)
 else
