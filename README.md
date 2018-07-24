@@ -4,6 +4,7 @@ Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/20
 
 ## Changelog
 07/24/2018
+- ALL : add Shebang to all sh files
 - ESP8266 : Add support for libraries/user assembly (.S) compilation (tested with gdbstub)
 
 06/01/2018

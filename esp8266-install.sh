@@ -1,3 +1,4 @@
+#!/bin/sh
 declare ESP8266_VER=2.4.1
 
 declare DOWNLOAD_CACHE=./download
