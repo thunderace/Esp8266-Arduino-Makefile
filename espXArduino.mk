@@ -147,7 +147,7 @@ USER_CXXSRC := $(wildcard $(addsuffix /*.cpp,$(USRCDIRS)))
 USER_HSRC := $(wildcard $(addsuffix /*.h,$(USRCDIRS)))
 USER_HPPSRC := $(wildcard $(addsuffix /*.hpp,$(USRCDIRS)))
 USER_INOSRC := $(wildcard $(addsuffix /*.ino,$(USRCDIRS)))
-LOCAL_SRCS = $(USER_INOSRC)$(USER_SRC) $(USER_CXXSRC)  $(USER_HSRC) $(USER_HPPSRC)
+LOCAL_SRCS = $(USER_INOSRC)$(USER_SRC) $(USER_CXXSRC) $(USER_HSRC) $(USER_HPPSRC)
 
 
 
@@ -231,19 +231,23 @@ ARDUINO_LIBS := $(sort $(ARDUINO_LIBS) $(UALIB))
 # arduino libraries
 ALIBDIRS = $(sort $(dir $(wildcard \
 	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/*.c) \
+	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/*.S) \
 	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/*.cpp) \
 	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/src/*/*.c) \
+	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/src/*/*.S) \
 	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/src/*/*.cpp) \
 	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/src/*.h) \
 	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/src/*.c) \
+	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/src/*.S) \
 	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/src/*.cpp))))
 ALIB_CSRC := $(wildcard $(addsuffix /*.c,$(ALIBDIRS)))
+ALIB_SSRC := $(wildcard $(addsuffix /*.S,$(ALIBDIRS)))
 ALIB_CXXSRC := $(wildcard $(addsuffix /*.cpp,$(ALIBDIRS)))
 
 
 # object files
 OBJ_FILES = $(addprefix $(BUILD_OUT)/,$(notdir $(TARGET).ino.cpp.o $(USER_SRC:.c=.c.o) $(USER_CXXSRC:.cpp=.cpp.o) ))
-LIB_OBJ_FILES = $(addprefix $(BUILD_OUT)/libraries/,$(notdir $(ULIB_CSRC:.c=.c.o) $(ALIB_CSRC:.c=.c.o) $(ULIB_CXXSRC:.cpp=.cpp.o) $(ALIB_CXXSRC:.cpp=.cpp.o) ))
+LIB_OBJ_FILES = $(addprefix $(BUILD_OUT)/libraries/,$(notdir $(ULIB_CSRC:.c=.c.o) $(ALIB_CSRC:.c=.c.o) $(ALIB_SSRC:.S=.S.o) $(ULIB_CXXSRC:.cpp=.cpp.o) $(ALIB_CXXSRC:.cpp=.cpp.o) ))
 
 
 ifeq ($(ARDUINO_ARCH),esp8266)
@@ -274,7 +278,9 @@ endif
 CORE_INC = $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH) \
 	$(ARDUINO_HOME)/variants/$(VARIANT)
 
-INCLUDES = -include Arduino.h $(CORE_INC:%=-I%) $(ALIBDIRS:%=-I%) $(ULIBDIRS:%=-I%)  $(USRCDIRS:%=-I%)
+INCLUDE_ARDUINO_H = -include Arduino.h
+INCLUDES =  $(CORE_INC:%=-I%) $(ALIBDIRS:%=-I%) $(ULIBDIRS:%=-I%)  $(USRCDIRS:%=-I%)
+
 VPATH = . $(CORE_INC) $(ALIBDIRS) $(ULIBDIRS)
 
 ifeq ($(ARDUINO_ARCH),esp8266)
@@ -301,9 +307,6 @@ else
 		-lphy -lapp_trace -lconsole -lulp -lwpa_supplicant -lfreertos -lbt -lmicro-ecc -lcxx -lxtensa-debug-module -lmdns -lvfs -lsoc -lcore -lsdmmc -lcoap -ltcpip_adapter \
 		-lc_nano -lrtc -lspi_flash -lwpa2 -lesp32 -lapp_update -lnghttp -lspiffs -lespnow -lnvs_flash -lesp_adc_cal -llog -lexpat -lm -lc -lheap -lmbedtls -llwip \
 		-lnet80211 -lpthread -ljson  -lstdc++
-#	ELFLIBS = -lgcc -lcxx -lstdc++ -lapp_trace -lapp_update -lbootloader_support -lbt -lbtdm_app -lc -lc_nano -lcoap -lcoexist -lconsole -lcore -ldriver -lesp32 -lethernet -lexpat \
-#		-lfatfs -lfreertos -lhal -lheap -ljsmn -ljson -llog -llwip -lm -lmbedtls -lmdns -lmicro-ecc -lnet80211 -lnewlib -lnghttp -lnvs_flash -lopenssl -lphy -lpp -lpthread -lrtc \
-#		-lsdmmc -lsmartconfig -lsoc -lspi_flash -lspiffs -ltcpip_adapter -lulp -lvfs -lwear_levelling -lwpa -lwpa2 -lwpa_supplicant -lwps -lxtensa-debug-module 
 	ELFFLAGS = -nostdlib -L$(ESPRESSIF_SDK)/lib -L$(ESPRESSIF_SDK)/ld -T esp32_out.ld -T esp32.common.ld -T esp32.rom.ld -T esp32.peripherals.ld -T esp32.rom.spiram_incompatible_fns.ld\
 		-u ld_include_panic_highint_hdl -u call_user_start_cpu0 -Wl,--gc-sections -Wl,-static -Wl,--undefined=uxTopUsedPriority -u __cxa_guard_dummy -u __cxx_fatal_exception
 endif		
@@ -396,22 +399,27 @@ $(BUILD_OUT)/core/core.a: $(CORE_OBJS)
 $(BUILD_OUT)/core/%.c.o: %.c
 	$(CC) $(CORE_DEFINE) $(CPREPROCESSOR_FLAGS) $(CFLAGS) $(DEFINES) $(CORE_INC:%=-I%) -o $@ $<
 
+$(BUILD_OUT)/core/%.cpp.o: %.cpp
+	$(CXX) $(CORE_DEFINE) $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(DEFINES) $(CORE_INC:%=-I%)  $< -o $@
 
 $(BUILD_OUT)/libraries/%.c.o: %.c
 	$(CC) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CFLAGS) $(DEFINES)  $(INCLUDES) -o $@ $<
 
 $(BUILD_OUT)/libraries/%.cpp.o: %.cpp
-	$(CXX) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(USER_DEFINE) $(DEFINES) $(INCLUDES) $< -o $@	
+	$(CXX) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(USER_DEFINE) $(DEFINES) $(INCLUDE_ARDUINO_H) $(INCLUDES) $< -o $@	
 
-
-$(BUILD_OUT)/core/%.cpp.o: %.cpp
-	$(CXX) $(CORE_DEFINE) $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(DEFINES) $(CORE_INC:%=-I%)  $< -o $@
+$(BUILD_OUT)/libraries/%.S.o: %.S
+	$(CC) $(CPREPROCESSOR_FLAGS) $(ASFLAGS) $(DEFINES) $(USER_DEFINE) $(INCLUDES) -o $@ $<
 
 $(BUILD_OUT)/%.c.o: %.c
-	$(CC) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CFLAGS) $(DEFINES)  $(INCLUDES) -o $@ $<
+	$(CC) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CFLAGS) $(DEFINES) $(INCLUDE_ARDUINO_H) $(INCLUDES) -o $@ $<
 
 $(BUILD_OUT)/%.cpp.o: %.cpp
-	$(CXX) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(USER_DEFINE) $(DEFINES) $(INCLUDES) $< -o $@	
+	$(CXX) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(USER_DEFINE) $(DEFINES) $(INCLUDE_ARDUINO_H) $(INCLUDES) $< -o $@	
+
+$(BUILD_OUT)/%.S.o: %.S
+	$(CC) $(CPREPROCESSOR_FLAGS) $(ASFLAGS) $(DEFINES) $(USER_DEFINE) $(INCLUDES) -o $@ $<
+
 
 $(BUILD_OUT)/%.ino.cpp: $(USER_INOSRC)
 ifeq ($(CONCATENATE_USER_FILES), yes)
@@ -421,7 +429,7 @@ else
 endif
 
 $(BUILD_OUT)/%.ino.cpp.o: $(BUILD_OUT)/%.ino.cpp
-	$(CXX) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(USER_DEFINE) $(DEFINES) $(INCLUDES) $< -o $@
+	$(CXX) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(USER_DEFINE) $(DEFINES) $(INCLUDE_ARDUINO_H) $(INCLUDES) $< -o $@
 
 $(BUILD_OUT)/$(TARGET).elf: sketch prelink core libs
 	$(LD) $(ELFFLAGS) -o $@ $(C_COMBINE_PATTERN)

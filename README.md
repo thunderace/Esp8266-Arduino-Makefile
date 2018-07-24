@@ -3,6 +3,9 @@ Makefile to build arduino code for ESP8266 under linux and Cygwin (tested on deb
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
+07/24/2018
+- ESP8266 : Add support for libraries/user assembly (.S) compilation (tested with gdbstub)
+
 06/01/2018
 - ESP8266-git version : Workaround for SD.h not found -> add 'ARDUINO_LIBS=SD SPI' to your Makefile
 - ESP8266-git version : Generation of the eagle.app.v6.common.ld file
