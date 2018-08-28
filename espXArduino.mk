@@ -21,7 +21,10 @@ GREP := grep$(EXEC_EXT)
 SERIAL_PORT ?= /dev/tty.nodemcu
 ARDUINO_ARCH ?= esp8266
 ifeq ($(ARDUINO_ARCH),esp8266)
-	ESP8266_VERSION ?= -2.4.1
+	ESP8266_VERSION ?= 2.4.2
+	ifneq ($(ESP8266_VERSION),.git)
+		ESP8266_VERSION := -$(ESP8266_VERSION)
+	endif
 else
 	ESP8266_VERSION=
 endif
@@ -385,9 +388,10 @@ bin: $(BUILD_OUT)/$(TARGET).bin
 VTABLE_FLAGS=-DVTABLES_IN_FLASH
 
 prelink:
-ifeq ($(ESP8266_VERSION), .git)
+ifneq ("$(wildcard  $(ESPRESSIF_SDK)/ld/eagle.app.v6.common.ld.h)","")
 	$(CC) $(VTABLE_FLAGS) -CC -E -P  $(ESPRESSIF_SDK)/ld/eagle.app.v6.common.ld.h -o $(ESPRESSIF_SDK)/ld/eagle.app.v6.common.ld
 endif
+
 
 $(BUILD_OUT)/core/%.S.o: $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/%.S
 	$(CC) $(CPREPROCESSOR_FLAGS) $(ASFLAGS) $(DEFINES) $(CORE_INC:%=-I%) -o $@ $<
@@ -442,7 +446,7 @@ ifeq ($(ARDUINO_ARCH),esp32)
 	$(OBJCOPY_EEP_PATTERN)
 endif
 	$(ESPTOOL) $(OBJCOPY_HEX_PATTERN)
-ifeq ($(ESP8266_VERSION), .git)
+ifneq ("$(wildcard  $(ESPRESSIF_SDK)/ld/eagle.app.v6.common.ld.h)","")
 	@rm $(ESPRESSIF_SDK)/ld/eagle.app.v6.common.ld
 endif
 
