@@ -3,6 +3,10 @@ Makefile to build arduino code for ESP8266 under linux and Cygwin (tested on deb
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
+08/30/2018
+- ESP8266 : Add support for version 2.4.2 (thanks to wintersandroid for is PR)
+- ESP8266 : standardization of release directories naming (.git -> -git)
+
 07/24/2018
 - ALL : add Shebang to all sh files
 - ESP8266 : Add support for libraries/user assembly (.S) compilation (tested with gdbstub)

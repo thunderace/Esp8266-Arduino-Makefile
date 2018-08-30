@@ -1,5 +1,5 @@
 #!/bin/sh
-declare ESP8266_VER=2.4.1
+declare ESP8266_VER=2.4.2
 
 declare DOWNLOAD_CACHE=./download
 mkdir $DOWNLOAD_CACHE
