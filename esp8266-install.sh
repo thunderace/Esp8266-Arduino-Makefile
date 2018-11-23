@@ -1,7 +1,7 @@
 #!/bin/sh
-declare ESP8266_VER=2.4.2
+ESP8266_VER=2.4.2
 
-declare DOWNLOAD_CACHE=./download
+DOWNLOAD_CACHE=./download
 mkdir $DOWNLOAD_CACHE
 
 # Get Arduino core for ESP8266 chip
