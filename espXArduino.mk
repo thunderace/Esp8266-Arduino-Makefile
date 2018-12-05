@@ -21,11 +21,11 @@ GREP := grep$(EXEC_EXT)
 SERIAL_PORT ?= /dev/tty.nodemcu
 ARDUINO_ARCH ?= esp8266
 ifeq ($(ARDUINO_ARCH),esp8266)
-	ESPXX_VERSION ?= 2.4.2
+	ESP8266_VERSION ?= 2.4.2
 else
-	ESPXX_VERSION ?= 1.0.0
+	ESP8266_VERSION ?= 1.0.0
 endif
-ARDUINO_HOME ?=  $(ROOT_DIR)/$(ARDUINO_ARCH)-$(ESPXX_VERSION)
+ARDUINO_HOME ?=  $(ROOT_DIR)/$(ARDUINO_ARCH)-$(ESP8266_VERSION)
 
 ARDUINO_VARIANT ?= nodemcu
 ARDUINO_VERSION ?= 10805
@@ -126,9 +126,9 @@ endif
 
 
 ifdef NODENAME
-	BUILD_OUT ?= ./build.$(ARDUINO_VARIANT).$(NODENAME)-$(ESPXX_VERSION)
+	BUILD_OUT ?= ./build.$(ARDUINO_VARIANT).$(NODENAME)-$(ESP8266_VERSION)
 else
-	BUILD_OUT ?= ./build.$(ARDUINO_VARIANT)-$(ESPXX_VERSION)
+	BUILD_OUT ?= ./build.$(ARDUINO_VARIANT)-$(ESP8266_VERSION)
 endif
 
 ### ESP8266 CORE
@@ -253,7 +253,7 @@ LIB_OBJ_FILES = $(addprefix $(BUILD_OUT)/libraries/,$(notdir $(ULIB_CSRC:.c=.c.o
 ifeq ($(ARDUINO_ARCH),esp8266)
 	CPREPROCESSOR_FLAGS = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ -I$(ESPRESSIF_SDK)/include -I$(ESPRESSIF_SDK)/lwip/include -I$(ESPRESSIF_SDK)/libc/xtensa-lx106-elf/include -I$(BUILD_OUT)/core
 else
-	CPREPROCESSOR_FLAGS = -DESP_PLATFORM -DMBEDTLS_CONFIG_FILE="mbedtls/esp_config.h" -DHAVE_CONFIG_H -I$(ESPRESSIF_SDK)/include/config \
+	CPREPROCESSOR_FLAGS = -DESP_PLATFORM -DMBEDTLS_CONFIG_FILE=\"mbedtls/esp_config.h\" -DHAVE_CONFIG_H -I$(ESPRESSIF_SDK)/include/config \
 					-I$(ESPRESSIF_SDK)/include/bluedroid -I$(ESPRESSIF_SDK)/include/bluedroid/api -I$(ESPRESSIF_SDK)/include/app_trace -I$(ESPRESSIF_SDK)/include/app_update -I$(ESPRESSIF_SDK)/include/bootloader_support \
 					-I$(ESPRESSIF_SDK)/include/bt -I$(ESPRESSIF_SDK)/include/driver -I$(ESPRESSIF_SDK)/include/esp32 -I$(ESPRESSIF_SDK)/include/esp_adc_cal -I$(ESPRESSIF_SDK)/include/esp_http_client \
 					-I$(ESPRESSIF_SDK)/include/esp_https_ota -I$(ESPRESSIF_SDK)/include/esp-mqtt -I$(ESPRESSIF_SDK)/include/esp-tls -I$(ESPRESSIF_SDK)/include/ethernet \
@@ -304,7 +304,7 @@ else
 	CXXFLAGS = -std=gnu++11 -fno-exceptions -Os -g3 -Wpointer-arith -fexceptions -fstack-protector -ffunction-sections -fdata-sections -fstrict-volatile-bitfields \
 		-mlongcalls -nostdlib -w -Wno-error=unused-function -Wno-error=unused-but-set-variable -Wno-error=unused-variable -Wno-error=deprecated-declarations \
 		-Wno-unused-parameter -Wno-sign-compare -fno-rtti -MMD -c
-ifeq ($(ESPXX_VERSION),git)
+ifeq ($(ESP8266_VERSION),git)
 	ELFLIBS = -lgcc -lopenssl -lbtdm_app -lfatfs -lwps -lhttp_server -lcoexist -lwear_levelling -lesp_http_client -lhal -lnewlib -ldriver -lbootloader_support -lpp -lmesh -lsmartconfig -ljsmn -lwpa -lethernet \
 		-lphy -lapp_trace -lconsole -lulp -lwpa_supplicant -lfreertos -lbt -lmicro-ecc -lcxx -lxtensa-debug-module -ltcp_transport -lmdns -lvfs -lesp_ringbuf -lsoc -lcore -lsdmmc -lcoap -ltcpip_adapter \
 		-lc_nano -lesp-tls -lasio -lrtc -lspi_flash -lwpa2 -lesp32 -lapp_update -lnghttp -lspiffs -lespnow -lnvs_flash -lesp_adc_cal -llog -lsmartconfig_ack -lexpat -lm -lmqtt -lc -lheap -lmbedtls -llwip \
