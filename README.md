@@ -4,6 +4,7 @@ Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/20
 
 ## Changelog
 12/05/2018
+- ALL : add EXCLUDE_USER_LIBS entry to exclude libs from auto dependencies (usefull with libraies with conditionnal includes)
 - ESP32 : Fix for mbedtls config file and add example (BasicHttpClient)
 
 10/16/2018

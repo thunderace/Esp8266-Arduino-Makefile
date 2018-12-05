@@ -5,6 +5,8 @@ SERIAL_PORT = /dev/ttyUSB1
 # uncomment this to use the 1M SPIFFS mapping
 #SPIFFS_SIZE = 1
 #ESPXX_VERSION=git
+# uncomment to eclude this lib from dependencies
+#EXCLUDE_USER_LIBS=ESP8266TrueRandom
 ARDUINO_ARCH=esp32
 USER_DEFINE = -D_SSID_=\"YourSSID\" -D_WIFI_PASSWORD_=\"YourPassword\"
 OTA_IP = 192.168.1.184

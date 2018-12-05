@@ -196,6 +196,10 @@ endif
 #remove duplicate Arduino libs
 USER_LIBS := $(sort $(USER_LIBS) $(UGLIB) $(ULLIB))
 
+USER_LIBS := $(filter-out $(EXCLUDE_USER_LIBS),$(USER_LIBS))
+
+
+
 #and again
 ULIBDIRS = $(sort $(dir $(wildcard \
 	$(USER_LIBS:%=$(LOCAL_USER_LIBDIR)/%/*.c) \
