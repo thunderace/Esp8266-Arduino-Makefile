@@ -3,6 +3,9 @@ Makefile to build arduino code for ESP8266 under linux and Cygwin (tested on deb
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
+12/06/2018
+- ESP32 : Update for ESP32 arduino last git
+
 12/05/2018
 - ALL : add EXCLUDE_USER_LIBS entry to exclude libs from auto dependencies (usefull with libraies with conditionnal includes)
 - ESP32 : Fix for mbedtls config file and add example (BasicHttpClient)

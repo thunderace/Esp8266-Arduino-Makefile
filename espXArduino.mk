@@ -257,6 +257,25 @@ LIB_OBJ_FILES = $(addprefix $(BUILD_OUT)/libraries/,$(notdir $(ULIB_CSRC:.c=.c.o
 ifeq ($(ARDUINO_ARCH),esp8266)
 	CPREPROCESSOR_FLAGS = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ -I$(ESPRESSIF_SDK)/include -I$(ESPRESSIF_SDK)/lwip/include -I$(ESPRESSIF_SDK)/libc/xtensa-lx106-elf/include -I$(BUILD_OUT)/core
 else
+ifeq ($(ESP8266_VERSION),git)
+	CPREPROCESSOR_FLAGS = -DESP_PLATFORM -DMBEDTLS_CONFIG_FILE=\"mbedtls/esp_config.h\" -DHAVE_CONFIG_H -I$(ESPRESSIF_SDK)/include/config \
+					-I$(ESPRESSIF_SDK)/include/app_trace -I$(ESPRESSIF_SDK)/include/app_update -I$(ESPRESSIF_SDK)/include/bootloader_support \
+					-I$(ESPRESSIF_SDK)/include/bt -I$(ESPRESSIF_SDK)/include/coap -I$(ESPRESSIF_SDK)/include/console -I$(ESPRESSIF_SDK)/include/driver \
+					-I$(ESPRESSIF_SDK)/include/esp-tls -I$(ESPRESSIF_SDK)/include/esp32 -I$(ESPRESSIF_SDK)/include/esp_adc_cal -I$(ESPRESSIF_SDK)/include/esp_event \
+					-I$(ESPRESSIF_SDK)/include/esp_http_client -I$(ESPRESSIF_SDK)/include/esp_http_server -I$(ESPRESSIF_SDK)/include/esp_https_ota \
+					-I$(ESPRESSIF_SDK)/include/esp_https_server -I$(ESPRESSIF_SDK)/include/esp_ringbuf -I$(ESPRESSIF_SDK)/include/ethernet \
+					-I$(ESPRESSIF_SDK)/include/expat -I$(ESPRESSIF_SDK)/include/fatfs -I$(ESPRESSIF_SDK)/include/freemodbus -I$(ESPRESSIF_SDK)/include/freertos \
+					-I$(ESPRESSIF_SDK)/include/heap -I$(ESPRESSIF_SDK)/include/idf_test -I$(ESPRESSIF_SDK)/include/jsmn -I$(ESPRESSIF_SDK)/include/json \
+					-I$(ESPRESSIF_SDK)/include/libsodium -I$(ESPRESSIF_SDK)/include/log -I$(ESPRESSIF_SDK)/include/lwip -I$(ESPRESSIF_SDK)/include/mbedtls \
+					-I$(ESPRESSIF_SDK)/include/mdns -I$(ESPRESSIF_SDK)/include/micro-ecc -I$(ESPRESSIF_SDK)/include/esp-mqtt -I$(ESPRESSIF_SDK)/include/newlib \
+					-I$(ESPRESSIF_SDK)/include/nghttp -I$(ESPRESSIF_SDK)/include/nvs_flash -I$(ESPRESSIF_SDK)/include/openssl -I$(ESPRESSIF_SDK)/include/protobuf-c \
+					-I$(ESPRESSIF_SDK)/include/protocomm -I$(ESPRESSIF_SDK)/include/pthread -I$(ESPRESSIF_SDK)/include/sdmmc -I$(ESPRESSIF_SDK)/include/smartconfig_ack \
+					-I$(ESPRESSIF_SDK)/include/soc -I$(ESPRESSIF_SDK)/include/spi_flash -I$(ESPRESSIF_SDK)/include/spiffs -I$(ESPRESSIF_SDK)/include/tcp_transport \
+					-I$(ESPRESSIF_SDK)/include/tcpip_adapter -I$(ESPRESSIF_SDK)/include/ulp -I$(ESPRESSIF_SDK)/include/unity -I$(ESPRESSIF_SDK)/include/vfs \
+					-I$(ESPRESSIF_SDK)/include/wear_levelling -I$(ESPRESSIF_SDK)/include/wifi_provisioning -I$(ESPRESSIF_SDK)/include/wpa_supplicant \
+					-I$(ESPRESSIF_SDK)/include/xtensa-debug-module
+
+else
 	CPREPROCESSOR_FLAGS = -DESP_PLATFORM -DMBEDTLS_CONFIG_FILE=\"mbedtls/esp_config.h\" -DHAVE_CONFIG_H -I$(ESPRESSIF_SDK)/include/config \
 					-I$(ESPRESSIF_SDK)/include/bluedroid -I$(ESPRESSIF_SDK)/include/bluedroid/api -I$(ESPRESSIF_SDK)/include/app_trace -I$(ESPRESSIF_SDK)/include/app_update -I$(ESPRESSIF_SDK)/include/bootloader_support \
 					-I$(ESPRESSIF_SDK)/include/bt -I$(ESPRESSIF_SDK)/include/driver -I$(ESPRESSIF_SDK)/include/esp32 -I$(ESPRESSIF_SDK)/include/esp_adc_cal -I$(ESPRESSIF_SDK)/include/esp_http_client \
@@ -268,6 +287,7 @@ else
 					-I$(ESPRESSIF_SDK)/include/wear_levelling -I$(ESPRESSIF_SDK)/include/xtensa-debug-module -I$(ESPRESSIF_SDK)/include/lwip -I$(ESPRESSIF_SDK)/include/coap -I$(ESPRESSIF_SDK)/include/console \
 					-I$(ESPRESSIF_SDK)/include/expat -I$(ESPRESSIF_SDK)/include/json -I$(ESPRESSIF_SDK)/include/newlib \
 					-I$(ESPRESSIF_SDK)/include/nghttp -I$(ESPRESSIF_SDK)/include/soc -I$(ESPRESSIF_SDK)/include/wpa_supplicant   
+endif
 endif
 
 ifeq ($(ARDUINO_ARCH),esp8266)
@@ -309,10 +329,10 @@ else
 		-mlongcalls -nostdlib -w -Wno-error=unused-function -Wno-error=unused-but-set-variable -Wno-error=unused-variable -Wno-error=deprecated-declarations \
 		-Wno-unused-parameter -Wno-sign-compare -fno-rtti -MMD -c
 ifeq ($(ESP8266_VERSION),git)
-	ELFLIBS = -lgcc -lopenssl -lbtdm_app -lfatfs -lwps -lhttp_server -lcoexist -lwear_levelling -lesp_http_client -lhal -lnewlib -ldriver -lbootloader_support -lpp -lmesh -lsmartconfig -ljsmn -lwpa -lethernet \
-		-lphy -lapp_trace -lconsole -lulp -lwpa_supplicant -lfreertos -lbt -lmicro-ecc -lcxx -lxtensa-debug-module -ltcp_transport -lmdns -lvfs -lesp_ringbuf -lsoc -lcore -lsdmmc -lcoap -ltcpip_adapter \
-		-lc_nano -lesp-tls -lasio -lrtc -lspi_flash -lwpa2 -lesp32 -lapp_update -lnghttp -lspiffs -lespnow -lnvs_flash -lesp_adc_cal -llog -lsmartconfig_ack -lexpat -lm -lmqtt -lc -lheap -lmbedtls -llwip \
-		-lnet80211 -lpthread -ljson -lesp_https_ota  -lstdc++
+	ELFLIBS = -lgcc -lopenssl -lbtdm_app -lfatfs -lwps -lcoexist -lwear_levelling -lesp_http_client -lprotobuf-c -lhal -lnewlib -ldriver -lbootloader_support -lpp -lfreemodbus -lmesh -lsmartconfig -ljsmn -lwpa -lethernet \
+		-lphy -lapp_trace -lconsole -lulp -lwpa_supplicant -lfreertos -lbt -lmicro-ecc -lcxx -lxtensa-debug-module -ltcp_transport -lmdns -lvfs -lesp_ringbuf -lsoc -lcore -lsdmmc -llibsodium -lcoap -ltcpip_adapter \
+		-lprotocomm -lesp_event -lc_nano -lesp-tls -lasio -lrtc -lspi_flash -lwpa2 -lwifi_provisioning -lesp32 -lapp_update -lnghttp -lspiffs -lunity -lesp_https_server -lespnow -lnvs_flash -lesp_adc_cal -llog -lsmartconfig_ack -lexpat -lm -lmqtt -lc -lheap -lmbedtls -llwip \
+		-lnet80211 -lesp_http_server -lpthread -ljson -lesp_https_ota  -lstdc++
 else
 	ELFLIBS = -lgcc -lopenssl -lbtdm_app -lfatfs -lwps -lcoexist -lwear_levelling -lesp_http_client -lhal -lnewlib -ldriver -lbootloader_support -lpp -lmesh -lsmartconfig -ljsmn -lwpa -lethernet \
 		-lphy -lapp_trace -lconsole -lulp -lwpa_supplicant -lfreertos -lbt -lmicro-ecc -lcxx -lxtensa-debug-module -lmdns -lvfs -lsoc -lcore -lsdmmc -lcoap -ltcpip_adapter \
@@ -357,14 +377,14 @@ else
 		$(ELFLIBS) -Wl,--end-group -Wl,-EL
 	SIZE_REGEX_DATA =  '^(?:\.dram0\.data|\.dram0\.bss)\s+([0-9]+).*'
 	SIZE_REGEX = '^(?:\.iram0\.text|\.dram0\.text|\.flash\.text|\.dram0\.data|\.flash\.rodata)\s+([0-9]+).*'
-	UPLOAD_SPEED = 115200
+	UPLOAD_SPEED ?= 115200
 	UPLOAD_PATTERN = --chip esp32 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED)  --before default_reset --after hard_reset write_flash -z \
 		--flash_mode $(FLASH_MODE) --flash_freq $(FLASH_FREQ) \
 		--flash_size detect 0xe000 $(ARDUINO_HOME)/tools/partitions/boot_app0.bin 0x1000  \
 		$(ARDUINO_HOME)/tools/sdk/bin/bootloader_$(BOOT)_$(FLASH_FREQ).bin 0x10000 \
 		$(BUILD_OUT)/$(TARGET).bin 0X8000 $(BUILD_OUT)/$(TARGET).partitions.bin  
 	# WARNING : NOT TESTED TODO : TEST
-	RESET_PATTERN = --chip esp32 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED)  --before hard_reset 
+	RESET_PATTERN = --chip esp32 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED)  --before default_reset 
 endif
 
 .PHONY: all dirs clean upload fs upload_fs
