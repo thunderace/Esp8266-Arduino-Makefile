@@ -7,7 +7,7 @@ mkdir $DOWNLOAD_CACHE
 
 # Get Arduino core for ESP32 chip
 wget --no-clobber https://github.com/espressif/arduino-esp32/releases/download/$ESP32_VER/esp32-$ESP32_VER.zip -P $DOWNLOAD_CACHE
-unzip $DOWNLOAD_CACHE/esp32-$ESP32_VER.zip
+unzip -o $DOWNLOAD_CACHE/esp32-$ESP32_VER.zip
 mkdir esp32-$ESP32_VER/package
 wget --no-clobber https://dl.espressif.com/dl/package_esp32_index.json -O esp32-$ESP32_VER/package/package_esp32_index.template.json
 if [ "$OSTYPE" == "cygwin" ] || [ "$OSTYPE" == "msys" ]; then
