@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Get Arduino core for ESP32 chip
 git clone https://github.com/espressif/arduino-esp32 esp32-git
 cd esp32 && git submodule update --init --recursive
