@@ -29,8 +29,8 @@ ported for sparkfun esp32
 #include "myLib.h"
 #include "myGlobalLib.h"
 
-const char* ssid     = "speedtouch";
-const char* password = "Delphine_Marie_Quentin_Arnaud";
+const char* ssid     = "APNAME";
+const char* password = "AP_PASSWORD";
 
 WiFiServer server(80);
 

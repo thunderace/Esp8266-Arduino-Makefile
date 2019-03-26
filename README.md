@@ -3,6 +3,11 @@ Makefile to build arduino code for ESP8266 under linux and Cygwin (tested on deb
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
+03/26/2019
+- ESP32 : Update for ESP32 arduino last git
+- ESP32 : Update for ESP32 arduino last stable release
+- ESP32 : Fix install scripts
+
 03/13/2019
 - Change Shebang from #!/bin/sh to #!/bin/bash in all install scripts in order to work on recent debian releases
 
