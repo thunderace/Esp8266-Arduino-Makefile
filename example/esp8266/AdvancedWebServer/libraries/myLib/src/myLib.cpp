@@ -1,7 +1,7 @@
 #include <Hash.h>
 
 void myLib(const char *name) {
-  uint8_t * hash = (uint8_t*)malloc(20);
-  sha1("MYKEY", hash);
+  uint8_t hash[20];
+  sha1("test", &hash[0]);
   Serial.println(name);
 }
