@@ -6,6 +6,7 @@ Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/20
 03/28/2019
 - ESP8266-git : last git support
 - ESP8266 : 2.5.0 support. NOTE : don't use the 2.5.0 version , there are lot of bugs in it
+- ESP8266 : lwip v2 lower memory as default lwip variant
 
 03/26/2019
 - ESP32 : Update for ESP32 arduino last git
