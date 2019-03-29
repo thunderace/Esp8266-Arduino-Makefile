@@ -95,6 +95,10 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 		ifeq ($(FLASH_FLAG), none) # for generic boards
 			FLASH_FLAG = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashMode.$(FLASH_MODE).build.flash_flags)
 		endif
+		LWIP_VARIANT ?= lm2f
+		LWIP_FLAGS ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.ip.$(LWIP_VARIANT).build.lwip_flags)
+		LWIP_LIB ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.ip.$(LWIP_VARIANT).build.lwip_lib)
+		LWIP_INCLUDE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.ip.$(LWIP_VARIANT).build.lwip_include)
 	else # Old releases
 		F_CPU = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.CpuFrequency.$(CPU_FREQ).build.f_cpu)
 		FLASH_SIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).build.flash_size)
@@ -103,11 +107,11 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 		SPIFFS_END ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).build.spiffs_end)
 		SPIFFS_BLOCKSIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).build.spiffs_blocksize)
 		UPLOAD_MAXIMUM_SIZE ?=  $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).upload.maximum_size) 
+		LWIP_VARIANT ?= v2mss536
+		LWIP_FLAGS ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.LwIPVariant.$(LWIP_VARIANT).build.lwip_flags)
+		LWIP_LIB ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.LwIPVariant.$(LWIP_VARIANT).build.lwip_lib)
+		LWIP_INCLUDE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.LwIPVariant.$(LWIP_VARIANT).build.lwip_include)
 	endif
-	LWIP_VARIANT ?= lm2f
-	LWIP_FLAGS ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.ip.$(LWIP_VARIANT).build.lwip_flags)
-	LWIP_LIB ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.ip.$(LWIP_VARIANT).build.lwip_lib)
-	LWIP_INCLUDE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.ip.$(LWIP_VARIANT).build.lwip_include)
 	
 	LED_BUILTIN ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.led.2.build.led)
 	SPIFFS_SIZE ?= $(shell echo $$(( $(SPIFFS_END) - $(SPIFFS_START) ))) 
@@ -330,10 +334,16 @@ endif
 endif
 
 ifeq ($(ARDUINO_ARCH),esp8266)
-	DEFINES = -D$(ESP8266_SDK)=1 -DF_CPU=$(F_CPU) $(LWIP_FLAGS) -DARDUINO=$(ARDUINO_VERSION) \
-		-DARDUINO_$(ARDUINO_BOARD) -DARDUINO_ARCH_$(shell echo "$(ARDUINO_ARCH)" | tr '[:lower:]' '[:upper:]') \
-		-DARDUINO_BOARD=\"$(ARDUINO_BOARD)\"  $(LED_BUILTIN) $(FLASH_FLAG) -DESP8266 
-else
+	ifeq ($(ESP8266_VERSION),$(filter $(ESP8266_VERSION),git 2.5.0))
+		DEFINES = -D$(ESP8266_SDK)=1 -DF_CPU=$(F_CPU) $(LWIP_FLAGS) -DARDUINO=$(ARDUINO_VERSION) \
+			-DARDUINO_$(ARDUINO_BOARD) -DARDUINO_ARCH_$(shell echo "$(ARDUINO_ARCH)" | tr '[:lower:]' '[:upper:]') \
+			-DARDUINO_BOARD=\"$(ARDUINO_BOARD)\"  $(LED_BUILTIN) $(FLASH_FLAG) -DESP8266 
+	else
+		DEFINES = -DF_CPU=$(F_CPU) $(LWIP_FLAGS) -DARDUINO=$(ARDUINO_VERSION) \
+			-DARDUINO_$(ARDUINO_BOARD) -DARDUINO_ARCH_$(shell echo "$(ARDUINO_ARCH)" | tr '[:lower:]' '[:upper:]') \
+			-DARDUINO_BOARD=\"$(ARDUINO_BOARD)\" -DESP8266 
+	endif
+else # ESP32
 	DEFINES = -DF_CPU=$(F_CPU) -DARDUINO=$(ARDUINO_VERSION) \
 		-DARDUINO_$(ARDUINO_BOARD) -DARDUINO_ARCH_$(shell echo "$(ARDUINO_ARCH)" | tr '[:lower:]' '[:upper:]') \
 		-DARDUINO_BOARD=\"$(ARDUINO_BOARD)\" -DARDUINO_VARIANT=\"$(ARDUINO_VARIANT)\" -DESP32
@@ -549,7 +559,7 @@ ifneq ($(FS_FILES),)
 	@mkdir -p $(BUILD_OUT)/spiffs
 	$(MKSPIFFS) $(MKSPIFFS_PATTERN)
 else
-	@echo "MKSPIFFS : not input file(s)"
+	
 endif
 
 upload_fs: fs
