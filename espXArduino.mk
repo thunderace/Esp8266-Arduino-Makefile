@@ -21,7 +21,7 @@ GREP := grep$(EXEC_EXT)
 SERIAL_PORT ?= /dev/tty.nodemcu
 ARDUINO_ARCH ?= esp8266
 ifeq ($(ARDUINO_ARCH),esp8266)
-	ESP8266_VERSION ?= 2.4.2
+	ESP8266_VERSION ?= 2.5.0
 else
 	ESP8266_VERSION ?= 1.0.1
 endif
@@ -114,6 +114,10 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 	endif
 	
 	LED_BUILTIN ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.led.2.build.led)
+	ifeq ($(LED_BUILTIN), none) # for generic boards
+		LED_BUILTIN = 
+	endif
+	
 	SPIFFS_SIZE ?= $(shell echo $$(( $(SPIFFS_END) - $(SPIFFS_START) ))) 
 	UPLOAD_MAXIMUM_DATA_SIZE ?=  $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.maximum_data_size) 
 else #ESP32

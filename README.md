@@ -3,9 +3,12 @@ Makefile to build arduino code for ESP8266 under linux and Cygwin (tested on deb
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
+04/11/2019
+- ESP8266 : default version is 2.5.0 - fix LED buitin
+
 03/28/2019
 - ESP8266-git : last git support
-- ESP8266 : 2.5.0 support. NOTE : don't use the 2.5.0 version , there are lot of bugs in it
+- ESP8266 : 2.5.0 support
 - ESP8266 : lwip v2 lower memory as default lwip variant
 
 03/26/2019
