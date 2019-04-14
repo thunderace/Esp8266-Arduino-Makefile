@@ -1,7 +1,7 @@
 #!/bin/bash
 ESP8266_VER=2.4.2
 
-DOWNLOAD_CACHE=./download
+DOWNLOAD_CACHE=/cygdrive/d/6_TMP/downloads
 mkdir $DOWNLOAD_CACHE
 
 # Get Arduino core for ESP8266 chip

@@ -13,6 +13,7 @@ endif
 CAT	:= cat$(EXEC_EXT)
 SED := sed$(EXEC_EXT)
 GREP := grep$(EXEC_EXT)
+PERL := perl$(EXEC_EXT)
 
 #DUMMY := $(shell $(ROOT_DIR)/bin/generate_platform.sh $(ARDUINO_HOME)/platform.txt $(ROOT_DIR)/bin/$(ARDUINO_ARCH)/platform.txt)
 #runtime.platform.path = $(ARDUINO_HOME)
@@ -156,8 +157,10 @@ endif
 
 ifdef NODENAME
 	BUILD_OUT ?= ./build.$(ARDUINO_VARIANT).$(NODENAME)-$(ESP8266_VERSION)
+	BUILD_OUT_TR ?= build.$(ARDUINO_VARIANT).$(NODENAME)-$(ESP8266_VERSION)
 else
 	BUILD_OUT ?= ./build.$(ARDUINO_VARIANT)-$(ESP8266_VERSION)
+	BUILD_OUT_TR ?= build.$(ARDUINO_VARIANT)-$(ESP8266_VERSION)
 endif
 
 ### ESP8266 CORE
@@ -282,15 +285,17 @@ ALIBDIRS = $(sort $(dir $(wildcard \
 	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/src/*.c) \
 	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/src/*.S) \
 	$(ARDUINO_LIBS:%=$(ARDUINO_HOME)/libraries/%/src/*.cpp))))
-ALIB_CSRC := $(wildcard $(addsuffix /*.c,$(ALIBDIRS)))
-ALIB_SSRC := $(wildcard $(addsuffix /*.S,$(ALIBDIRS)))
-ALIB_CXXSRC := $(wildcard $(addsuffix /*.cpp,$(ALIBDIRS)))
+	
+ALIB_CSRC := $(wildcard $(addsuffix *.c,$(ALIBDIRS)))
+ALIB_SSRC := $(wildcard $(addsuffix *.S,$(ALIBDIRS)))
+ALIB_CXXSRC := $(wildcard $(addsuffix *.cpp,$(ALIBDIRS)))
 
 
 # object files
 OBJ_FILES = $(addprefix $(BUILD_OUT)/,$(notdir $(TARGET).ino.cpp.o $(USER_SRC:.c=.c.o) $(USER_CXXSRC:.cpp=.cpp.o) ))
-LIB_OBJ_FILES = $(addprefix $(BUILD_OUT)/libraries/,$(notdir $(ULIB_CSRC:.c=.c.o) $(ALIB_CSRC:.c=.c.o) $(ALIB_SSRC:.S=.S.o) $(ULIB_CXXSRC:.cpp=.cpp.o) $(ALIB_CXXSRC:.cpp=.cpp.o) ))
-
+# LIB_OBJ_FILES = $(addprefix $(BUILD_OUT)/libraries/,$(notdir $(ULIB_CSRC:.c=.c.o) $(ALIB_CSRC:.c=.c.o) $(ALIB_SSRC:.S=.S.o) $(ULIB_CXXSRC:.cpp=.cpp.o) $(ALIB_CXXSRC:.cpp=.cpp.o) ))
+LIB_OBJ_FILES = $(subst $(ARDUINO_HOME),$(BUILD_OUT),$(ULIB_CSRC:.c=.c.o) $(ALIB_CSRC:.c=.c.o) $(ALIB_SSRC:.S=.S.o) $(ULIB_CXXSRC:.cpp=.cpp.o) $(ALIB_CXXSRC:.cpp=.cpp.o))
+LIB_DIRS = $(sort $(dir $(LIB_OBJ_FILES)))
 
 ifeq ($(ARDUINO_ARCH),esp8266)
 	CPREPROCESSOR_FLAGS = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ -I$(ESPRESSIF_SDK)/include -I$(ESPRESSIF_SDK)/$(LWIP_INCLUDE) -I$(ESPRESSIF_SDK)/libc/xtensa-lx106-elf/include -I$(BUILD_OUT)/core
@@ -457,16 +462,30 @@ endif
 
 .PHONY: all dirs clean upload fs upload_fs
 
-all: sketch libs core bin size
+all: sketch libs core bin size 
+# size perl presentation error with cygwin
+# $(PERL) -e "$$MEM_USAGE" $(SIZE_REGEX) $(SIZE_REGEX_DATA)
 
 
 show_variables:
+	$(info [CORE_OBJS] : $(CORE_OBJS))
+	$(info [CORE_DIRS] : $(CORE_DIRS))
 	$(info [ARDUINO_LIBS] : $(ARDUINO_LIBS))
 	$(info [USER_LIBS] : $(USER_LIBS))
+	$(info [ALIBDIRS] : $(ALIBDIRS))
+	$(info [ALIB_CSRC] : $(ALIB_CSRC))
+	$(info [ALIB_SSRC] : $(ALIB_SSRC))
+	$(info [ALIB_CXXSRC] : $(ALIB_CXXSRC))
+	$(info [OBJ_FILES] : $(OBJ_FILES))
+	$(info [LIB_OBJ_FILES] : $(LIB_OBJ_FILES))
+	$(info [LIB_DIRS] : $(LIB_DIRS))
+	$(info [BUILD_OUT_TR] : $(BUILD_OUT_TR))
+	$(info [ARDUINO_HOME] : $(ARDUINO_HOME))
 
 dirs:
 	@mkdir -p $(CORE_DIRS)
 	@mkdir -p $(BUILD_OUT)/libraries
+	@mkdir -p $(LIB_DIRS)
 
 clean:
 	rm -rf $(BUILD_OUT)
@@ -506,11 +525,11 @@ $(BUILD_OUT)/core/%.c.o: %.c
 $(BUILD_OUT)/core/%.cpp.o: %.cpp
 	$(CXX) $(CORE_DEFINE) $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(DEFINES) $(CORE_INC:%=-I%)  $< -o $@
 
-$(BUILD_OUT)/libraries/%.c.o: %.c
-	$(CC) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CFLAGS) $(DEFINES)  $(INCLUDES) -o $@ $<
-
-$(BUILD_OUT)/libraries/%.cpp.o: %.cpp
-	$(CXX) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(USER_DEFINE) $(DEFINES) $(INCLUDE_ARDUINO_H) $(INCLUDES) $< -o $@	
+$(filter %.c.o,$(LIB_OBJ_FILES)): %.c.o:
+	$(CC) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CFLAGS) $(DEFINES)  $(INCLUDES) -o $@ $(subst $(BUILD_OUT_TR),$(ARDUINO_HOME),$(subst .c.o,.c, $@))
+	
+$(filter %.cpp.o,$(LIB_OBJ_FILES)): %.cpp.o:
+	$(CXX) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(USER_DEFINE) $(DEFINES) $(INCLUDE_ARDUINO_H) $(INCLUDES) $(subst $(BUILD_OUT_TR),$(ARDUINO_HOME),$(subst .cpp.o,.cpp, $@)) -o $@
 
 $(BUILD_OUT)/libraries/%.S.o: %.S
 	$(CC) $(CPREPROCESSOR_FLAGS) $(ASFLAGS) $(DEFINES) $(USER_DEFINE) $(INCLUDES) -o $@ $<
@@ -539,7 +558,8 @@ $(BUILD_OUT)/$(TARGET).elf: sketch prelink core libs
 	$(LD) $(ELFFLAGS) -o $@ $(C_COMBINE_PATTERN)
 
 size: $(BUILD_OUT)/$(TARGET).elf
-	@$(SIZE) -A $(BUILD_OUT)/$(TARGET).elf | perl -e "$$MEM_USAGE" $(SIZE_REGEX) $(SIZE_REGEX_DATA)
+	@$(SIZE) -A $(BUILD_OUT)/$(TARGET).elf | grep -E '^(Total|\.text|\.data|\.rodata|\.bss|\.comment|\.irom0\.text|)\s+([0-9]+).*'
+	
 
 $(BUILD_OUT)/$(TARGET).bin: $(BUILD_OUT)/$(TARGET).elf
 ifeq ($(ARDUINO_ARCH),esp32)

@@ -1,0 +1,12 @@
+{
+    "espVersions":
+    {
+        "ESP8266_VER":"2.4.2",
+        "ESP32_VER":"1.0.1"
+    },
+    "paths":
+    {
+        "cacheFolder": "/cygdrive/d/6_TMP/downloads",
+        "librariesFolder": "/cygdrive/d/5_GITHUB/Esp8266-Arduino-Makefile/esp8266-2.4.2/libraries"
+    }
+}

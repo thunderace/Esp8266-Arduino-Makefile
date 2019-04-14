@@ -2,7 +2,7 @@
 # Get Arduino core for ESP32 chip
 ESP32_VER=1.0.1
 
-DOWNLOAD_CACHE=./download
+DOWNLOAD_CACHE=/cygdrive/d/6_TMP/downloads
 mkdir $DOWNLOAD_CACHE
 
 # Get Arduino core for ESP32 chip
