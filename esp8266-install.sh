@@ -1,5 +1,5 @@
 #!/bin/bash
-ESP8266_VER=2.5.0
+ESP8266_VER=2.5.2
 
 DOWNLOAD_CACHE=./download
 mkdir $DOWNLOAD_CACHE
