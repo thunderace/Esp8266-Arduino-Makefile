@@ -3,11 +3,12 @@ Makefile to build arduino code for ESP8266 under linux and Cygwin (tested on deb
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
+05/23/2019
+- TODO removed
+
 05/22/2019
 - ESP8266 : default version is 2.5.2
 - ESP32 : default version is 1.0.2
-- **TODO** : ESP8266 upload tests
-- **TODO** : update ESP8266/ESP32 git repo and test
 
 04/11/2019
 - ESP8266 : default version is 2.5.0 - fix LED buitin

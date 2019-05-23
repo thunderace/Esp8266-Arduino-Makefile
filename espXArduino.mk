@@ -314,7 +314,7 @@ ifeq ($(ESP8266_VERSION),git)
 					-I$(ESPRESSIF_SDK)/include/openssl -I$(ESPRESSIF_SDK)/include/protobuf-c -I$(ESPRESSIF_SDK)/include/protocomm -I$(ESPRESSIF_SDK)/include/pthread \
 					-I$(ESPRESSIF_SDK)/include/sdmmc -I$(ESPRESSIF_SDK)/include/smartconfig_ack -I$(ESPRESSIF_SDK)/include/soc -I$(ESPRESSIF_SDK)/include/spi_flash \
 					-I$(ESPRESSIF_SDK)/include/spiffs -I$(ESPRESSIF_SDK)/include/tcp_transport -I$(ESPRESSIF_SDK)/include/tcpip_adapter -I$(ESPRESSIF_SDK)/include/ulp \
-					-I$(ESPRESSIF_SDK)/include/unity -I$(ESPRESSIF_SDK)/include/vfs -I$(ESPRESSIF_SDK)/include/wear_levelling -I$(ESPRESSIF_SDK)/include/wifi_provisioning \
+					-I$(ESPRESSIF_SDK)/include/vfs -I$(ESPRESSIF_SDK)/include/wear_levelling -I$(ESPRESSIF_SDK)/include/wifi_provisioning \
 					-I$(ESPRESSIF_SDK)/include/wpa_supplicant -I$(ESPRESSIF_SDK)/include/xtensa-debug-module -I$(ESPRESSIF_SDK)/include/esp32-camera \
 					-I$(ESPRESSIF_SDK)/include/esp-face -I$(ESPRESSIF_SDK)/include/fb_gfx 
 else
@@ -393,10 +393,10 @@ else	#ESP32
 		-Wno-unused-parameter -Wno-sign-compare -fno-rtti -MMD -c
 ifeq ($(ESP8266_VERSION),git)
 	ELFLIBS = -lgcc -lopenssl -lbtdm_app -lfatfs -lwps -lcoexist -lwear_levelling -lesp_http_client -lprotobuf-c -lhal -lnewlib -ldriver -lbootloader_support -lpp -lfreemodbus \
-		-lmesh -lsmartconfig -ljsmn -lwpa -lethernet -lphy -lfrmn -lapp_trace -lfr_coefficients -lconsole -lulp -lwpa_supplicant -lfreertos -lbt -lmicro-ecc -lesp32-camera \
-		-lcxx -lxtensa-debug-module -ltcp_transport -lmdns -lvfs -lmtmn -lespcoredump -lesp_ringbuf -lsoc -lcore -lfb_gfx -lsdmmc -llibsodium -lcoap -ltcpip_adapter \
+		-lmesh -lsmartconfig -ljsmn -lwpa -lethernet -lphy -lapp_trace -lconsole -lulp -lwpa_supplicant -lfreertos -lbt -lmicro-ecc -lesp32-camera \
+		-lcxx -lxtensa-debug-module -ltcp_transport -lmdns -lvfs -lesp_ringbuf -lsoc -lcore -lfb_gfx -lsdmmc -llibsodium -lcoap -ltcpip_adapter \
 		-lprotocomm -lesp_event -limage_util -lc_nano -lesp-tls -lasio -lrtc -lspi_flash -lwpa2 -lwifi_provisioning -lesp32 -lface_recognition -lapp_update -lnghttp -lspiffs \
-		-lface_detection -lefuse -lunity -lesp_https_server -lespnow -lnvs_flash -lesp_adc_cal -llog -ldl_lib -lsmartconfig_ack -lexpat -lfd_coefficients -lm -lmqtt -lc -lheap -lmbedtls -llwip \
+		-lface_detection -lespnow -lnvs_flash -lesp_adc_cal -llog -ldl_lib -lsmartconfig_ack -lexpat -lm -lmqtt -lc -lheap -lmbedtls -llwip \
 		-lnet80211 -lesp_http_server -lpthread -ljson -lesp_https_ota -lstdc++
 else
 	ELFLIBS = -lgcc -lopenssl -lbtdm_app -lfatfs -lwps -lcoexist -lwear_levelling -lesp_http_client -lprotobuf-c -lhal -lnewlib -ldriver -lbootloader_support -lpp -lfreemodbus \
