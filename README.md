@@ -3,6 +3,10 @@ Makefile to build arduino code for ESP8266 under linux and Cygwin (tested on deb
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
+06/19/2019
+- ESP8266 : new stable installation script
+- ESP8266 : fast and dirty #28 fix : use new elf2bin/upload python scripts
+
 05/23/2019
 - TODO removed
 

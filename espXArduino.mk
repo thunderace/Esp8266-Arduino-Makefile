@@ -138,7 +138,9 @@ MKSPIFFS=$(ARDUINO_HOME)/tools/mkspiffs/mkspiffs$(EXEC_EXT)
 ESPOTA ?= $(ARDUINO_HOME)/tools/espota.py
 ifeq ($(ARDUINO_ARCH),esp8266)
 	XTENSA_TOOLCHAIN ?= $(ARDUINO_HOME)/tools/xtensa-lx106-elf/bin/
-	ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool/esptool$(EXEC_EXT)
+	ESPTOOL ?= $(ARDUINO_HOME)/tools/elf2bin.py
+	UPLOADTOOL ?= $(ARDUINO_HOME)/tools/upload.py
+	#ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool/esptool$(EXEC_EXT)
 	ESP8266_SDK ?= NONOSDK221
 else
 	XTENSA_TOOLCHAIN ?= $(ARDUINO_HOME)/tools/xtensa-esp32-elf/bin/
@@ -370,7 +372,7 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 	CXXFLAGS = -c -w -Os -g -mlongcalls -mtext-section-literals -fno-exceptions \
 		-fno-rtti -falign-functions=4 -std=c++11 -MMD -ffunction-sections -fdata-sections
 ifeq ($(ESP8266_VERSION),$(filter $(ESP8266_VERSION),git 2.5.2))
-	ELFFLAGS = -g -w -Os -nostdlib -Wl,--no-check-sections -u app_entry -u _printf_float -u _scanf_float -Wl,-static \
+	ELFFLAGS = -fno-exceptions -g -w -Os -nostdlib -Wl,--no-check-sections -u app_entry -u _printf_float -u _scanf_float -Wl,-static \
 			-L$(ESPRESSIF_SDK)/lib -L$(ESPRESSIF_SDK)/lib/$(ESP8266_SDK) -L$(ESPRESSIF_SDK)/ld -L$(ESPRESSIF_SDK)/libc/xtensa-lx106-elf/lib \
 			 -T$(FLASH_LD) \
 			 -Wl,--gc-sections -Wl,-wrap,system_restart_local -Wl,-wrap,spi_flash_read
@@ -417,9 +419,12 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 	LD := $(XTENSA_TOOLCHAIN)xtensa-lx106-elf-gcc
 	OBJDUMP := $(XTENSA_TOOLCHAIN)xtensa-lx106-elf-objdump
 	SIZE := $(XTENSA_TOOLCHAIN)xtensa-lx106-elf-size
-	OBJCOPY_HEX_PATTERN = -eo $(ARDUINO_HOME)/bootloaders/eboot/eboot.elf -bo $(BUILD_OUT)/$(TARGET).bin \
-		-bm $(FLASH_MODE) -bf $(FLASH_FREQ) -bz $(FLASH_SIZE) \
-		-bs .text -bp 4096 -ec -eo $(BUILD_OUT)/$(TARGET).elf -bs .irom0.text -bs .text -bs .data -bs .rodata -bc -ec
+	OBJCOPY_HEX_PATTERN = --eboot $(ARDUINO_HOME)/bootloaders/eboot/eboot.elf --app $(BUILD_OUT)/$(TARGET).elf \
+		--flash_mode $(FLASH_MODE) --flash_freq $(FLASH_FREQ) --flash_size $(FLASH_SIZE) \
+		--path $(XTENSA_TOOLCHAIN) --out $(BUILD_OUT)/$(TARGET).bin
+#	OBJCOPY_HEX_PATTERN = -eo $(ARDUINO_HOME)/bootloaders/eboot/eboot.elf -bo $(BUILD_OUT)/$(TARGET).bin \
+#		-bm $(FLASH_MODE) -bf $(FLASH_FREQ) -bz $(FLASH_SIZE) \
+#		-bs .text -bp 4096 -ec -eo $(BUILD_OUT)/$(TARGET).elf -bs .irom0.text -bs .text -bs .data -bs .rodata -bc -ec
 	SIZE_REGEX_DATA = '^(?:\.data|\.rodata|\.bss)\s+([0-9]+).*'
 	SIZE_REGEX = '^(?:\.irom0\.text|\.text|\.data)\s+([0-9]+).*'
 	SIZE_REGEX_EEPROM = '^(?:\.eeprom)\s+([0-9]+).*'
@@ -556,8 +561,11 @@ reset:
 	-$(ESPTOOL) $(RESET_PATTERN)
 
 upload: $(BUILD_OUT)/$(TARGET).bin size
+ifeq ($(ESP8266_VERSION),$(filter $(ESP8266_VERSION),git 2.5.2))
+	python3 $(UPLOADTOOL) --chip esp8266 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED) version --end --chip esp8266 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED) write_flash 0x0 $(BUILD_OUT)/$(TARGET).bin --end
+else
 	$(ESPTOOL) $(UPLOAD_PATTERN)
-
+endif
 fs:
 ifneq ($(FS_FILES),)
 	@rm -f $(FS_IMAGE)
