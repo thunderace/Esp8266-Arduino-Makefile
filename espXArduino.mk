@@ -25,6 +25,21 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 else
 	ESP8266_VERSION ?= 1.0.2
 endif
+
+word-dot = $(word $2,$(subst ., ,$1))
+NUM_ESP8266_VERSION = $(call word-dot,$(ESP8266_VERSION),1)$(call word-dot,$(ESP8266_VERSION),2)$(call word-dot,$(ESP8266_VERSION),3)
+ifeq ($(ESP8266_VERSION),$(filter $(ESP8266_VERSION),git))
+   ESP8266_PROCESS=NEW
+else
+	compareint = $(shell if [ $(1) -ge $(2) ] ; then echo ge ; else echo lt ; fi)
+	ifeq ($(call compareint,$(NUM_ESP8266_VERSION),252),ge)
+  	ESP8266_PROCESS=NEW
+	else
+		ESP8266_PROCESS=OLD
+	endif
+endif
+
+
 ARDUINO_HOME ?=  $(ROOT_DIR)/$(ARDUINO_ARCH)-$(ESP8266_VERSION)
 
 ARDUINO_VARIANT ?= nodemcu
@@ -67,11 +82,12 @@ endif
 
 UPLOAD_RESETMETHOD ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.resetmethod)
 UPLOAD_SPEED ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.speed)
+
 ifeq ($(UPLOAD_SPEED),none)
-	UPLOAD_SPEED = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.baud.115200)
+	UPLOAD_SPEED = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.UploadSpeed.115200)
 endif
 
-ifeq ($(ESP8266_VERSION),$(filter $(ESP8266_VERSION),git 2.5.2))
+ifeq ($(ESP8266_PROCESS),$(filter $(ESP8266_PROCESS),NEW))
 	FLASH_LD ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.eesz.$(FLASH_PARTITION).build.flash_ld)
 else
 	FLASH_LD ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).build.flash_ld)
@@ -83,7 +99,9 @@ endif
 #endif
 
 ifeq ($(ARDUINO_ARCH),esp8266)
-	ifeq ($(ESP8266_VERSION),$(filter $(ESP8266_VERSION),git 2.5.2))
+
+	ifeq ($(ESP8266_PROCESS),$(filter $(ESP8266_PROCESS),NEW))
+		TOTO=TRUE
 		F_CPU = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.xtal.$(CPU_FREQ).build.f_cpu)
 		FLASH_SIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.eesz.$(FLASH_PARTITION).build.flash_size)
 		SPIFFS_PAGESIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.eesz.$(FLASH_PARTITION).build.spiffs_pagesize)
@@ -99,7 +117,7 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 		LWIP_FLAGS ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.ip.$(LWIP_VARIANT).build.lwip_flags)
 		LWIP_LIB ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.ip.$(LWIP_VARIANT).build.lwip_lib)
 		LWIP_INCLUDE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.ip.$(LWIP_VARIANT).build.lwip_include)
-	else # Old releases
+	else # Old releases < 2.5.2
 		F_CPU = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.CpuFrequency.$(CPU_FREQ).build.f_cpu)
 		FLASH_SIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).build.flash_size)
 		SPIFFS_PAGESIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).build.spiffs_pagesize)
@@ -138,9 +156,13 @@ MKSPIFFS=$(ARDUINO_HOME)/tools/mkspiffs/mkspiffs$(EXEC_EXT)
 ESPOTA ?= $(ARDUINO_HOME)/tools/espota.py
 ifeq ($(ARDUINO_ARCH),esp8266)
 	XTENSA_TOOLCHAIN ?= $(ARDUINO_HOME)/tools/xtensa-lx106-elf/bin/
-	ESPTOOL ?= $(ARDUINO_HOME)/tools/elf2bin.py
-	UPLOADTOOL ?= $(ARDUINO_HOME)/tools/upload.py
-	#ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool/esptool$(EXEC_EXT)
+	ifeq ($(ESP8266_PROCESS),$(filter $(ESP8266_PROCESS),NEW))
+		PYTHON = $(ARDUINO_HOME)/tools/python/python$(EXEC_EXT)
+		ESPTOOL ?= $(ARDUINO_HOME)/tools/elf2bin.py
+		UPLOADTOOL ?= $(ARDUINO_HOME)/tools/upload.py
+	else
+		ESPTOOL ?= $(ARDUINO_HOME)/tools/esptool/esptool$(EXEC_EXT)
+	endif
 	ESP8266_SDK ?= NONOSDK221
 else
 	XTENSA_TOOLCHAIN ?= $(ARDUINO_HOME)/tools/xtensa-esp32-elf/bin/
@@ -172,7 +194,7 @@ CORE_SRC = $(wildcard $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/*.c)
 CORE_SRC += $(wildcard $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/*/*.c)
 CORE_CXXSRC = $(wildcard $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/*.cpp)
 
-ifeq ($(ARDUINO_ARCH)$(ESP8266_VERSION),$(filter $(ARDUINO_ARCH)$(ESP8266_VERSION),esp8266git esp82662.5.2))
+ifeq ($(ARDUINO_ARCH)-$(ESP8266_PROCESS),$(filter $(ARDUINO_ARCH)-$(ESP8266_PROCESS),esp8266-NEW))
 	CORE_CXXSRC += $(wildcard $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/libb64/*.cpp)
 	CORE_CXXSRC += $(wildcard $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/spiffs/*.cpp)
 	CORE_CXXSRC += $(wildcard $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/umm_malloc/*.cpp)
@@ -341,7 +363,7 @@ endif
 endif
 
 ifeq ($(ARDUINO_ARCH),esp8266)
-	ifeq ($(ESP8266_VERSION),$(filter $(ESP8266_VERSION),git 2.5.2))
+	ifeq ($(ESP8266_PROCESS),$(filter $(ESP8266_PROCESS),NEW))
 		DEFINES = -D$(ESP8266_SDK)=1 -DF_CPU=$(F_CPU) $(LWIP_FLAGS) -DARDUINO=$(ARDUINO_VERSION) \
 			-DARDUINO_$(ARDUINO_BOARD) -DARDUINO_ARCH_$(shell echo "$(ARDUINO_ARCH)" | tr '[:lower:]' '[:upper:]') \
 			-DARDUINO_BOARD=\"$(ARDUINO_BOARD)\"  $(LED_BUILTIN) $(FLASH_FLAG) -DESP8266 
@@ -371,20 +393,19 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 		-falign-functions=4 -MMD -std=gnu99 -ffunction-sections -fdata-sections
 	CXXFLAGS = -c -w -Os -g -mlongcalls -mtext-section-literals -fno-exceptions \
 		-fno-rtti -falign-functions=4 -std=c++11 -MMD -ffunction-sections -fdata-sections
-ifeq ($(ESP8266_VERSION),$(filter $(ESP8266_VERSION),git 2.5.2))
-	ELFFLAGS = -fno-exceptions -g -w -Os -nostdlib -Wl,--no-check-sections -u app_entry -u _printf_float -u _scanf_float -Wl,-static \
+	ifeq ($(ESP8266_PROCESS),$(filter $(ESP8266_PROCESS),NEW))
+		ELFFLAGS = -fno-exceptions -g -w -Os -nostdlib -Wl,--no-check-sections -u app_entry -u _printf_float -u _scanf_float -Wl,-static \
 			-L$(ESPRESSIF_SDK)/lib -L$(ESPRESSIF_SDK)/lib/$(ESP8266_SDK) -L$(ESPRESSIF_SDK)/ld -L$(ESPRESSIF_SDK)/libc/xtensa-lx106-elf/lib \
 			 -T$(FLASH_LD) \
 			 -Wl,--gc-sections -Wl,-wrap,system_restart_local -Wl,-wrap,spi_flash_read
-	ELFLIBS = -lhal -lphy -lpp -lnet80211 $(LWIP_LIB) -lwpa -lcrypto -lmain -lwps -lbearssl -laxtls -lespnow -lsmartconfig -lairkiss -lwpa2 -lstdc++ -lm -lc -lgcc
-else
-	ELFFLAGS = -g -Os -nostdlib -Wl,--no-check-sections -u call_user_start -u _printf_float -u _scanf_float -Wl,-static \
+		ELFLIBS = -lhal -lphy -lpp -lnet80211 $(LWIP_LIB) -lwpa -lcrypto -lmain -lwps -lbearssl -laxtls -lespnow -lsmartconfig -lairkiss -lwpa2 -lstdc++ -lm -lc -lgcc
+	else
+		ELFFLAGS = -g -Os -nostdlib -Wl,--no-check-sections -u call_user_start -u _printf_float -u _scanf_float -Wl,-static \
 			-L$(ESPRESSIF_SDK)/lib -L$(ESPRESSIF_SDK)/ld -L$(ESPRESSIF_SDK)/libc/xtensa-lx106-elf/lib \
 			 -T$(FLASH_LD) \
 			 -Wl,--gc-sections -Wl,-wrap,system_restart_local -Wl,-wrap,spi_flash_read
-	ELFLIBS = -lhal -lphy -lpp -lnet80211 $(LWIP_LIB) -lwpa -lcrypto -lmain -lwps -laxtls -lespnow -lsmartconfig -lairkiss -lwpa2 -lstdc++ -lm -lc -lgcc
-endif
-			 
+		ELFLIBS = -lhal -lphy -lpp -lnet80211 $(LWIP_LIB) -lwpa -lcrypto -lmain -lwps -laxtls -lespnow -lsmartconfig -lairkiss -lwpa2 -lstdc++ -lm -lc -lgcc
+	endif
 else	#ESP32
 	ASFLAGS = -c -g3 -x assembler-with-cpp -MMD -mlongcalls
 	CFLAGS = -std=gnu99 -Os -g3 -fstack-protector -ffunction-sections -fdata-sections -fstrict-volatile-bitfields -mlongcalls \
@@ -419,12 +440,15 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 	LD := $(XTENSA_TOOLCHAIN)xtensa-lx106-elf-gcc
 	OBJDUMP := $(XTENSA_TOOLCHAIN)xtensa-lx106-elf-objdump
 	SIZE := $(XTENSA_TOOLCHAIN)xtensa-lx106-elf-size
-	OBJCOPY_HEX_PATTERN = --eboot $(ARDUINO_HOME)/bootloaders/eboot/eboot.elf --app $(BUILD_OUT)/$(TARGET).elf \
-		--flash_mode $(FLASH_MODE) --flash_freq $(FLASH_FREQ) --flash_size $(FLASH_SIZE) \
-		--path $(XTENSA_TOOLCHAIN) --out $(BUILD_OUT)/$(TARGET).bin
-#	OBJCOPY_HEX_PATTERN = -eo $(ARDUINO_HOME)/bootloaders/eboot/eboot.elf -bo $(BUILD_OUT)/$(TARGET).bin \
-#		-bm $(FLASH_MODE) -bf $(FLASH_FREQ) -bz $(FLASH_SIZE) \
-#		-bs .text -bp 4096 -ec -eo $(BUILD_OUT)/$(TARGET).elf -bs .irom0.text -bs .text -bs .data -bs .rodata -bc -ec
+	ifeq ($(ESP8266_PROCESS),$(filter $(ESP8266_PROCESS),NEW))
+		OBJCOPY_HEX_PATTERN = --eboot $(ARDUINO_HOME)/bootloaders/eboot/eboot.elf --app $(BUILD_OUT)/$(TARGET).elf \
+			--flash_mode $(FLASH_MODE) --flash_freq $(FLASH_FREQ) --flash_size $(FLASH_SIZE) \
+			--path $(XTENSA_TOOLCHAIN) --out $(BUILD_OUT)/$(TARGET).bin
+	else
+		OBJCOPY_HEX_PATTERN = -eo $(ARDUINO_HOME)/bootloaders/eboot/eboot.elf -bo $(BUILD_OUT)/$(TARGET).bin \
+			-bm $(FLASH_MODE) -bf $(FLASH_FREQ) -bz $(FLASH_SIZE) \
+			-bs .text -bp 4096 -ec -eo $(BUILD_OUT)/$(TARGET).elf -bs .irom0.text -bs .text -bs .data -bs .rodata -bc -ec
+	endif
 	SIZE_REGEX_DATA = '^(?:\.data|\.rodata|\.bss)\s+([0-9]+).*'
 	SIZE_REGEX = '^(?:\.irom0\.text|\.text|\.data)\s+([0-9]+).*'
 	SIZE_REGEX_EEPROM = '^(?:\.eeprom)\s+([0-9]+).*'
@@ -432,7 +456,7 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 	RESET_PATTERN = $(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cp $(SERIAL_PORT) -cr
 	FS_UPLOAD_PATTERN = $(ESPTOOL_VERBOSE)  --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED) -a soft_reset write_flash $(SPIFFS_START) 
 	MKSPIFFS_PATTERN = -c $(FS_DIR) -b $(SPIFFS_BLOCKSIZE) -p $(SPIFFS_PAGESIZE) -s $(SPIFFS_SIZE) $(FS_IMAGE)
-ifeq ($(ESP8266_VERSION),$(filter $(ESP8266_VERSION),git 2.5.2))
+ifeq ($(ESP8266_PROCESS),$(filter $(ESP8266_PROCESS),NEW))
 	C_COMBINE_PATTERN = -Wl,-Map "-Wl,$(BUILD_OUT)/$(TARGET).map" -Wl,--start-group $(OBJ_FILES) $(LIB_OBJ_FILES) $(BUILD_OUT)/core/core.a \
 		$(ELFLIBS) -Wl,--end-group -L$(BUILD_OUT)
 else
@@ -496,7 +520,7 @@ VTABLE_FLAGS=-DVTABLES_IN_FLASH
 
 prelink:
 ifneq ("$(wildcard  $(ESPRESSIF_SDK)/ld/eagle.app.v6.common.ld.h)","")
-ifeq ($(ESP8266_VERSION),$(filter $(ESP8266_VERSION),git 2.5.2))
+ifeq ($(ESP8266_PROCESS),$(filter $(ESP8266_PROCESS),NEW))
 	$(CC) $(VTABLE_FLAGS) -CC -E -P  $(ESPRESSIF_SDK)/ld/eagle.app.v6.common.ld.h -o $(BUILD_OUT)/local.eagle.app.v6.common.ld
 else
 	$(CC) $(VTABLE_FLAGS) -CC -E -P  $(ESPRESSIF_SDK)/ld/eagle.app.v6.common.ld.h -o $(ESPRESSIF_SDK)/ld/eagle.app.v6.common.ld
@@ -561,8 +585,8 @@ reset:
 	-$(ESPTOOL) $(RESET_PATTERN)
 
 upload: $(BUILD_OUT)/$(TARGET).bin size
-ifeq ($(ESP8266_VERSION),$(filter $(ESP8266_VERSION),git 2.5.2))
-	python3 $(UPLOADTOOL) --chip esp8266 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED) version --end --chip esp8266 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED) write_flash 0x0 $(BUILD_OUT)/$(TARGET).bin --end
+ifeq ($(ESP8266_PROCESS),$(filter $(ESP8266_PROCESS),NEW))
+	$(PYTHON) $(UPLOADTOOL) --chip esp8266 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED) version --end --chip esp8266 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED) write_flash 0x0 $(BUILD_OUT)/$(TARGET).bin --end
 else
 	$(ESPTOOL) $(UPLOAD_PATTERN)
 endif
@@ -577,7 +601,10 @@ endif
 
 upload_fs: fs
 ifeq ($(ARDUINO_ARCH),esp8266)
-	$(ESPTOOL) $(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cb $(UPLOAD_SPEED) -cp $(SERIAL_PORT) -ca $(SPIFFS_START) -cf $(FS_IMAGE)
+	ifeq ($(ESP8266_PROCESS),$(filter $(ESP8266_PROCESS),NEW))
+	else
+		$(ESPTOOL) $(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cb $(UPLOAD_SPEED) -cp $(SERIAL_PORT) -ca $(SPIFFS_START) -cf $(FS_IMAGE)
+	endif
 else
 	@echo upload_fs : No SPIFFS function available for $(ARDUINO_ARCH)
 endif

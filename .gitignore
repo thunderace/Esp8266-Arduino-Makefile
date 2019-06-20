@@ -2,3 +2,5 @@ build.*/
 download
 esp8266-*/
 esp32-*/
+serial.log
+out.txt
