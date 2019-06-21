@@ -14,10 +14,6 @@ CAT	:= cat$(EXEC_EXT)
 SED := sed$(EXEC_EXT)
 GREP := grep$(EXEC_EXT)
 
-#DUMMY := $(shell $(ROOT_DIR)/bin/generate_platform.sh $(ARDUINO_HOME)/platform.txt $(ROOT_DIR)/bin/$(ARDUINO_ARCH)/platform.txt)
-#runtime.platform.path = $(ARDUINO_HOME)
-#include $(ROOT_DIR)/bin/$(ARDUINO_ARCH)/platform.txt
-
 SERIAL_PORT ?= /dev/tty.nodemcu
 ARDUINO_ARCH ?= esp8266
 ifeq ($(ARDUINO_ARCH),esp8266)
@@ -41,109 +37,91 @@ endif
 
 
 ARDUINO_HOME ?=  $(ROOT_DIR)/$(ARDUINO_ARCH)-$(ESP8266_VERSION)
-
 ARDUINO_VARIANT ?= nodemcu
 ARDUINO_VERSION ?= 10805
-
 BOARDS_TXT  = $(ARDUINO_HOME)/boards.txt
+include $(BOARDS_TXT)
 PLATFORM_TXT  = $(ARDUINO_HOME)/platform.txt
-PARSE_BOARD = $(ROOT_DIR)/bin/ard-parse-boards
-PARSE_PLATFORM = $(ROOT_DIR)/bin/ard-parse-platform
-PARSE_BOARD_OPTS = --boards_txt=$(BOARDS_TXT)
-PARSE_BOARD_CMD = $(PARSE_BOARD) $(PARSE_BOARD_OPTS)
-PARSE_PLATFORM_OPTS = --platform_txt=$(PLATFORM_TXT)
-PARSE_PLATFORM_CMD = $(PARSE_PLATFORM) $(PARSE_PLATFORM_OPTS)
-
-ARDUINO_CORE_VERSION = $(shell $(PARSE_PLATFORM_CMD) version)
-ARDUINO_BOARD = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.board)
-VARIANT = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.variant)
+include $(PLATFORM_TXT)
+ARDUINO_CORE_VERSION = $(version)
+ARDUINO_BOARD = $($(ARDUINO_VARIANT).build.board)
+VARIANT = $($(ARDUINO_VARIANT).build.variant)
 
 CONCATENATE_USER_FILES ?= yes
 FLASH_PARTITION ?= 4M1M
 
-MCU = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.mcu)
+MCU = $($(ARDUINO_VARIANT).build.mcu)
 SERIAL_BAUD   ?= 115200
 ifeq ($(ARDUINO_ARCH),esp8266)
 	CPU_FREQ ?= 80
 	DEFAULT_FLASH_FREQ = 40
-	FLASH_FREQ ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.flash_freq)
-	ifeq ($(FLASH_FREQ), none)
+	FLASH_FREQ ?= $($(ARDUINO_VARIANT).build.flash_freq)
+	ifeq ($(FLASH_FREQ),)
 		FLASH_FREQ = $(DEFAULT_FLASH_FREQ)
 	endif
 else
 	CPU_FREQ ?= 40
-	FLASH_FREQ ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashFreq.$(CPU_FREQ).build.flash_freq)
+	FLASH_FREQ ?= $($(ARDUINO_VARIANT).menu.FlashFreq.$(CPU_FREQ).build.flash_freq)
 endif
 
-FLASH_MODE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.flash_mode)
-ifeq ($(FLASH_MODE), none)
+FLASH_MODE ?= $($(ARDUINO_VARIANT).build.flash_mode)
+ifeq ($(FLASH_MODE),)
 	FLASH_MODE = qio
 endif
 
-UPLOAD_RESETMETHOD ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.resetmethod)
-UPLOAD_SPEED ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.speed)
+UPLOAD_RESETMETHOD ?= $($(ARDUINO_VARIANT).upload.resetmethod)
+UPLOAD_SPEED ?= $($(ARDUINO_VARIANT).upload.speed)
 
-ifeq ($(UPLOAD_SPEED),none)
+ifeq ($(UPLOAD_SPEED),)
 	UPLOAD_SPEED = 115200
 endif
 
 ifeq ($(ESP8266_PROCESS),$(filter $(ESP8266_PROCESS),NEW))
-	FLASH_LD ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.eesz.$(FLASH_PARTITION).build.flash_ld)
+	FLASH_LD ?= $($(ARDUINO_VARIANT).menu.eesz.$(FLASH_PARTITION).build.flash_ld)
 else
-	FLASH_LD ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).build.flash_ld)
+	FLASH_LD ?= $($(ARDUINO_VARIANT).menu.FlashSize.$(FLASH_PARTITION).build.flash_ld)
 endif
 
-#ifeq ($(FLASH_LD),none)
-	#directly select the ld file from FLASH_PARTITION
-#	FLASH_LD := eagle.flash.$(shell echo $(FLASH_PARTITION) | tr '[:upper:]' '[:lower:]').ld
-#endif
-
 ifeq ($(ARDUINO_ARCH),esp8266)
-
 	ifeq ($(ESP8266_PROCESS),$(filter $(ESP8266_PROCESS),NEW))
-		TOTO=TRUE
-		F_CPU = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.xtal.$(CPU_FREQ).build.f_cpu)
-		FLASH_SIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.eesz.$(FLASH_PARTITION).build.flash_size)
-		SPIFFS_PAGESIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.eesz.$(FLASH_PARTITION).build.spiffs_pagesize)
-		SPIFFS_START ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.eesz.$(FLASH_PARTITION).build.spiffs_start)
-		SPIFFS_END ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.eesz.$(FLASH_PARTITION).build.spiffs_end)
-		SPIFFS_BLOCKSIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.eesz.$(FLASH_PARTITION).build.spiffs_blocksize)
-		UPLOAD_MAXIMUM_SIZE ?=  $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.eesz.$(FLASH_PARTITION).upload.maximum_size) 
-		FLASH_FLAG ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.flash_flags)
-		ifeq ($(FLASH_FLAG), none) # for generic boards
-			FLASH_FLAG = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashMode.$(FLASH_MODE).build.flash_flags)
+		F_CPU = $($(ARDUINO_VARIANT).menu.xtal.$(CPU_FREQ).build.f_cpu)
+		FLASH_SIZE ?= $($(ARDUINO_VARIANT).menu.eesz.$(FLASH_PARTITION).build.flash_size)
+		SPIFFS_PAGESIZE ?= $($(ARDUINO_VARIANT).menu.eesz.$(FLASH_PARTITION).build.spiffs_pagesize)
+		SPIFFS_START ?= $($(ARDUINO_VARIANT).menu.eesz.$(FLASH_PARTITION).build.spiffs_start)
+		SPIFFS_END ?= $($(ARDUINO_VARIANT).menu.eesz.$(FLASH_PARTITION).build.spiffs_end)
+		SPIFFS_BLOCKSIZE ?= $($(ARDUINO_VARIANT).menu.eesz.$(FLASH_PARTITION).build.spiffs_blocksize)
+		UPLOAD_MAXIMUM_SIZE ?=  $($(ARDUINO_VARIANT).menu.eesz.$(FLASH_PARTITION).upload.maximum_size) 
+		FLASH_FLAG ?= $($(ARDUINO_VARIANT).build.flash_flags)
+		ifeq ($(FLASH_FLAG),) # for generic boards
+			FLASH_FLAG = $($(ARDUINO_VARIANT).menu.FlashMode.$(FLASH_MODE).build.flash_flags)
 		endif
 		LWIP_VARIANT ?= lm2f
-		LWIP_FLAGS ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.ip.$(LWIP_VARIANT).build.lwip_flags)
-		LWIP_LIB ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.ip.$(LWIP_VARIANT).build.lwip_lib)
-		LWIP_INCLUDE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.ip.$(LWIP_VARIANT).build.lwip_include)
+		LWIP_FLAGS ?= $($(ARDUINO_VARIANT).menu.ip.$(LWIP_VARIANT).build.lwip_flags)
+		LWIP_LIB ?= $($(ARDUINO_VARIANT).menu.ip.$(LWIP_VARIANT).build.lwip_lib)
+		LWIP_INCLUDE ?= $($(ARDUINO_VARIANT).menu.ip.$(LWIP_VARIANT).build.lwip_include)
 	else # Old releases < 2.5.2
-		F_CPU = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.CpuFrequency.$(CPU_FREQ).build.f_cpu)
-		FLASH_SIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).build.flash_size)
-		SPIFFS_PAGESIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).build.spiffs_pagesize)
-		SPIFFS_START ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).build.spiffs_start)
-		SPIFFS_END ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).build.spiffs_end)
-		SPIFFS_BLOCKSIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).build.spiffs_blocksize)
-		UPLOAD_MAXIMUM_SIZE ?=  $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashSize.$(FLASH_PARTITION).upload.maximum_size) 
+		F_CPU = $($(ARDUINO_VARIANT).menu.CpuFrequency.$(CPU_FREQ).build.f_cpu)
+		FLASH_SIZE ?= $($(ARDUINO_VARIANT).menu.FlashSize.$(FLASH_PARTITION).build.flash_size)
+		SPIFFS_PAGESIZE ?= $($(ARDUINO_VARIANT).menu.FlashSize.$(FLASH_PARTITION).build.spiffs_pagesize)
+		SPIFFS_START ?= $($(ARDUINO_VARIANT).menu.FlashSize.$(FLASH_PARTITION).build.spiffs_start)
+		SPIFFS_END ?= $($(ARDUINO_VARIANT).menu.FlashSize.$(FLASH_PARTITION).build.spiffs_end)
+		SPIFFS_BLOCKSIZE ?= $($(ARDUINO_VARIANT).menu.FlashSize.$(FLASH_PARTITION).build.spiffs_blocksize)
+		UPLOAD_MAXIMUM_SIZE ?=  $($(ARDUINO_VARIANT).menu.FlashSize.$(FLASH_PARTITION).upload.maximum_size) 
 		LWIP_VARIANT ?= v2mss536
-		LWIP_FLAGS ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.LwIPVariant.$(LWIP_VARIANT).build.lwip_flags)
-		LWIP_LIB ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.LwIPVariant.$(LWIP_VARIANT).build.lwip_lib)
-		LWIP_INCLUDE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.LwIPVariant.$(LWIP_VARIANT).build.lwip_include)
+		LWIP_FLAGS ?= $($(ARDUINO_VARIANT).menu.LwIPVariant.$(LWIP_VARIANT).build.lwip_flags)
+		LWIP_LIB ?= $($(ARDUINO_VARIANT).menu.LwIPVariant.$(LWIP_VARIANT).build.lwip_lib)
+		LWIP_INCLUDE ?= $($(ARDUINO_VARIANT).menu.LwIPVariant.$(LWIP_VARIANT).build.lwip_include)
 	endif
 	
-	LED_BUILTIN ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.led.2.build.led)
-	ifeq ($(LED_BUILTIN), none) # for generic boards
-		LED_BUILTIN = 
-	endif
-	
+	LED_BUILTIN ?= $($(ARDUINO_VARIANT).menu.led.2.build.led)
 	SPIFFS_SIZE ?= $(shell echo $$(( $(SPIFFS_END) - $(SPIFFS_START) ))) 
-	UPLOAD_MAXIMUM_DATA_SIZE ?=  $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.maximum_data_size) 
+	UPLOAD_MAXIMUM_DATA_SIZE ?=  $($(ARDUINO_VARIANT).upload.maximum_data_size) 
 else #ESP32
-	F_CPU = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.f_cpu)
-	FLASH_SIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.flash_size)
-	BOOT ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.boot)
-	UPLOAD_MAXIMUM_SIZE ?=  $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.maximum_size) 
-	UPLOAD_MAXIMUM_DATA_SIZE ?=  $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.maximum_data_size) 
+	F_CPU = $($(ARDUINO_VARIANT).build.f_cpu)
+	FLASH_SIZE ?= $($(ARDUINO_VARIANT).build.flash_size)
+	BOOT ?= $($(ARDUINO_VARIANT).build.boot)
+	UPLOAD_MAXIMUM_SIZE ?=  $($(ARDUINO_VARIANT).upload.maximum_size) 
+	UPLOAD_MAXIMUM_DATA_SIZE ?=  $($(ARDUINO_VARIANT).upload.maximum_data_size) 
 endif
 
 
