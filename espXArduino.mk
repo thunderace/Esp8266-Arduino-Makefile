@@ -84,7 +84,7 @@ UPLOAD_RESETMETHOD ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.reset
 UPLOAD_SPEED ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.speed)
 
 ifeq ($(UPLOAD_SPEED),none)
-	UPLOAD_SPEED = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.UploadSpeed.115200)
+	UPLOAD_SPEED = 115200
 endif
 
 ifeq ($(ESP8266_PROCESS),$(filter $(ESP8266_PROCESS),NEW))
