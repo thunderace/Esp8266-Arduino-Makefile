@@ -4,6 +4,10 @@ Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/20
 
 ## Changelog
 06/21/2019
+- New branch (WITHOUT_BOARD_PARSER) without external boards.txt parser for speed enhancement : tested on linux for ESP8266
+- TODO : test for ESP32 and Windows environnment
+
+06/21/2019
 - ESP8266 : set default upload speed to 115200 if none found
 
 06/20/2019
