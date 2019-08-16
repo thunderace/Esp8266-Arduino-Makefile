@@ -608,6 +608,9 @@ else
 	endif
 endif
 
+ota_fs: fs
+	$(ESPOTA) -i $(OTA_IP) -p $(OTA_PORT) -a $(OTA_AUTH) --spiffs -f $(FS_IMAGE)
+
 ota: $(BUILD_OUT)/$(TARGET).bin
 	$(ESPOTA) -i $(OTA_IP) -p $(OTA_PORT) -a $(OTA_AUTH) -f $(BUILD_OUT)/$(TARGET).bin
 
