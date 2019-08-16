@@ -591,22 +591,21 @@ else
 	$(ESPTOOL) $(UPLOAD_PATTERN)
 endif
 fs:
-ifneq ($(FS_FILES),)
+ifneq ($(strip $(FS_FILES)),)
 	@rm -f $(FS_IMAGE)
 	@mkdir -p $(BUILD_OUT)/spiffs
 	$(MKSPIFFS) $(MKSPIFFS_PATTERN)
-else
-	
 endif
 
 upload_fs: fs
-ifeq ($(ARDUINO_ARCH),esp8266)
-	ifeq ($(ESP8266_PROCESS),$(filter $(ESP8266_PROCESS),NEW))
-	else
+ifeq ($(ARDUINO_ARCH)-$(ESP8266_PROCESS),$(filter $(ARDUINO_ARCH)-$(ESP8266_PROCESS),esp8266-NEW))
+	$(PYTHON) $(UPLOADTOOL) --chip esp8266 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED) version --end --chip esp8266 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED) write_flash $(SPIFFS_START) $(FS_IMAGE) --end
+else 
+	ifeq ($(ARDUINO_ARCH)-$(ESP8266_PROCESS),$(filter $(ARDUINO_ARCH)-$(ESP8266_PROCESS),esp8266-NEW))
 		$(ESPTOOL) $(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cb $(UPLOAD_SPEED) -cp $(SERIAL_PORT) -ca $(SPIFFS_START) -cf $(FS_IMAGE)
+	else
+		@echo upload_fs : No SPIFFS function available for $(ARDUINO_ARCH)
 	endif
-else
-	@echo upload_fs : No SPIFFS function available for $(ARDUINO_ARCH)
 endif
 
 ota: $(BUILD_OUT)/$(TARGET).bin
