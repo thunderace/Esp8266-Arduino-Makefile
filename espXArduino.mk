@@ -21,7 +21,7 @@ GREP := grep$(EXEC_EXT)
 SERIAL_PORT ?= /dev/tty.nodemcu
 ARDUINO_ARCH ?= esp8266
 ifeq ($(ARDUINO_ARCH),esp8266)
-	ESP8266_VERSION ?= 2.5.2
+	ESP8266_VERSION ?= 2.6.0
 else
 	ESP8266_VERSION ?= 1.0.2
 endif
@@ -33,7 +33,7 @@ ifeq ($(ESP8266_VERSION),$(filter $(ESP8266_VERSION),git))
 else
 	compareint = $(shell if [ $(1) -ge $(2) ] ; then echo ge ; else echo lt ; fi)
 	ifeq ($(call compareint,$(NUM_ESP8266_VERSION),252),ge)
-  	ESP8266_PROCESS=NEW
+  		ESP8266_PROCESS=NEW
 	else
 		ESP8266_PROCESS=OLD
 	endif
