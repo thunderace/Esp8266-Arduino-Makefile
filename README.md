@@ -3,8 +3,12 @@ Makefile to build arduino code for ESP8266 under linux and Cygwin (tested on deb
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
+11/13/2019
+- ESP32 : default version is 1.0.4
+
 11/12/2019
 - ESP8266 : default version is 2.6.0
+- ESP32 : default version is 1.0.4
 
 06/21/2019
 - ESP8266 : set default upload speed to 115200 if none found

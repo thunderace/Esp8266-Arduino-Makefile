@@ -1,6 +1,6 @@
 #!/bin/sh
 # Get Arduino core for ESP32 chip
-ESP32_VER=1.0.2
+ESP32_VER=1.0.4
 
 DOWNLOAD_CACHE=./download
 mkdir $DOWNLOAD_CACHE
@@ -9,7 +9,7 @@ mkdir $DOWNLOAD_CACHE
 wget --no-clobber https://github.com/espressif/arduino-esp32/releases/download/$ESP32_VER/esp32-$ESP32_VER.zip -P $DOWNLOAD_CACHE
 unzip -o $DOWNLOAD_CACHE/esp32-$ESP32_VER.zip
 mkdir esp32-$ESP32_VER/package
-wget --no-clobber https://dl.espressif.com/dl/package_esp32_index.json -O esp32-$ESP32_VER/package/package_esp32_index.template.json
+wget --no-clobber https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json -O esp32-$ESP32_VER/package/package_esp32_index.template.json
 if [ "$OSTYPE" == "cygwin" ] || [ "$OSTYPE" == "msys" ]; then
 	cp ./bin/esp32/get.exe esp32-$ESP32_VER/tools
 	chmod +x esp32-$ESP32_VER/tools/get.exe
