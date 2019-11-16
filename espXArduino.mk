@@ -21,7 +21,7 @@ GREP := grep$(EXEC_EXT)
 SERIAL_PORT ?= /dev/tty.nodemcu
 ARDUINO_ARCH ?= esp8266
 ifeq ($(ARDUINO_ARCH),esp8266)
-	ESP8266_VERSION ?= 2.6.0
+	ESP8266_VERSION ?= 2.6.1
 else
 	ESP8266_VERSION ?= 1.0.4
 endif
@@ -107,6 +107,13 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 		SPIFFS_END ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.eesz.$(FLASH_PARTITION).build.spiffs_end)
 		SPIFFS_BLOCKSIZE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.eesz.$(FLASH_PARTITION).build.spiffs_blocksize)
 		UPLOAD_MAXIMUM_SIZE ?=  $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.eesz.$(FLASH_PARTITION).upload.maximum_size) 
+		UPLOAD_ERASE_CMD ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) upload.erase_cmd)
+		ifeq ($(UPLOAD_ERASE_CMD), none)
+			UPLOAD_ERASE_CMD = 
+		endif
+		ifeq ($(UPLOAD_RESETMETHOD), none)
+			UPLOAD_RESETMETHOD = 
+		endif
 		FLASH_FLAG ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.flash_flags)
 		ifeq ($(FLASH_FLAG), none) # for generic boards
 			FLASH_FLAG = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.FlashMode.$(FLASH_MODE).build.flash_flags)
@@ -155,7 +162,7 @@ ESPOTA ?= $(ARDUINO_HOME)/tools/espota.py
 ifeq ($(ARDUINO_ARCH),esp8266)
 	XTENSA_TOOLCHAIN ?= $(ARDUINO_HOME)/tools/xtensa-lx106-elf/bin/
 	ifeq ($(ESP8266_PROCESS),$(filter $(ESP8266_PROCESS),NEW))
-		PYTHON = $(ARDUINO_HOME)/tools/python/python$(EXEC_EXT)
+		PYTHON = $(ARDUINO_HOME)/tools/python3/python3$(EXEC_EXT)
 		ESPTOOL ?= $(ARDUINO_HOME)/tools/elf2bin.py
 		UPLOADTOOL ?= $(ARDUINO_HOME)/tools/upload.py
 	else
@@ -583,7 +590,7 @@ reset:
 
 upload: $(BUILD_OUT)/$(TARGET).bin size
 ifeq ($(ESP8266_PROCESS),$(filter $(ESP8266_PROCESS),NEW))
-	$(PYTHON) $(UPLOADTOOL) --chip esp8266 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED) version --end --chip esp8266 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED) write_flash 0x0 $(BUILD_OUT)/$(TARGET).bin --end
+	$(PYTHON) $(UPLOADTOOL) --chip esp8266 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED) $(UPLOAD_ERASE_CMD) $(UPLOAD_RESETMETHOD )$(BUILD_OUT)/$(TARGET).bin
 else
 	$(ESPTOOL) $(UPLOAD_PATTERN)
 endif
