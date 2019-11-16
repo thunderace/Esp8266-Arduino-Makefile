@@ -4,6 +4,9 @@ Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/20
 
 ## Changelog
 11/13/2019
+- ESP8266 : upgrade to last stable release (2.6.1) - fix upload command
+- 
+11/13/2019
 - ESP32 : default version is 1.0.4
 
 11/12/2019
