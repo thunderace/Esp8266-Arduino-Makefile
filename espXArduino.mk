@@ -135,6 +135,12 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 		LWIP_LIB ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.LwIPVariant.$(LWIP_VARIANT).build.lwip_lib)
 		LWIP_INCLUDE ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.LwIPVariant.$(LWIP_VARIANT).build.lwip_include)
 	endif
+	ifeq ($(SPIFFS_PAGESIZE), none)
+		SPIFFS_PAGESIZE = 256
+	endif
+	ifeq ($(SPIFFS_BLOCKSIZE), none)
+		SPIFFS_BLOCKSIZE = 4096
+	endif
 	
 	LED_BUILTIN ?= $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) menu.led.2.build.led)
 	ifeq ($(LED_BUILTIN), none) # for generic boards
@@ -590,7 +596,7 @@ reset:
 
 upload: $(BUILD_OUT)/$(TARGET).bin size
 ifeq ($(ESP8266_PROCESS),$(filter $(ESP8266_PROCESS),NEW))
-	$(PYTHON) $(UPLOADTOOL) --chip esp8266 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED) $(UPLOAD_ERASE_CMD) $(UPLOAD_RESETMETHOD )$(BUILD_OUT)/$(TARGET).bin
+	$(PYTHON) $(UPLOADTOOL) --chip esp8266 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED) $(UPLOAD_ERASE_CMD) $(UPLOAD_RESETMETHOD) $(BUILD_OUT)/$(TARGET).bin
 else
 	$(ESPTOOL) $(UPLOAD_PATTERN)
 endif
@@ -603,7 +609,16 @@ endif
 
 upload_fs: fs
 ifeq ($(ARDUINO_ARCH)-$(ESP8266_PROCESS),$(filter $(ARDUINO_ARCH)-$(ESP8266_PROCESS),esp8266-NEW))
-	$(PYTHON) $(UPLOADTOOL) --chip esp8266 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED) version --end --chip esp8266 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED) write_flash $(SPIFFS_START) $(FS_IMAGE) --end
+	@echo "SPIFFS Uploading Image..."
+	@echo "[SPIFFS] upload   : " $(FS_IMAGE)
+	@echo "[SPIFFS] address  : " $(SPIFFS_START)
+	@echo "[SPIFFS] reset    : " $(UPLOAD_RESETMETHOD)
+	@echo "[SPIFFS] port     : " $(SERIAL_PORT)
+	@echo "[SPIFFS] speed    : " $(UPLOAD_SPEED)
+	@echo "[SPIFFS] uploader : " $(ARDUINO_HOME)/tools/esptool/esptool.py
+	
+	#/home/thunder/Esp8266-Arduino-Makefile/esp8266-2.6.1/tools/python3/python3 /home/thunder/Esp8266-Arduino-Makefile/esp8266-2.6.1/tools/esptool/esptool.py --chip esp8266 --port /dev/ttyUSB0 --baud 115200   write_flash  0x300000 ./build.nodemcuv2.ArDomo23-2.6.1/spiffs/spiffs.bin
+	$(PYTHON) $(ARDUINO_HOME)/tools/esptool/esptool.py --chip esp8266 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED) write_flash $(SPIFFS_START) $(FS_IMAGE) 
 else 
 	ifeq ($(ARDUINO_ARCH)-$(ESP8266_PROCESS),$(filter $(ARDUINO_ARCH)-$(ESP8266_PROCESS),esp8266-NEW))
 		$(ESPTOOL) $(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cb $(UPLOAD_SPEED) -cp $(SERIAL_PORT) -ca $(SPIFFS_START) -cf $(FS_IMAGE)
