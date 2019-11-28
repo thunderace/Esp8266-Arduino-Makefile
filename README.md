@@ -3,9 +3,15 @@ Makefile to build arduino code for ESP8266 under linux and Cygwin (tested on deb
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
+11/28/2019
+- ESP8266 : upgrade to last stable release (2.6.2)
+
+11/27/2019
+- ESP8266 : fix fs_upload
+
 11/13/2019
 - ESP8266 : upgrade to last stable release (2.6.1) - fix upload command
-- 
+ 
 11/13/2019
 - ESP32 : default version is 1.0.4
 

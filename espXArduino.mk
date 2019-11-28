@@ -21,7 +21,7 @@ GREP := grep$(EXEC_EXT)
 SERIAL_PORT ?= /dev/tty.nodemcu
 ARDUINO_ARCH ?= esp8266
 ifeq ($(ARDUINO_ARCH),esp8266)
-	ESP8266_VERSION ?= 2.6.1
+	ESP8266_VERSION ?= 2.6.2
 else
 	ESP8266_VERSION ?= 1.0.4
 endif
@@ -596,10 +596,12 @@ reset:
 
 upload: $(BUILD_OUT)/$(TARGET).bin size
 ifeq ($(ESP8266_PROCESS),$(filter $(ESP8266_PROCESS),NEW))
-	$(PYTHON) $(UPLOADTOOL) --chip esp8266 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED) $(UPLOAD_ERASE_CMD) $(UPLOAD_RESETMETHOD) $(BUILD_OUT)/$(TARGET).bin
+	# write_flash 0x0 "{build.path}/{build.project_name}.bin"
+	$(PYTHON) $(UPLOADTOOL) --chip esp8266 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED) $(UPLOAD_ERASE_CMD) $(UPLOAD_RESETMETHOD) write_flash 0x0 $(BUILD_OUT)/$(TARGET).bin
 else
 	$(ESPTOOL) $(UPLOAD_PATTERN)
 endif
+
 fs:
 ifneq ($(strip $(FS_FILES)),)
 	@rm -f $(FS_IMAGE)

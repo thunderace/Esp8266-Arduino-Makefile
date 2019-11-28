@@ -1,5 +1,5 @@
-ARDUINO_VARIANT = nodemcuv2
-SERIAL_PORT = /dev/ttyUSB0
+ARDUINO_VARIANT = d1_mini
+SERIAL_PORT = /dev/ttyUSB1
 # uncomment and set the right serial baud according to your sketch (default to 115200)
 #SERIAL_BAUD = 115200
 LOG_SERIAL_TO_FILE=yes
