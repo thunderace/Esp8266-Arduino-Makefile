@@ -21,10 +21,12 @@ GREP := grep$(EXEC_EXT)
 SERIAL_PORT ?= /dev/tty.nodemcu
 ARDUINO_ARCH ?= esp8266
 ifeq ($(ARDUINO_ARCH),esp8266)
-	ESP8266_VERSION ?= 2.6.3
+	ESP8266_VERSION ?= 2.7.4
 else
 	ESP8266_VERSION ?= 1.0.4
 endif
+
+OTA_PORT ?= 8266
 
 word-dot = $(word $2,$(subst ., ,$1))
 NUM_ESP8266_VERSION = $(call word-dot,$(ESP8266_VERSION),1)$(call word-dot,$(ESP8266_VERSION),2)$(call word-dot,$(ESP8266_VERSION),3)
@@ -463,7 +465,7 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 	SIZE_REGEX = '^(?:\.irom0\.text|\.text|\.data)\s+([0-9]+).*'
 	SIZE_REGEX_EEPROM = '^(?:\.eeprom)\s+([0-9]+).*'
 	UPLOAD_PATTERN = $(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cb $(UPLOAD_SPEED) -cp $(SERIAL_PORT) -ca 0x00000 -cf $(BUILD_OUT)/$(TARGET).bin
-	RESET_PATTERN = $(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cp $(SERIAL_PORT) -cr
+	RESET_PATTERN = $(ESPTOOL_VERBOSE) --chip auto $(UPLOAD_RESETMETHOD) --port $(SERIAL_PORT) chip_id
 	FS_UPLOAD_PATTERN = $(ESPTOOL_VERBOSE)  --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED) -a soft_reset write_flash $(SPIFFS_START) 
 	MKSPIFFS_PATTERN = -c $(FS_DIR) -b $(SPIFFS_BLOCKSIZE) -p $(SPIFFS_PAGESIZE) -s $(SPIFFS_SIZE) $(FS_IMAGE)
 ifeq ($(ESP8266_PROCESS),$(filter $(ESP8266_PROCESS),NEW))
@@ -592,7 +594,8 @@ endif
 	$(ESPTOOL) $(OBJCOPY_HEX_PATTERN)
 
 reset: 
-	-$(ESPTOOL) $(RESET_PATTERN)
+	$(PYTHON) $(ARDUINO_HOME)/tools/esptool/esptool.py $(RESET_PATTERN)
+	#-$(ESPTOOL) $(RESET_PATTERN)
 
 upload: $(BUILD_OUT)/$(TARGET).bin size
 ifeq ($(ESP8266_PROCESS),$(filter $(ESP8266_PROCESS),NEW))
@@ -601,6 +604,10 @@ ifeq ($(ESP8266_PROCESS),$(filter $(ESP8266_PROCESS),NEW))
 else
 	$(ESPTOOL) $(UPLOAD_PATTERN)
 endif
+
+erase:
+	$(PYTHON) $(UPLOADTOOL) --chip esp8266 --port $(SERIAL_PORT) erase_flash
+
 
 fs:
 ifneq ($(strip $(FS_FILES)),)
@@ -665,6 +672,8 @@ help:
 	@echo "  upload               Build and flash the project application"
 	@echo "  upload_fs            Build and flash SPIFFS file"
 	@echo "  ota                  Build and flash via OTA"
+	@echo "                          Params: OAT_IP, OTA_PORT and OTA_AUTH"
+	@echo "  ota_fs               Build and flash filesystem via OTA"
 	@echo "                          Params: OAT_IP, OTA_PORT and OTA_AUTH"
 	@echo "  term/monitor         Open a the serial console on ESP port"
 	@echo "  reset                Reset the board"
