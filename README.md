@@ -4,6 +4,9 @@ Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/20
 
 ## Changelog
 05/27/2021
+- ESP8266 : fixes for 3.X support
+
+05/27/2021
 - ESP8266 : drop support for version < 2.5.2
 - ESP8266 : upgrade to support last stable release (3.0.0)
 - ESP8266 : minor fixes for last stable release (2.7.4)

@@ -31,7 +31,7 @@ OTA_PORT ?= 8266
 word-dot = $(word $2,$(subst ., ,$1))
 NUM_ESP8266_VERSION = $(call word-dot,$(ESP8266_VERSION),1)$(call word-dot,$(ESP8266_VERSION),2)$(call word-dot,$(ESP8266_VERSION),3)
 ifeq ($(ESP8266_VERSION),$(filter $(ESP8266_VERSION),git))
-   ESP8266_PROCESS=NEW
+	ESP8266_V3=true
 else
 	compareint = $(shell if [ $(1) -ge $(2) ] ; then echo ge ; else echo lt ; fi)
 	ifeq ($(call compareint,$(NUM_ESP8266_VERSION),300),ge)
@@ -373,6 +373,12 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 	DEFINES = -D$(ESP8266_SDK)=1 -DF_CPU=$(F_CPU) $(LWIP_FLAGS) -DARDUINO=$(ARDUINO_VERSION) \
 		-DARDUINO_$(ARDUINO_BOARD) -DARDUINO_ARCH_$(shell echo "$(ARDUINO_ARCH)" | tr '[:lower:]' '[:upper:]') \
 		-DARDUINO_BOARD=\"$(ARDUINO_BOARD)\"  $(LED_BUILTIN) $(FLASH_FLAG) -DESP8266 
+	# with release installation from git the constants are not defined so do it here
+	ifneq ($(ESP8266_VERSION),git)
+		ESP8266_RELEASE_STRING=\"$(call word-dot,$(ESP8266_VERSION),1)_$(call word-dot,$(ESP8266_VERSION),2)_$(call word-dot,$(ESP8266_VERSION),3)\"
+		DEFINES += -DARDUINO_ESP8266_RELEASE_$(call word-dot,$(ESP8266_VERSION),1)_$(call word-dot,$(ESP8266_VERSION),2)_$(call word-dot,$(ESP8266_VERSION),3) -DARDUINO_ESP8266_RELEASE=$(ESP8266_RELEASE_STRING)
+	endif
+		
 else # ESP32
 	DEFINES = -DF_CPU=$(F_CPU) -DARDUINO=$(ARDUINO_VERSION) \
 		-DARDUINO_$(ARDUINO_BOARD) -DARDUINO_ARCH_$(shell echo "$(ARDUINO_ARCH)" | tr '[:lower:]' '[:upper:]') \
@@ -403,7 +409,10 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 			$(EXCEPTION_FLAGS) $(MMU_FLAGS) $(NON32XFER_FLAGS) $(SSL_FLAGS)
 		ELFLIBS = -lhal -lphy -lpp -lnet80211 $(LWIP_LIB) -lwpa -lcrypto -lmain -lwps -lbearssl -lespnow -lsmartconfig -lairkiss -lwpa2 -lstdc++ \
 			-lm -lc -lgcc
-
+		ELFFLAGS = -fno-exceptions -g -w -Os -nostdlib -Wl,--no-check-sections -u app_entry -u _printf_float -u _scanf_float -Wl,-static \
+			-L$(ESPRESSIF_SDK)/lib -L$(ESPRESSIF_SDK)/lib/$(ESP8266_SDK) -L$(ESPRESSIF_SDK)/ld -L$(ESPRESSIF_SDK)/libc/xtensa-lx106-elf/lib \
+			 -Tlocal.eagle.flash.ld \
+			 -Wl,--gc-sections -Wl,-wrap,system_restart_local -Wl,-wrap,spi_flash_read
 	else
 		CFLAGS = -c -Os -g -Wpointer-arith -Wno-implicit-function-declaration -Wl,-EL \
 			-fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals \
@@ -414,11 +423,11 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 			-fno-rtti -falign-functions=4 -std=$(STDCPP_LEVEL) -MMD -ffunction-sections -fdata-sections \
 			$(EXCEPTION_FLAGS) $(SSL_FLAGS)
 		ELFLIBS = -lhal -lphy -lpp -lnet80211 $(LWIP_LIB) -lwpa -lcrypto -lmain -lwps -lbearssl -laxtls -lespnow -lsmartconfig -lairkiss -lwpa2 -lstdc++ -lm -lc -lgcc
+		ELFFLAGS = -fno-exceptions -g -w -Os -nostdlib -Wl,--no-check-sections -u app_entry -u _printf_float -u _scanf_float -Wl,-static \
+			-L$(ESPRESSIF_SDK)/lib -L$(ESPRESSIF_SDK)/lib/$(ESP8266_SDK) -L$(ESPRESSIF_SDK)/ld -L$(ESPRESSIF_SDK)/libc/xtensa-lx106-elf/lib \
+			 -T$(FLASH_LD) \
+			 -Wl,--gc-sections -Wl,-wrap,system_restart_local -Wl,-wrap,spi_flash_read
 	endif
-	ELFFLAGS = -fno-exceptions -g -w -Os -nostdlib -Wl,--no-check-sections -u app_entry -u _printf_float -u _scanf_float -Wl,-static \
-		-L$(ESPRESSIF_SDK)/lib -L$(ESPRESSIF_SDK)/lib/$(ESP8266_SDK) -L$(ESPRESSIF_SDK)/ld -L$(ESPRESSIF_SDK)/libc/xtensa-lx106-elf/lib \
-		 -T$(FLASH_LD) \
-		 -Wl,--gc-sections -Wl,-wrap,system_restart_local -Wl,-wrap,spi_flash_read
 else	#ESP32
 	ASFLAGS = -c -g3 -x assembler-with-cpp -MMD -mlongcalls
 	CFLAGS = -std=gnu99 -Os -g3 -fstack-protector -ffunction-sections -fdata-sections -fstrict-volatile-bitfields -mlongcalls \
