@@ -533,9 +533,9 @@ ifeq ($(ESP8266_V3), true)
 	$(CC) $(VTABLE_FLAGS) -CC -E -P  $(MMU_FLAGS) $(VTABLE_FLAGS) $(BUILD_OUT)/ld_h/local.eagle.flash.ld.h -o $(BUILD_OUT)/local.eagle.flash.ld
 	$(CC) $(VTABLE_FLAGS) -CC -E -P  $(MMU_FLAGS) $(VTABLE_FLAGS) $(ESPRESSIF_SDK)/ld/eagle.app.v6.common.ld.h -o $(BUILD_OUT)/local.eagle.app.v6.common.ld
 else
-	ifneq ("$(wildcard  $(ESPRESSIF_SDK)/ld/eagle.app.v6.common.ld.h)","")
-		$(CC) $(VTABLE_FLAGS) -CC -E -P  $(ESPRESSIF_SDK)/ld/eagle.app.v6.common.ld.h -o $(BUILD_OUT)/local.eagle.app.v6.common.ld
-	endif
+ifneq ("$(wildcard  $(ESPRESSIF_SDK)/ld/eagle.app.v6.common.ld.h)","")
+	$(CC) $(VTABLE_FLAGS) -CC -E -P  $(ESPRESSIF_SDK)/ld/eagle.app.v6.common.ld.h -o $(BUILD_OUT)/local.eagle.app.v6.common.ld
+endif
 endif
 $(BUILD_OUT)/core/%.S.o: $(ARDUINO_HOME)/cores/$(ARDUINO_ARCH)/%.S
 	$(CC) $(CPREPROCESSOR_FLAGS) $(ASFLAGS) $(DEFINES) $(CORE_INC:%=-I%) -o $@ $<
