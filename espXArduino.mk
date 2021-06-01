@@ -21,7 +21,7 @@ GREP := grep$(EXEC_EXT)
 SERIAL_PORT ?= /dev/tty.nodemcu
 ARDUINO_ARCH ?= esp8266
 ifeq ($(ARDUINO_ARCH),esp8266)
-	ESP8266_VERSION ?= 3.0.0
+	ESP8266_VERSION?=3.0.0
 else
 	ESP8266_VERSION ?= 1.0.4
 endif
@@ -35,12 +35,11 @@ ifeq ($(ESP8266_VERSION),$(filter $(ESP8266_VERSION),git))
 else
 	compareint = $(shell if [ $(1) -ge $(2) ] ; then echo ge ; else echo lt ; fi)
 	ifeq ($(call compareint,$(NUM_ESP8266_VERSION),300),ge)
-  		ESP8266_V3=true
+		ESP8266_V3=true
 	else
 		ESP8266_V3=false
 	endif
 endif
-
 
 ARDUINO_HOME ?=  $(ROOT_DIR)/$(ARDUINO_ARCH)-$(ESP8266_VERSION)
 
@@ -416,7 +415,7 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 	else
 		CFLAGS = -c -Os -g -Wpointer-arith -Wno-implicit-function-declaration -Wl,-EL \
 			-fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals \
-			-falign-functions=4 -MMD -std=$(STDC_LEVEL) -ffunction-sections -fdata-sections
+			-falign-functions=4 -MMD -std=$(STDC_LEVEL) -ffunction-sections -fdata-sections \
 			$(EXCEPTION_FLAGS) $(SSL_FLAGS)
 			
 		CXXFLAGS = -c $(WARNING_FLAGS) -Os -g -mlongcalls -mtext-section-literals $(EXCEPTION_FLAGS)  \
@@ -465,7 +464,7 @@ ifeq ($(ARDUINO_ARCH),esp8266)
 		--flash_mode $(FLASH_MODE) --flash_freq $(FLASH_FREQ) --flash_size $(FLASH_SIZE) \
 		--path $(XTENSA_TOOLCHAIN) --out $(BUILD_OUT)/$(TARGET).bin
 	SIZE_REGEX_DATA = '^(?:\.data|\.rodata|\.bss)\s+([0-9]+).*'
-	SIZE_REGEX = '^(?:\.irom0\.text|\.text|\.data)\s+([0-9]+).*'
+	SIZE_REGEX = '^(?:\.irom0\.text|\.text|\.text1|\.data|\.rodata|)\s+([0-9]+).*'
 	SIZE_REGEX_EEPROM = '^(?:\.eeprom)\s+([0-9]+).*'
 	UPLOAD_PATTERN = $(ESPTOOL_VERBOSE) -cd $(UPLOAD_RESETMETHOD) -cb $(UPLOAD_SPEED) -cp $(SERIAL_PORT) -ca 0x00000 -cf $(BUILD_OUT)/$(TARGET).bin
 	RESET_PATTERN = $(ESPTOOL_VERBOSE) --chip auto $(UPLOAD_RESETMETHOD) --port $(SERIAL_PORT) chip_id
