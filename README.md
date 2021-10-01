@@ -3,8 +3,12 @@ Makefile to build arduino code for ESP8266 under linux and Cygwin (tested on deb
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
+10/01/2021
+
+
 05/27/2021
 - ESP8266 : fixes for 3.X support
+- ESP8266 : upgrade to support last stable release (3.0.1)
 
 05/27/2021
 - ESP8266 : drop support for version < 2.5.2

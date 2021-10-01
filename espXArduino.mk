@@ -21,7 +21,7 @@ GREP := grep$(EXEC_EXT)
 SERIAL_PORT ?= /dev/tty.nodemcu
 ARDUINO_ARCH ?= esp8266
 ifeq ($(ARDUINO_ARCH),esp8266)
-	ESP8266_VERSION?=3.0.0
+	ESP8266_VERSION?=3.0.1
 else
 	ESP8266_VERSION ?= 1.0.4
 endif
@@ -59,7 +59,7 @@ ARDUINO_CORE_VERSION = $(shell $(PARSE_PLATFORM_CMD) version)
 ARDUINO_BOARD = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.board)
 VARIANT = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.variant)
 
-CONCATENATE_USER_FILES ?= yes
+CONCATENATE_USER_FILES ?= no
 FLASH_PARTITION ?= 4M1M
 
 MCU = $(shell $(PARSE_BOARD_CMD) $(ARDUINO_VARIANT) build.mcu)
@@ -328,7 +328,7 @@ LIB_OBJ_FILES = $(addprefix $(BUILD_OUT)/libraries/,$(notdir $(ULIB_CSRC:.c=.c.o
 
 
 ifeq ($(ARDUINO_ARCH),esp8266)
-	CPREPROCESSOR_FLAGS = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ -I$(ESPRESSIF_SDK)/include -I$(ESPRESSIF_SDK)/$(LWIP_INCLUDE) -I$(ESPRESSIF_SDK)/libc/xtensa-lx106-elf/include -I$(BUILD_OUT)/core
+	CPREPROCESSOR_FLAGS = -D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ -D_GNU_SOURCE -I$(ESPRESSIF_SDK)/include -I$(ESPRESSIF_SDK)/$(LWIP_INCLUDE) -I$(ESPRESSIF_SDK)/libc/xtensa-lx106-elf/include -I$(BUILD_OUT)/core
 else #ESP32
 ifeq ($(ESP8266_VERSION),git)
 	CPREPROCESSOR_FLAGS = -DESP_PLATFORM -DMBEDTLS_CONFIG_FILE=\"mbedtls/esp_config.h\" -DHAVE_CONFIG_H -I$(ESPRESSIF_SDK)/include/config \
@@ -590,13 +590,12 @@ ifeq ($(ARDUINO_ARCH),esp32)
 	$(OBJCOPY_EEP_PATTERN)
 endif
 	$(ESPTOOL) $(OBJCOPY_HEX_PATTERN)
+	@sha256sum $(BUILD_OUT)/$(TARGET).bin > $(BUILD_OUT)/$(TARGET).sha
 
 reset: 
 	$(PYTHON) $(ARDUINO_HOME)/tools/esptool/esptool.py $(RESET_PATTERN)
-	#-$(ESPTOOL) $(RESET_PATTERN)
 
 upload: $(BUILD_OUT)/$(TARGET).bin size
-	# write_flash 0x0 "{build.path}/{build.project_name}.bin"
 	$(PYTHON) $(UPLOADTOOL) --chip esp8266 --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED) $(UPLOAD_ERASE_CMD) $(UPLOAD_RESETMETHOD) write_flash 0x0 $(BUILD_OUT)/$(TARGET).bin
 
 erase:
