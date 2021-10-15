@@ -1,6 +1,6 @@
 #!/bin/sh
 # Get Arduino core for ESP32 chip
-ESP32_VER=1.0.6
+ESP32_VER=2.0.0
 
 DOWNLOAD_CACHE=./download
 mkdir $DOWNLOAD_CACHE

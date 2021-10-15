@@ -26,11 +26,9 @@ ported for sparkfun esp32
  */
 
 #include <WiFi.h>
-#include "myLib.h"
-#include "myGlobalLib.h"
 
-const char* ssid     = "APNAME";
-const char* password = "AP_PASSWORD";
+const char* ssid     = "yourssid";
+const char* password = "yourpasswd";
 
 WiFiServer server(80);
 
@@ -59,10 +57,8 @@ void setup()
     Serial.println("WiFi connected.");
     Serial.println("IP address: ");
     Serial.println(WiFi.localIP());
-
+    
     server.begin();
-    myLib("Local Start");
-	myGlobalLib("Global Start");
 
 }
 
