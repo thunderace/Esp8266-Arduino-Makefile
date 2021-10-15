@@ -3,6 +3,10 @@ Makefile to build arduino code for ESP8266 under linux and Cygwin (tested on deb
 Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/2009/02/arduino-cli.html
 
 ## Changelog
+
+10/15/2021-2
+- ESP32 : fix incorect installation of gcc 5 depndencies
+
 10/15/2021
 - ALL  : perl and ard-parse-board are deprecated (faster compilation)
 - ESP8266 : define ARDUINO_ESP8266_MAJOR, ARDUINO_ESP8266_MINOR, ARDUINO_ESP8266_REVISION, ARDUINO_ESP8266_RELEASE_X_X_X and ARDUINO_ESP8266_RELEASE (not in the git repo)
