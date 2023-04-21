@@ -4,8 +4,13 @@ Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/20
 
 ## Changelog
 
+04/21/2023
+- ALL : makefile splitted : one for ESP8266 and another for ESP32x
+- ESP8266 : 3.1.2
+- ESP32x : 2.0.7 (have some problems with the 2.0.8)
+
 10/15/2021-2
-- ESP32 : fix incorect installation of gcc 5 depndencies
+- ESP32 : fix incorrect installation of gcc 5 dependencies
 
 10/15/2021
 - ALL  : perl and ard-parse-board are deprecated (faster compilation)
