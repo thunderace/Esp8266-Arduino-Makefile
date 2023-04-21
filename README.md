@@ -7,7 +7,7 @@ Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/20
 04/21/2023
 - ALL : makefile splitted : one for ESP8266 and another for ESP32x
 - ESP8266 : 3.1.2
-- ESP32x : 2.0.7 (have some problems with the 2.0.8)
+- ESP32 : 2.0.8 + support for S2, S3 and C3 variants (binaries not yet tested on board)
 
 10/15/2021-2
 - ESP32 : fix incorrect installation of gcc 5 dependencies
