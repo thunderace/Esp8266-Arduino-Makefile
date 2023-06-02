@@ -19,7 +19,7 @@ PYTHON = python3
 #include $(ROOT_DIR)/bin/$(ARDUINO_ARCH)/platform.txt
 
 SERIAL_PORT ?= /dev/tty.nodemcu
-ESP32_VERSION ?= 2.0.8
+ESP32_VERSION ?= 2.0.9
 OTA_PORT ?= 8266
 word-dot = $(word $2,$(subst ., ,$1))
 ARDUINO_HOME ?=  $(ROOT_DIR)/esp32-$(ESP32_VERSION)

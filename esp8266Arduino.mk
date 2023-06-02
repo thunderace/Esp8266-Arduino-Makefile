@@ -10,8 +10,6 @@ else
 	ROOT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 endif
 
-
-
 CAT	:= cat$(EXEC_EXT)
 SED := sed$(EXEC_EXT)
 GREP := grep$(EXEC_EXT)
