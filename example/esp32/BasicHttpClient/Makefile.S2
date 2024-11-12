@@ -1,4 +1,4 @@
-ARDUINO_VARIANT = lolin32
+ARDUINO_VARIANT = esp32s2
 SERIAL_PORT = /dev/ttyUSB1
 # uncomment and set the right serail baud according to your sketch (default to 115200)
 #SERIAL_BAUD = 115200

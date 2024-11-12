@@ -1,11 +1,10 @@
-ARDUINO_VARIANT = lolin32
+ARDUINO_VARIANT = esp32h2
 SERIAL_PORT = /dev/ttyUSB1
 # uncomment and set the right serail baud according to your sketch (default to 115200)
 #SERIAL_BAUD = 115200
 # uncomment this to use the 1M SPIFFS mapping
 #SPIFFS_SIZE = 1
-#ESP8266_VERSION=git
-ARDUINO_LIBS=NetworkClientSecure Network
+ARDUINO_LIBS=NetworkClientSecure Network WiFi
 USER_DEFINE = -D_SSID_=\"YourSSID\" -D_WIFI_PASSWORD_=\"YourPassword\"
 OTA_IP = 192.168.1.184
 OTA_PORT = 8266 

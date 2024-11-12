@@ -19,7 +19,7 @@ PYTHON = python3
 #include $(ROOT_DIR)/bin/$(ARDUINO_ARCH)/platform.txt
 
 SERIAL_PORT ?= /dev/tty.nodemcu
-ESP32_VERSION ?= 2.0.9
+ESP32_VERSION ?= 3.0.7
 OTA_PORT ?= 8266
 word-dot = $(word $2,$(subst ., ,$1))
 ARDUINO_HOME ?=  $(ROOT_DIR)/esp32-$(ESP32_VERSION)
@@ -62,7 +62,7 @@ FLASH_SIZE ?= $($(ARDUINO_VARIANT).build.flash_size)
 BOOT ?= $($(ARDUINO_VARIANT).build.boot)
 UPLOAD_MAXIMUM_SIZE ?= $($(ARDUINO_VARIANT).upload.maximum_size) 
 UPLOAD_MAXIMUM_DATA_SIZE ?= $($(ARDUINO_VARIANT).upload.maximum_data_size) 
-ESPRESSIF_SDK = $(ARDUINO_HOME)/tools/sdk/$(MCU)
+ESPRESSIF_SDK = $(ARDUINO_HOME)/tools/esp32-arduino-libs/$(MCU)
 FS_DIR ?= ./data
 FS_IMAGE=$(BUILD_OUT)/spiffs/spiffs.bin
 FS_FILES=$(wildcard $(FS_DIR)/*)
@@ -236,598 +236,53 @@ COMPILER_OPT_FLAGS=-Os
 COMPILER_OPT_FLAGS_RELEASE=-Os
 COMPILER_OPT_FLAGS_DEBUG=-Og -g3
 
-BUILD_EXTRA_FLAGS ?= -DESP32 -DCORE_DEBUG_LEVEL=$($(ARDUINO_VARIANT).build.code_debug) $($(ARDUINO_VARIANT).build.loop_core) $($(ARDUINO_VARIANT).build.event_core) \
-						$($(ARDUINO_VARIANT).build.defines) $($(ARDUINO_VARIANT).build.extra_flags.$(MCU))
-
-
-ifeq ($(MCU),esp32)
-	CPREPROCESSOR_FLAGS = -DHAVE_CONFIG_H -DMBEDTLS_CONFIG_FILE=\"mbedtls/esp_config.h\" -DUNITY_INCLUDE_CONFIG_H -DWITH_POSIX -D_GNU_SOURCE \
-						-DIDF_VER=\"v4.4-4\" -DESP_PLATFORM -D_POSIX_READER_WRITER_LOCKS \
-						-I$(ESPRESSIF_SDK)/include/config -I$(ESPRESSIF_SDK)/include/newlib/platform_include \
-						-I$(ESPRESSIF_SDK)/include/freertos/include \
-						-I$(ESPRESSIF_SDK)/include/freertos/include/esp_additions/freertos -I$(ESPRESSIF_SDK)/include/freertos/port/xtensa/include \
-						-I$(ESPRESSIF_SDK)/include/freertos/include/esp_additions -I$(ESPRESSIF_SDK)/include/esp_hw_support/include \
-						-I$(ESPRESSIF_SDK)/include/esp_hw_support/include/soc -I$(ESPRESSIF_SDK)/include/esp_hw_support/include/soc/esp32 \
-						-I$(ESPRESSIF_SDK)/include/esp_hw_support/port/esp32 -I$(ESPRESSIF_SDK)/include/esp_hw_support/port/esp32/private_include \
-						-I$(ESPRESSIF_SDK)/include/heap/include -I$(ESPRESSIF_SDK)/include/log/include -I$(ESPRESSIF_SDK)/include/lwip/include/apps \
-						-I$(ESPRESSIF_SDK)/include/lwip/include/apps/sntp -I$(ESPRESSIF_SDK)/include/lwip/lwip/src/include \
-						-I$(ESPRESSIF_SDK)/include/lwip/port/esp32/include -I$(ESPRESSIF_SDK)/include/lwip/port/esp32/include/arch \
-						-I$(ESPRESSIF_SDK)/include/soc/include -I$(ESPRESSIF_SDK)/include/soc/esp32 -I$(ESPRESSIF_SDK)/include/soc/esp32/include \
-						-I$(ESPRESSIF_SDK)/include/hal/esp32/include -I$(ESPRESSIF_SDK)/include/hal/include -I$(ESPRESSIF_SDK)/include/hal/platform_port/include \
-						-I$(ESPRESSIF_SDK)/include/esp_rom/include -I$(ESPRESSIF_SDK)/include/esp_rom/include/esp32 -I$(ESPRESSIF_SDK)/include/esp_rom/esp32 \
-						-I$(ESPRESSIF_SDK)/include/esp_common/include -I$(ESPRESSIF_SDK)/include/esp_system/include -I$(ESPRESSIF_SDK)/include/esp_system/port/soc \
-						-I$(ESPRESSIF_SDK)/include/esp_system/port/public_compat -I$(ESPRESSIF_SDK)/include/esp32/include -I$(ESPRESSIF_SDK)/include/xtensa/include \
-						-I$(ESPRESSIF_SDK)/include/xtensa/esp32/include -I$(ESPRESSIF_SDK)/include/driver/include -I$(ESPRESSIF_SDK)/include/driver/esp32/include \
-						-I$(ESPRESSIF_SDK)/include/esp_pm/include -I$(ESPRESSIF_SDK)/include/esp_ringbuf/include -I$(ESPRESSIF_SDK)/include/efuse/include \
-						-I$(ESPRESSIF_SDK)/include/efuse/esp32/include -I$(ESPRESSIF_SDK)/include/vfs/include -I$(ESPRESSIF_SDK)/include/esp_wifi/include \
-						-I$(ESPRESSIF_SDK)/include/esp_event/include -I$(ESPRESSIF_SDK)/include/esp_netif/include -I$(ESPRESSIF_SDK)/include/esp_eth/include \
-						-I$(ESPRESSIF_SDK)/include/tcpip_adapter/include -I$(ESPRESSIF_SDK)/include/esp_phy/include -I$(ESPRESSIF_SDK)/include/esp_phy/esp32/include \
-						-I$(ESPRESSIF_SDK)/include/esp_ipc/include -I$(ESPRESSIF_SDK)/include/app_trace/include -I$(ESPRESSIF_SDK)/include/esp_timer/include \
-						-I$(ESPRESSIF_SDK)/include/mbedtls/port/include -I$(ESPRESSIF_SDK)/include/mbedtls/mbedtls/include \
-						-I$(ESPRESSIF_SDK)/include/mbedtls/esp_crt_bundle/include -I$(ESPRESSIF_SDK)/include/app_update/include \
-						-I$(ESPRESSIF_SDK)/include/spi_flash/include -I$(ESPRESSIF_SDK)/include/bootloader_support/include \
-						-I$(ESPRESSIF_SDK)/include/nvs_flash/include -I$(ESPRESSIF_SDK)/include/pthread/include -I$(ESPRESSIF_SDK)/include/esp_gdbstub/include \
-						-I$(ESPRESSIF_SDK)/include/esp_gdbstub/xtensa -I$(ESPRESSIF_SDK)/include/esp_gdbstub/esp32 -I$(ESPRESSIF_SDK)/include/espcoredump/include \
-						-I$(ESPRESSIF_SDK)/include/espcoredump/include/port/xtensa -I$(ESPRESSIF_SDK)/include/wpa_supplicant/include \
-						-I$(ESPRESSIF_SDK)/include/wpa_supplicant/port/include -I$(ESPRESSIF_SDK)/include/wpa_supplicant/esp_supplicant/include \
-						-I$(ESPRESSIF_SDK)/include/ieee802154/include -I$(ESPRESSIF_SDK)/include/console -I$(ESPRESSIF_SDK)/include/asio/asio/asio/include \
-						-I$(ESPRESSIF_SDK)/include/asio/port/include -I$(ESPRESSIF_SDK)/include/bt/common/osi/include -I$(ESPRESSIF_SDK)/include/bt/include/esp32/include \
-						-I$(ESPRESSIF_SDK)/include/bt/common/api/include/api -I$(ESPRESSIF_SDK)/include/bt/common/btc/profile/esp/blufi/include \
-						-I$(ESPRESSIF_SDK)/include/bt/common/btc/profile/esp/include -I$(ESPRESSIF_SDK)/include/bt/host/bluedroid/api/include/api \
-						-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/mesh_common/include -I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/mesh_common/tinycrypt/include \
-						-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/mesh_core -I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/mesh_core/include \
-						-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/mesh_core/storage -I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/btc/include \
-						-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/mesh_models/common/include -I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/mesh_models/client/include \
-						-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/mesh_models/server/include -I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/api/core/include \
-						-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/api/models/include -I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/api \
-						-I$(ESPRESSIF_SDK)/include/cbor/port/include -I$(ESPRESSIF_SDK)/include/unity/include -I$(ESPRESSIF_SDK)/include/unity/unity/src \
-						-I$(ESPRESSIF_SDK)/include/cmock/CMock/src -I$(ESPRESSIF_SDK)/include/coap/port/include -I$(ESPRESSIF_SDK)/include/coap/libcoap/include \
-						-I$(ESPRESSIF_SDK)/include/nghttp/port/include -I$(ESPRESSIF_SDK)/include/nghttp/nghttp2/lib/includes -I$(ESPRESSIF_SDK)/include/esp-tls \
-						-I$(ESPRESSIF_SDK)/include/esp-tls/esp-tls-crypto -I$(ESPRESSIF_SDK)/include/esp_adc_cal/include -I$(ESPRESSIF_SDK)/include/esp_hid/include \
-						-I$(ESPRESSIF_SDK)/include/tcp_transport/include -I$(ESPRESSIF_SDK)/include/esp_http_client/include \
-						-I$(ESPRESSIF_SDK)/include/esp_http_server/include -I$(ESPRESSIF_SDK)/include/esp_https_ota/include \
-						-I$(ESPRESSIF_SDK)/include/esp_https_server/include -I$(ESPRESSIF_SDK)/include/esp_lcd/include -I$(ESPRESSIF_SDK)/include/esp_lcd/interface \
-						-I$(ESPRESSIF_SDK)/include/protobuf-c/protobuf-c -I$(ESPRESSIF_SDK)/include/protocomm/include/common \
-						-I$(ESPRESSIF_SDK)/include/protocomm/include/security -I$(ESPRESSIF_SDK)/include/protocomm/include/transports \
-						-I$(ESPRESSIF_SDK)/include/mdns/include -I$(ESPRESSIF_SDK)/include/esp_local_ctrl/include -I$(ESPRESSIF_SDK)/include/sdmmc/include \
-						-I$(ESPRESSIF_SDK)/include/esp_serial_slave_link/include -I$(ESPRESSIF_SDK)/include/esp_websocket_client/include \
-						-I$(ESPRESSIF_SDK)/include/expat/expat/expat/lib -I$(ESPRESSIF_SDK)/include/expat/port/include \
-						-I$(ESPRESSIF_SDK)/include/wear_levelling/include -I$(ESPRESSIF_SDK)/include/fatfs/diskio -I$(ESPRESSIF_SDK)/include/fatfs/vfs \
-						-I$(ESPRESSIF_SDK)/include/fatfs/src -I$(ESPRESSIF_SDK)/include/freemodbus/freemodbus/common/include \
-						-I$(ESPRESSIF_SDK)/include/idf_test/include -I$(ESPRESSIF_SDK)/include/idf_test/include/esp32 -I$(ESPRESSIF_SDK)/include/jsmn/include \
-						-I$(ESPRESSIF_SDK)/include/json/cJSON -I$(ESPRESSIF_SDK)/include/libsodium/libsodium/src/libsodium/include \
-						-I$(ESPRESSIF_SDK)/include/libsodium/port_include -I$(ESPRESSIF_SDK)/include/mqtt/esp-mqtt/include \
-						-I$(ESPRESSIF_SDK)/include/openssl/include -I$(ESPRESSIF_SDK)/include/perfmon/include -I$(ESPRESSIF_SDK)/include/spiffs/include \
-						-I$(ESPRESSIF_SDK)/include/ulp/include -I$(ESPRESSIF_SDK)/include/wifi_provisioning/include -I$(ESPRESSIF_SDK)/include/rmaker_common/include \
-						-I$(ESPRESSIF_SDK)/include/json_parser/upstream/include -I$(ESPRESSIF_SDK)/include/json_parser/upstream \
-						-I$(ESPRESSIF_SDK)/include/json_generator/upstream -I$(ESPRESSIF_SDK)/include/esp_schedule/include \
-						-I$(ESPRESSIF_SDK)/include/esp_rainmaker/include -I$(ESPRESSIF_SDK)/include/gpio_button/button/include \
-						-I$(ESPRESSIF_SDK)/include/qrcode/include -I$(ESPRESSIF_SDK)/include/ws2812_led -I$(ESPRESSIF_SDK)/include/esp_diagnostics/include \
-						-I$(ESPRESSIF_SDK)/include/rtc_store/include -I$(ESPRESSIF_SDK)/include/esp_insights/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/dotprod/include -I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/support/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/windows/include -I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/windows/hann/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/windows/blackman/include -I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/windows/blackman_harris/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/windows/blackman_nuttall/include -I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/windows/nuttall/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/windows/flat_top/include -I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/iir/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/fir/include -I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/math/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/math/add/include -I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/math/sub/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/math/mul/include -I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/math/addc/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/math/mulc/include -I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/math/sqrt/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/matrix/include -I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/fft/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/dct/include -I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/conv/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/common/include -I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/kalman/ekf/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/kalman/ekf_imu13states/include -I$(ESPRESSIF_SDK)/include/esp_littlefs/include \
-						-I$(ESPRESSIF_SDK)/include/esp-dl/include -I$(ESPRESSIF_SDK)/include/esp-dl/include/tool -I$(ESPRESSIF_SDK)/include/esp-dl/include/typedef \
-						-I$(ESPRESSIF_SDK)/include/esp-dl/include/image -I$(ESPRESSIF_SDK)/include/esp-dl/include/math -I$(ESPRESSIF_SDK)/include/esp-dl/include/nn \
-						-I$(ESPRESSIF_SDK)/include/esp-dl/include/layer -I$(ESPRESSIF_SDK)/include/esp-dl/include/detect \
-						-I$(ESPRESSIF_SDK)/include/esp-dl/include/model_zoo -I$(ESPRESSIF_SDK)/include/esp-sr/src/include \
-						-I$(ESPRESSIF_SDK)/include/esp-sr/esp-tts/esp_tts_chinese/include -I$(ESPRESSIF_SDK)/include/esp-sr/include/esp32 \
-						-I$(ESPRESSIF_SDK)/include/esp32-camera/driver/include -I$(ESPRESSIF_SDK)/include/esp32-camera/conversions/include \
-						-I$(ESPRESSIF_SDK)/include/fb_gfx/include \
+CPREPROCESSOR_FLAGS =	$(shell cat $(ESPRESSIF_SDK)/flags/defines) -iprefix $(ESPRESSIF_SDK)/include/ $(shell cat $(ESPRESSIF_SDK)/flags/includes) -I$(ESPRESSIF_SDK) \
 						-I$(ESPRESSIF_SDK)/$(MEMORY_TYPE)/include
 
-	ASFLAGS =	-mlongcalls -ffunction-sections -fdata-sections -Wno-error=unused-function -Wno-error=unused-variable -Wno-error=deprecated-declarations \
-				-Wno-unused-parameter -Wno-sign-compare -ggdb -freorder-blocks -Wwrite-strings -fstack-protector -fstrict-volatile-bitfields \
-				-Wno-error=unused-but-set-variable -fno-jump-tables -fno-tree-switch-conversion  -x assembler-with-cpp -MMD -c -w $(COMPILER_OPT_FLAGS)
-	
-	CFLAGS = -mlongcalls -Wno-frame-address -ffunction-sections -fdata-sections -Wno-error=unused-function -Wno-error=unused-variable \
-			 -Wno-error=deprecated-declarations -Wno-unused-parameter -Wno-sign-compare -ggdb -freorder-blocks -Wwrite-strings -fstack-protector \
-			 -fstrict-volatile-bitfields -Wno-error=unused-but-set-variable -fno-jump-tables -fno-tree-switch-conversion -std=gnu99 \
-			 -Wno-old-style-declaration  -MMD -c -w $(COMPILER_OPT_FLAGS)
-			 
-	CXXFLAGS =	-mlongcalls -Wno-frame-address -ffunction-sections -fdata-sections -Wno-error=unused-function -Wno-error=unused-variable \
-				-Wno-error=deprecated-declarations -Wno-unused-parameter -Wno-sign-compare -ggdb -freorder-blocks -Wwrite-strings -fstack-protector \
-				-fstrict-volatile-bitfields -Wno-error=unused-but-set-variable -fno-jump-tables -fno-tree-switch-conversion -std=gnu++11 \
-				-fexceptions -fno-rtti  -MMD -c -w $(COMPILER_OPT_FLAGS) 
+ASFLAGS =	-MMD -c -x assembler-with-cpp $(shell cat $(ESPRESSIF_SDK)/flags/S_flags) -Os -w -Werror=return-type
 
-	ELFLIBS =	-lesp_ringbuf -lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash \
-				-lnvs_flash -lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth \
-				-ltcpip_adapter -lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc \
-				-lesp_hw_support -lxtensa -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lasio -lbt -lcbor \
-				-lunity -lcmock -lcoap -lnghttp -lesp-tls -lesp_adc_cal -lesp_hid -ltcp_transport -lesp_http_client \
-				-lesp_http_server -lesp_https_ota -lesp_https_server -lesp_lcd -lprotobuf-c -lprotocomm -lmdns -lesp_local_ctrl \
-				-lsdmmc -lesp_serial_slave_link -lesp_websocket_client -lexpat -lwear_levelling -lfatfs -lfreemodbus -ljsmn \
-				-ljson -llibsodium -lmqtt -lopenssl -lperfmon -lspiffs -lulp -lwifi_provisioning -lrmaker_common \
-				-lesp_diagnostics -lrtc_store -lesp_insights -ljson_parser -ljson_generator -lesp_schedule \
-				-lespressif__esp_secure_cert_mgr -lesp_rainmaker -lgpio_button -lqrcode -lws2812_led -lesp-sr -lesp32-camera \
-				-lesp_littlefs -lespressif__esp-dsp -lfb_gfx -lasio -lcmock -lunity -lcoap -lesp_lcd -lesp_websocket_client \
-				-lexpat -lfreemodbus -ljsmn -llibsodium -lperfmon -lesp_adc_cal -lesp_hid -lfatfs -lwear_levelling -lopenssl \
-				-lesp_insights -lcbor -lesp_diagnostics -lrtc_store -lesp_rainmaker -lesp_local_ctrl -lesp_https_server \
-				-lwifi_provisioning -lprotocomm -lbt -lbtdm_app -lprotobuf-c -lmdns -ljson_parser -ljson_generator -lesp_schedule \
-				-lespressif__esp_secure_cert_mgr -lqrcode -lrmaker_common -lmqtt -lcat_face_detect -lhuman_face_detect \
-				-lcolor_detect -lmfn -ldl -lmultinet -lesp_audio_processor -lesp_audio_front_end -lwakenet -lesp-sr \
-				-lmultinet -lesp_audio_processor -lesp_audio_front_end -lwakenet -ljson -lspiffs -ldl_lib -lc_speech_features \
-				-lwakeword_model -lmultinet2_ch -lesp_tts_chinese -lvoice_set_xiaole -lesp_ringbuf -lefuse -lesp_ipc -ldriver \
-				-lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash -lnvs_flash -lpthread -lesp_gdbstub \
-				-lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth -ltcpip_adapter -lesp_netif -lesp_event \
-				-lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc -lesp_hw_support -lxtensa -lesp_common \
-				-lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lnghttp -lesp-tls -ltcp_transport -lesp_http_client \
-				-lesp_http_server -lesp_https_ota -lsdmmc -lesp_serial_slave_link -lulp -lmbedtls_2 -lmbedcrypto -lmbedx509 \
-				-lcoexist -lcore -lespnow -lmesh -lnet80211 -lpp -lsmartconfig -lwapi -lesp_ringbuf -lefuse -lesp_ipc \
-				-ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash -lnvs_flash -lpthread \
-				-lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth -ltcpip_adapter \
-				-lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc -lesp_hw_support\
-				-lxtensa -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lnghttp -lesp-tls -ltcp_transport \
-				-lesp_http_client -lesp_http_server -lesp_https_ota -lsdmmc -lesp_serial_slave_link -lulp -lmbedtls_2 \
-				-lmbedcrypto -lmbedx509 -lcoexist -lcore -lespnow -lmesh -lnet80211 -lpp -lsmartconfig -lwapi -lesp_ringbuf \
-				-lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash -lnvs_flash \
-				-lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth -ltcpip_adapter \
-				-lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc -lesp_hw_support \
-				-lxtensa -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lnghttp -lesp-tls -ltcp_transport \
-				-lesp_http_client -lesp_http_server -lesp_https_ota -lsdmmc -lesp_serial_slave_link -lulp -lmbedtls_2 \
-				-lmbedcrypto -lmbedx509 -lcoexist -lcore -lespnow -lmesh -lnet80211 -lpp -lsmartconfig -lwapi \
-				-lesp_ringbuf -lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash \
-				-lnvs_flash -lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth \
-				-ltcpip_adapter -lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc \
-				-lesp_hw_support -lxtensa -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lnghttp -lesp-tls \
-				-ltcp_transport -lesp_http_client -lesp_http_server -lesp_https_ota -lsdmmc -lesp_serial_slave_link -lulp \
-				-lmbedtls_2 -lmbedcrypto -lmbedx509 -lcoexist -lcore -lespnow -lmesh -lnet80211 -lpp -lsmartconfig -lwapi \
-				-lesp_ringbuf -lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash \
-				-lnvs_flash -lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth \
-				-ltcpip_adapter -lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc \
-				-lesp_hw_support -lxtensa -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lnghttp -lesp-tls \
-				-ltcp_transport -lesp_http_client -lesp_http_server -lesp_https_ota -lsdmmc -lesp_serial_slave_link -lulp \
-				-lmbedtls_2 -lmbedcrypto -lmbedx509 -lcoexist -lcore -lespnow -lmesh -lnet80211 -lpp -lsmartconfig -lwapi \
-				-lphy -lrtc -lesp_phy -lphy -lrtc -lesp_phy -lphy -lrtc -lxt_hal -lm -lnewlib -lstdc++ -lpthread -lgcc \
-				-lcxx -lapp_trace -lgcov -lapp_trace -lgcov -lc 
+CFLAGS =	-MMD -c $(shell cat $(ESPRESSIF_SDK)/flags/c_flags) -Os -w -Werror=return-type
 
-	ARFLAGS = cr
-	
-	ELFFLAGS =	-T esp32.rom.redefined.ld -T memory.ld -T sections.ld -T esp32.rom.ld -T esp32.rom.api.ld -T esp32.rom.libgcc.ld -T esp32.rom.newlib-data.ld \
-				-T esp32.rom.syscalls.ld -T esp32.peripherals.ld  -mlongcalls -Wno-frame-address -Wl,--cref -Wl,--gc-sections -fno-rtti -fno-lto \
-				-u ld_include_hli_vectors_bt -Wl,--wrap=esp_log_write -Wl,--wrap=esp_log_writev -Wl,--wrap=log_printf -u _Z5setupv -u _Z4loopv \
-				-u esp_app_desc -u pthread_include_pthread_impl -u pthread_include_pthread_cond_impl -u pthread_include_pthread_local_storage_impl \
-				-u pthread_include_pthread_rwlock_impl -u include_esp_phy_override -u ld_include_highint_hdl -u start_app -u start_app_other_cores \
-				-u __ubsan_include -Wl,--wrap=longjmp -u __assert_func -u vfs_include_syscalls_impl -Wl,--undefined=uxTopUsedPriority -u app_main \
-				-u newlib_include_heap_impl -u newlib_include_syscalls_impl -u newlib_include_pthread_impl -u newlib_include_assert_impl \
-				-u __cxa_guard_dummy
-				
+CXXFLAGS =	-MMD -c $(shell cat $(ESPRESSIF_SDK)/flags/cpp_flags) -Os -w -Werror=return-type
+
+ELFLIBS = $(shell cat $(ESPRESSIF_SDK)/flags/ld_libs)
+
+ARFLAGS = cr
+
+ELFFLAGS =	$(shell cat $(ESPRESSIF_SDK)/flags/ld_flags) $(shell cat $(ESPRESSIF_SDK)/flags/ld_scripts) -Os -w -Wl,--Map=$(BUILD_OUT)/project.map \
+			-L$(ESPRESSIF_SDK)/lib -L$(ESPRESSIF_SDK)/ld -L$(ESPRESSIF_SDK)/$(MEMORY_TYPE) -Wl,--wrap=esp_panic_handler
+
+BUILD_EXTRA_FLAGS ?= -DARDUINO_FQBN="$($(ARDUINO_VARIANT).build.fqbn)" -DESP32=ESP32 -DCORE_DEBUG_LEVEL=$($(ARDUINO_VARIANT).build.code_debug) $($(ARDUINO_VARIANT).build.loop_core) \
+						$($(ARDUINO_VARIANT).build.event_core) $($(ARDUINO_VARIANT).build.defines) $($(ARDUINO_VARIANT).build.extra_flags.$($(ARDUINO_VARIANT).build.mcu))
+						
+ifeq ($(MCU),esp32)
 	BUILD_EXTRA_FLAGS +=-DARDUINO_USB_CDC_ON_BOOT=0
 endif #!ESP32
 
 ifeq ($(MCU),esp32s2)
-	CPREPROCESSOR_FLAGS = -DHAVE_CONFIG_H -DMBEDTLS_CONFIG_FILE=\"mbedtls/esp_config.h\" -DUNITY_INCLUDE_CONFIG_H -DWITH_POSIX -D_GNU_SOURCE \
-						-DIDF_VER=\"v4.4-4\" -DESP_PLATFORM -D_POSIX_READER_WRITER_LOCKS \
-						-I$(ESPRESSIF_SDK)/include/config -I$(ESPRESSIF_SDK)/include/newlib/platform_include -I$(ESPRESSIF_SDK)/include/freertos/include \
-						-I$(ESPRESSIF_SDK)/include/freertos/include/esp_additions/freertos -I$(ESPRESSIF_SDK)/include/freertos/port/xtensa/include \
-						-I$(ESPRESSIF_SDK)/include/freertos/include/esp_additions -I$(ESPRESSIF_SDK)/include/esp_hw_support/include \
-						-I$(ESPRESSIF_SDK)/include/esp_hw_support/include/soc -I$(ESPRESSIF_SDK)/include/esp_hw_support/include/soc/esp32s2 \
-						-I$(ESPRESSIF_SDK)/include/esp_hw_support/port/esp32s2 -I$(ESPRESSIF_SDK)/include/esp_hw_support/port/esp32s2/private_include \
-						-I$(ESPRESSIF_SDK)/include/heap/include -I$(ESPRESSIF_SDK)/include/log/include -I$(ESPRESSIF_SDK)/include/lwip/include/apps \
-						-I$(ESPRESSIF_SDK)/include/lwip/include/apps/sntp -I$(ESPRESSIF_SDK)/include/lwip/lwip/src/include \
-						-I$(ESPRESSIF_SDK)/include/lwip/port/esp32/include -I$(ESPRESSIF_SDK)/include/lwip/port/esp32/include/arch \
-						-I$(ESPRESSIF_SDK)/include/soc/include -I$(ESPRESSIF_SDK)/include/soc/esp32s2 -I$(ESPRESSIF_SDK)/include/soc/esp32s2/include \
-						-I$(ESPRESSIF_SDK)/include/hal/esp32s2/include -I$(ESPRESSIF_SDK)/include/hal/include -I$(ESPRESSIF_SDK)/include/hal/platform_port/include \
-						-I$(ESPRESSIF_SDK)/include/esp_rom/include -I$(ESPRESSIF_SDK)/include/esp_rom/include/esp32s2 -I$(ESPRESSIF_SDK)/include/esp_rom/esp32s2 \
-						-I$(ESPRESSIF_SDK)/include/esp_common/include -I$(ESPRESSIF_SDK)/include/esp_system/include -I$(ESPRESSIF_SDK)/include/esp_system/port/soc \
-						-I$(ESPRESSIF_SDK)/include/esp_system/port/public_compat -I$(ESPRESSIF_SDK)/include/xtensa/include \
-						-I$(ESPRESSIF_SDK)/include/xtensa/esp32s2/include -I$(ESPRESSIF_SDK)/include/driver/include \
-						-I$(ESPRESSIF_SDK)/include/driver/esp32s2/include -I$(ESPRESSIF_SDK)/include/esp_pm/include -I$(ESPRESSIF_SDK)/include/esp_ringbuf/include \
-						-I$(ESPRESSIF_SDK)/include/efuse/include -I$(ESPRESSIF_SDK)/include/efuse/esp32s2/include -I$(ESPRESSIF_SDK)/include/vfs/include \
-						-I$(ESPRESSIF_SDK)/include/esp_wifi/include -I$(ESPRESSIF_SDK)/include/esp_event/include -I$(ESPRESSIF_SDK)/include/esp_netif/include \
-						-I$(ESPRESSIF_SDK)/include/esp_eth/include -I$(ESPRESSIF_SDK)/include/tcpip_adapter/include \
-						-I$(ESPRESSIF_SDK)/include/esp_phy/include -I$(ESPRESSIF_SDK)/include/esp_phy/esp32s2/include -I$(ESPRESSIF_SDK)/include/esp_ipc/include \
-						-I$(ESPRESSIF_SDK)/include/app_trace/include -I$(ESPRESSIF_SDK)/include/esp_timer/include -I$(ESPRESSIF_SDK)/include/mbedtls/port/include \
-						-I$(ESPRESSIF_SDK)/include/mbedtls/mbedtls/include -I$(ESPRESSIF_SDK)/include/mbedtls/esp_crt_bundle/include \
-						-I$(ESPRESSIF_SDK)/include/app_update/include -I$(ESPRESSIF_SDK)/include/spi_flash/include \
-						-I$(ESPRESSIF_SDK)/include/bootloader_support/include -I$(ESPRESSIF_SDK)/include/nvs_flash/include \
-						-I$(ESPRESSIF_SDK)/include/pthread/include -I$(ESPRESSIF_SDK)/include/esp_gdbstub/include \
-						-I$(ESPRESSIF_SDK)/include/esp_gdbstub/xtensa -I$(ESPRESSIF_SDK)/include/esp_gdbstub/esp32s2 \
-						-I$(ESPRESSIF_SDK)/include/espcoredump/include -I$(ESPRESSIF_SDK)/include/espcoredump/include/port/xtensa \
-						-I$(ESPRESSIF_SDK)/include/wpa_supplicant/include -I$(ESPRESSIF_SDK)/include/wpa_supplicant/port/include \
-						-I$(ESPRESSIF_SDK)/include/wpa_supplicant/esp_supplicant/include -I$(ESPRESSIF_SDK)/include/ieee802154/include \
-						-I$(ESPRESSIF_SDK)/include/console -I$(ESPRESSIF_SDK)/include/asio/asio/asio/include -I$(ESPRESSIF_SDK)/include/asio/port/include \
-						-I$(ESPRESSIF_SDK)/include/cbor/port/include -I$(ESPRESSIF_SDK)/include/unity/include -I$(ESPRESSIF_SDK)/include/unity/unity/src \
-						-I$(ESPRESSIF_SDK)/include/cmock/CMock/src -I$(ESPRESSIF_SDK)/include/coap/port/include -I$(ESPRESSIF_SDK)/include/coap/libcoap/include \
-						-I$(ESPRESSIF_SDK)/include/nghttp/port/include -I$(ESPRESSIF_SDK)/include/nghttp/nghttp2/lib/includes -I$(ESPRESSIF_SDK)/include/esp-tls \
-						-I$(ESPRESSIF_SDK)/include/esp-tls/esp-tls-crypto -I$(ESPRESSIF_SDK)/include/esp_adc_cal/include -I$(ESPRESSIF_SDK)/include/esp_hid/include \
-						-I$(ESPRESSIF_SDK)/include/tcp_transport/include -I$(ESPRESSIF_SDK)/include/esp_http_client/include \
-						-I$(ESPRESSIF_SDK)/include/esp_http_server/include -I$(ESPRESSIF_SDK)/include/esp_https_ota/include \
-						-I$(ESPRESSIF_SDK)/include/esp_https_server/include -I$(ESPRESSIF_SDK)/include/esp_lcd/include -I$(ESPRESSIF_SDK)/include/esp_lcd/interface \
-						-I$(ESPRESSIF_SDK)/include/protobuf-c/protobuf-c -I$(ESPRESSIF_SDK)/include/protocomm/include/common \
-						-I$(ESPRESSIF_SDK)/include/protocomm/include/security -I$(ESPRESSIF_SDK)/include/protocomm/include/transports \
-						-I$(ESPRESSIF_SDK)/include/mdns/include -I$(ESPRESSIF_SDK)/include/esp_local_ctrl/include -I$(ESPRESSIF_SDK)/include/sdmmc/include \
-						-I$(ESPRESSIF_SDK)/include/esp_serial_slave_link/include -I$(ESPRESSIF_SDK)/include/esp_websocket_client/include \
-						-I$(ESPRESSIF_SDK)/include/expat/expat/expat/lib -I$(ESPRESSIF_SDK)/include/expat/port/include\
-						-I$(ESPRESSIF_SDK)/include/wear_levelling/include -I$(ESPRESSIF_SDK)/include/fatfs/diskio -I$(ESPRESSIF_SDK)/include/fatfs/vfs \
-						-I$(ESPRESSIF_SDK)/include/fatfs/src -I$(ESPRESSIF_SDK)/include/freemodbus/freemodbus/common/include \
-						-I$(ESPRESSIF_SDK)/include/idf_test/include -I$(ESPRESSIF_SDK)/include/idf_test/include/esp32s2 -I$(ESPRESSIF_SDK)/include/jsmn/include \
-						-I$(ESPRESSIF_SDK)/include/json/cJSON -I$(ESPRESSIF_SDK)/include/libsodium/libsodium/src/libsodium/include \
-						-I$(ESPRESSIF_SDK)/include/libsodium/port_include -I$(ESPRESSIF_SDK)/include/mqtt/esp-mqtt/include \
-						-I$(ESPRESSIF_SDK)/include/openssl/include -I$(ESPRESSIF_SDK)/include/perfmon/include -I$(ESPRESSIF_SDK)/include/spiffs/include \
-						-I$(ESPRESSIF_SDK)/include/usb/include -I$(ESPRESSIF_SDK)/include/touch_element/include -I$(ESPRESSIF_SDK)/include/ulp/include \
-						-I$(ESPRESSIF_SDK)/include/wifi_provisioning/include -I$(ESPRESSIF_SDK)/include/rmaker_common/include \
-						-I$(ESPRESSIF_SDK)/include/esp_diagnostics/include -I$(ESPRESSIF_SDK)/include/rtc_store/include \
-						-I$(ESPRESSIF_SDK)/include/esp_insights/include -I$(ESPRESSIF_SDK)/include/json_parser/upstream/include \
-						-I$(ESPRESSIF_SDK)/include/json_parser/upstream -I$(ESPRESSIF_SDK)/include/json_generator/upstream \
-						-I$(ESPRESSIF_SDK)/include/esp_schedule/include -I$(ESPRESSIF_SDK)/include/espressif__esp_secure_cert_mgr/include \
-						-I$(ESPRESSIF_SDK)/include/esp_rainmaker/include -I$(ESPRESSIF_SDK)/include/gpio_button/button/include \
-						-I$(ESPRESSIF_SDK)/include/qrcode/include -I$(ESPRESSIF_SDK)/include/ws2812_led -I$(ESPRESSIF_SDK)/include/freertos/include/freertos \
-						-I$(ESPRESSIF_SDK)/include/arduino_tinyusb/tinyusb/src -I$(ESPRESSIF_SDK)/include/arduino_tinyusb/include \
-						-I$(ESPRESSIF_SDK)/include/esp_littlefs/include -I$(ESPRESSIF_SDK)/include/esp-dl/include -I$(ESPRESSIF_SDK)/include/esp-dl/include/tool \
-						-I$(ESPRESSIF_SDK)/include/esp-dl/include/typedef -I$(ESPRESSIF_SDK)/include/esp-dl/include/image \
-						-I$(ESPRESSIF_SDK)/include/esp-dl/include/math -I$(ESPRESSIF_SDK)/include/esp-dl/include/nn \
-						-I$(ESPRESSIF_SDK)/include/esp-dl/include/layer -I$(ESPRESSIF_SDK)/include/esp-dl/include/detect \
-						-I$(ESPRESSIF_SDK)/include/esp-dl/include/model_zoo -I$(ESPRESSIF_SDK)/include/esp-sr/esp-tts/esp_tts_chinese/include \
-						-I$(ESPRESSIF_SDK)/include/esp32-camera/driver/include -I$(ESPRESSIF_SDK)/include/esp32-camera/conversions/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/dotprod/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/support/include -I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/windows/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/windows/hann/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/windows/blackman/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/windows/blackman_harris/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/windows/blackman_nuttall/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/windows/nuttall/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/windows/flat_top/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/iir/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/fir/include -I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/math/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/math/add/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/math/sub/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/math/mul/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/math/addc/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/math/mulc/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/math/sqrt/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/matrix/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/fft/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/dct/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/conv/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/common/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/kalman/ekf/include \
-						-I$(ESPRESSIF_SDK)/include/espressif__esp-dsp/modules/kalman/ekf_imu13states/include \
-						-I$(ESPRESSIF_SDK)/include/fb_gfx/include \
-						-I$(ESPRESSIF_SDK)/$(MEMORY_TYPE)/include
-
-	ASFLAGS =	-mlongcalls -ffunction-sections -fdata-sections -Wno-error=unused-function -Wno-error=unused-variable -Wno-error=deprecated-declarations \
-				-Wno-unused-parameter -Wno-sign-compare -ggdb -freorder-blocks -Wwrite-strings -fstack-protector -fstrict-volatile-bitfields \
-				-Wno-error=unused-but-set-variable -fno-jump-tables -fno-tree-switch-conversion  -x assembler-with-cpp -MMD -c -w $(COMPILER_OPT_FLAGS)
-	
-	CFLAGS = -mlongcalls -Wno-frame-address -ffunction-sections -fdata-sections -Wno-error=unused-function -Wno-error=unused-variable \
-			 -Wno-error=deprecated-declarations -Wno-unused-parameter -Wno-sign-compare -ggdb -freorder-blocks -Wwrite-strings -fstack-protector \
-			 -fstrict-volatile-bitfields -Wno-error=unused-but-set-variable -fno-jump-tables -fno-tree-switch-conversion -std=gnu99 \
-			 -Wno-old-style-declaration  -MMD -c -w $(COMPILER_OPT_FLAGS)
-			 
-	CXXFLAGS =	-mlongcalls -Wno-frame-address -ffunction-sections -fdata-sections -Wno-error=unused-function -Wno-error=unused-variable \
-				-Wno-error=deprecated-declarations -Wno-unused-parameter -Wno-sign-compare -ggdb -freorder-blocks -Wwrite-strings -fstack-protector \
-				-fstrict-volatile-bitfields -Wno-error=unused-but-set-variable -fno-jump-tables -fno-tree-switch-conversion -std=gnu++11 \
-				-fexceptions -fno-rtti  -MMD -c -w $(COMPILER_OPT_FLAGS) 
-
-	ELFLIBS =	-lesp_ringbuf -lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash -lnvs_flash -lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth -ltcpip_adapter -lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc -lesp_hw_support -lxtensa -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lasio -lcbor -lunity -lcmock -lcoap -lnghttp -lesp-tls -lesp_adc_cal -lesp_hid -ltcp_transport -lesp_http_client -lesp_http_server -lesp_https_ota -lesp_https_server -lesp_lcd -lprotobuf-c -lprotocomm -lmdns -lesp_local_ctrl -lsdmmc -lesp_serial_slave_link -lesp_websocket_client -lexpat -lwear_levelling -lfatfs -lfreemodbus -ljsmn -ljson -llibsodium -lmqtt -lopenssl -lperfmon -lspiffs -lusb -ltouch_element -lulp -lwifi_provisioning -lrmaker_common -lesp_diagnostics -lrtc_store -lesp_insights -ljson_parser -ljson_generator -lesp_schedule -lespressif__esp_secure_cert_mgr -lesp_rainmaker -lgpio_button -lqrcode -lws2812_led -lesp32-camera -lesp_littlefs -lespressif__esp-dsp -lfb_gfx -lasio -lcmock -lunity -lcoap -lesp_lcd -lesp_websocket_client -lexpat -lfreemodbus -ljsmn -llibsodium -lperfmon -lusb -ltouch_element -lesp_adc_cal -lesp_hid -lfatfs -lwear_levelling -lopenssl -lspiffs -lesp_insights -lcbor -lesp_diagnostics -lrtc_store -lesp_rainmaker -lesp_local_ctrl -lesp_https_server -lwifi_provisioning -lprotocomm -lprotobuf-c -lmdns -ljson -ljson_parser -ljson_generator -lesp_schedule -lespressif__esp_secure_cert_mgr -lqrcode -lrmaker_common -lmqtt -larduino_tinyusb -lcat_face_detect -lhuman_face_detect -lcolor_detect -lmfn -ldl -lesp_tts_chinese -lvoice_set_xiaole -lesp_ringbuf -lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash -lnvs_flash -lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth -ltcpip_adapter -lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc -lesp_hw_support -lxtensa -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lnghttp -lesp-tls -ltcp_transport -lesp_http_client -lesp_http_server -lesp_https_ota -lsdmmc -lesp_serial_slave_link -lulp -lmbedtls_2 -lmbedcrypto -lmbedx509 -lcoexist -lcore -lespnow -lmesh -lnet80211 -lpp -lsmartconfig -lwapi -lesp_ringbuf -lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash -lnvs_flash -lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth -ltcpip_adapter -lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc -lesp_hw_support -lxtensa -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lnghttp -lesp-tls -ltcp_transport -lesp_http_client -lesp_http_server -lesp_https_ota -lsdmmc -lesp_serial_slave_link -lulp -lmbedtls_2 -lmbedcrypto -lmbedx509 -lcoexist -lcore -lespnow -lmesh -lnet80211 -lpp -lsmartconfig -lwapi -lesp_ringbuf -lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash -lnvs_flash -lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth -ltcpip_adapter -lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc -lesp_hw_support -lxtensa -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lnghttp -lesp-tls -ltcp_transport -lesp_http_client -lesp_http_server -lesp_https_ota -lsdmmc -lesp_serial_slave_link -lulp -lmbedtls_2 -lmbedcrypto -lmbedx509 -lcoexist -lcore -lespnow -lmesh -lnet80211 -lpp -lsmartconfig -lwapi -lesp_ringbuf -lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash -lnvs_flash -lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth -ltcpip_adapter -lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc -lesp_hw_support -lxtensa -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lnghttp -lesp-tls -ltcp_transport -lesp_http_client -lesp_http_server -lesp_https_ota -lsdmmc -lesp_serial_slave_link -lulp -lmbedtls_2 -lmbedcrypto -lmbedx509 -lcoexist -lcore -lespnow -lmesh -lnet80211 -lpp -lsmartconfig -lwapi -lesp_ringbuf -lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash -lnvs_flash -lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth -ltcpip_adapter -lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc -lesp_hw_support -lxtensa -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lnghttp -lesp-tls -ltcp_transport -lesp_http_client -lesp_http_server -lesp_https_ota -lsdmmc -lesp_serial_slave_link -lulp -lmbedtls_2 -lmbedcrypto -lmbedx509 -lcoexist -lcore -lespnow -lmesh -lnet80211 -lpp -lsmartconfig -lwapi -lesp_ringbuf -lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash -lnvs_flash -lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth -ltcpip_adapter -lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc -lesp_hw_support -lxtensa -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lnghttp -lesp-tls -ltcp_transport -lesp_http_client -lesp_http_server -lesp_https_ota -lsdmmc -lesp_serial_slave_link -lulp -lmbedtls_2 -lmbedcrypto -lmbedx509 -lcoexist -lcore -lespnow -lmesh -lnet80211 -lpp -lsmartconfig -lwapi -lphy -lesp_phy -lphy -lesp_phy -lphy -lxt_hal -lm -lnewlib -lstdc++ -lpthread -lgcc -lcxx -lapp_trace -lgcov -lapp_trace -lgcov -lc 
-
-	ARFLAGS = cr
-	
-	ELFFLAGS =	-T memory.ld -T sections.ld -T esp32s2.rom.ld -T esp32s2.rom.api.ld -T esp32s2.rom.libgcc.ld -T esp32s2.rom.newlib-funcs.ld \
-				-T esp32s2.rom.newlib-data.ld -T esp32s2.rom.spiflash.ld -T esp32s2.rom.newlib-time.ld -T esp32s2.peripherals.ld  -mlongcalls \
-				-Wl,--cref -Wl,--gc-sections -fno-rtti -fno-lto -Wl,--wrap=esp_log_write -Wl,--wrap=esp_log_writev \
-				-Wl,--wrap=log_printf -u _Z5setupv -u _Z4loopv -u esp_app_desc -u pthread_include_pthread_impl -u pthread_include_pthread_cond_impl \
-				-u pthread_include_pthread_local_storage_impl -u pthread_include_pthread_rwlock_impl -u include_esp_phy_override \
-				-u ld_include_highint_hdl -u start_app -u __ubsan_include -Wl,--wrap=longjmp -u __assert_func -u vfs_include_syscalls_impl \
-				-Wl,--undefined=uxTopUsedPriority -u app_main -u newlib_include_heap_impl -u newlib_include_syscalls_impl \
-				-u newlib_include_pthread_impl -u newlib_include_assert_impl -u __cxa_guard_dummy 
-	BUILD_EXTRA_FLAGS +=-DARDUINO_USB_MODE=$($(ARDUINO_VARIANT).build.usb_mode) -DARDUINO_USB_CDC_ON_BOOT=$($(ARDUINO_VARIANT).build.cdc_on_boot) \
+	BUILD_EXTRA_FLAGS +=-DARDUINO_USB_MODE=0 -DARDUINO_USB_CDC_ON_BOOT=$($(ARDUINO_VARIANT).build.cdc_on_boot) \
 						-DARDUINO_USB_MSC_ON_BOOT=$($(ARDUINO_VARIANT).build.msc_on_boot) -DARDUINO_USB_DFU_ON_BOOT=$($(ARDUINO_VARIANT).build.dfu_on_boot)
-endif #end S2
+endif #!S2
 
 ifeq ($(MCU),esp32s3)
-	CPREPROCESSOR_FLAGS = -DHAVE_CONFIG_H -DMBEDTLS_CONFIG_FILE=mbedtls/esp_config.h -DUNITY_INCLUDE_CONFIG_H -DWITH_POSIX -D_GNU_SOURCE \
-							-DIDF_VER=v4.4.4 -DESP_PLATFORM -D_POSIX_READER_WRITER_LOCKS  \
-							-I$(ESPRESSIF_SDK)/include/config -I$(ESPRESSIF_SDK)/include/newlib/platform_include \
-							-I$(ESPRESSIF_SDK)/include/freertos/include -I$(ESPRESSIF_SDK)/include/freertos/include/esp_additions/freertos \
-							-I$(ESPRESSIF_SDK)/include/freertos/port/xtensa/include -I$(ESPRESSIF_SDK)/include/freertos/include/esp_additions \
-							-I$(ESPRESSIF_SDK)/include/esp_hw_support/include -I$(ESPRESSIF_SDK)/include/esp_hw_support/include/soc \
-							-I$(ESPRESSIF_SDK)/include/esp_hw_support/include/soc/esp32s3 -I$(ESPRESSIF_SDK)/include/esp_hw_support/port/esp32s3 \
-							-I$(ESPRESSIF_SDK)/include/esp_hw_support/port/esp32s3/private_include -I$(ESPRESSIF_SDK)/include/heap/include \
-							-I$(ESPRESSIF_SDK)/include/log/include -I$(ESPRESSIF_SDK)/include/lwip/include/apps -I$(ESPRESSIF_SDK)/include/lwip/include/apps/sntp \
-							-I$(ESPRESSIF_SDK)/include/lwip/lwip/src/include -I$(ESPRESSIF_SDK)/include/lwip/port/esp32/include \
-							-I$(ESPRESSIF_SDK)/include/lwip/port/esp32/include/arch -I$(ESPRESSIF_SDK)/include/soc/include \
-							-I$(ESPRESSIF_SDK)/include/soc/esp32s3 -I$(ESPRESSIF_SDK)/include/soc/esp32s3/include \
-							-I$(ESPRESSIF_SDK)/include/hal/esp32s3/include -I$(ESPRESSIF_SDK)/include/hal/include \
-							-I$(ESPRESSIF_SDK)/include/hal/platform_port/include -I$(ESPRESSIF_SDK)/include/esp_rom/include \
-							-I$(ESPRESSIF_SDK)/include/esp_rom/include/esp32s3 -I$(ESPRESSIF_SDK)/include/esp_rom/esp32s3 \
-							-I$(ESPRESSIF_SDK)/include/esp_common/include -I$(ESPRESSIF_SDK)/include/esp_system/include \
-							-I$(ESPRESSIF_SDK)/include/esp_system/port/soc -I$(ESPRESSIF_SDK)/include/esp_system/port/public_compat \
-							-I$(ESPRESSIF_SDK)/include/xtensa/include -I$(ESPRESSIF_SDK)/include/xtensa/esp32s3/include \
-							-I$(ESPRESSIF_SDK)/include/driver/include -I$(ESPRESSIF_SDK)/include/driver/esp32s3/include \
-							-I$(ESPRESSIF_SDK)/include/esp_pm/include -I$(ESPRESSIF_SDK)/include/esp_ringbuf/include \
-							-I$(ESPRESSIF_SDK)/include/efuse/include -I$(ESPRESSIF_SDK)/include/efuse/esp32s3/include \
-							-I$(ESPRESSIF_SDK)/include/vfs/include -I$(ESPRESSIF_SDK)/include/esp_wifi/include \
-							-I$(ESPRESSIF_SDK)/include/esp_event/include -I$(ESPRESSIF_SDK)/include/esp_netif/include \
-							-I$(ESPRESSIF_SDK)/include/esp_eth/include -I$(ESPRESSIF_SDK)/include/tcpip_adapter/include \
-							-I$(ESPRESSIF_SDK)/include/esp_phy/include -I$(ESPRESSIF_SDK)/include/esp_phy/esp32s3/include \
-							-I$(ESPRESSIF_SDK)/include/esp_ipc/include -I$(ESPRESSIF_SDK)/include/app_trace/include \
-							-I$(ESPRESSIF_SDK)/include/esp_timer/include -I$(ESPRESSIF_SDK)/include/mbedtls/port/include \
-							-I$(ESPRESSIF_SDK)/include/mbedtls/mbedtls/include -I$(ESPRESSIF_SDK)/include/mbedtls/esp_crt_bundle/include \
-							-I$(ESPRESSIF_SDK)/include/app_update/include -I$(ESPRESSIF_SDK)/include/spi_flash/include \
-							-I$(ESPRESSIF_SDK)/include/bootloader_support/include -I$(ESPRESSIF_SDK)/include/nvs_flash/include \
-							-I$(ESPRESSIF_SDK)/include/pthread/include -I$(ESPRESSIF_SDK)/include/esp_gdbstub/include \
-							-I$(ESPRESSIF_SDK)/include/esp_gdbstub/xtensa -I$(ESPRESSIF_SDK)/include/esp_gdbstub/esp32s3 \
-							-I$(ESPRESSIF_SDK)/include/espcoredump/include -I$(ESPRESSIF_SDK)/include/espcoredump/include/port/xtensa \
-							-I$(ESPRESSIF_SDK)/include/wpa_supplicant/include -I$(ESPRESSIF_SDK)/include/wpa_supplicant/port/include \
-							-I$(ESPRESSIF_SDK)/include/wpa_supplicant/esp_supplicant/include -I$(ESPRESSIF_SDK)/include/ieee802154/include \
-							-I$(ESPRESSIF_SDK)/include/console -I$(ESPRESSIF_SDK)/include/asio/asio/asio/include \
-							-I$(ESPRESSIF_SDK)/include/asio/port/include -I$(ESPRESSIF_SDK)/include/bt/common/osi/include \
-							-I$(ESPRESSIF_SDK)/include/bt/include/esp32s3/include -I$(ESPRESSIF_SDK)/include/bt/common/api/include/api \
-							-I$(ESPRESSIF_SDK)/include/bt/common/btc/profile/esp/blufi/include \
-							-I$(ESPRESSIF_SDK)/include/bt/common/btc/profile/esp/include \
-							-I$(ESPRESSIF_SDK)/include/bt/host/bluedroid/api/include/api \
-							-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/mesh_common/include \
-							-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/mesh_common/tinycrypt/include \
-							-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/mesh_core \
-							-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/mesh_core/include \
-							-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/mesh_core/storage \
-							-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/btc/include \
-							-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/mesh_models/common/include \
-							-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/mesh_models/client/include \
-							-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/mesh_models/server/include \
-							-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/api/core/include \
-							-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/api/models/include \
-							-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/api -I$(ESPRESSIF_SDK)/include/cbor/port/include \
-							-I$(ESPRESSIF_SDK)/include/unity/include -I$(ESPRESSIF_SDK)/include/unity/unity/src \
-							-I$(ESPRESSIF_SDK)/include/cmock/CMock/src -I$(ESPRESSIF_SDK)/include/coap/port/include \
-							-I$(ESPRESSIF_SDK)/include/coap/libcoap/include -I$(ESPRESSIF_SDK)/include/nghttp/port/include \
-							-I$(ESPRESSIF_SDK)/include/nghttp/nghttp2/lib/includes -I$(ESPRESSIF_SDK)/include/esp-tls \
-							-I$(ESPRESSIF_SDK)/include/esp-tls/esp-tls-crypto -I$(ESPRESSIF_SDK)/include/esp_adc_cal/include \
-							-I$(ESPRESSIF_SDK)/include/esp_hid/include -I$(ESPRESSIF_SDK)/include/tcp_transport/include \
-							-I$(ESPRESSIF_SDK)/include/esp_http_client/include -I$(ESPRESSIF_SDK)/include/esp_http_server/include \
-							-I$(ESPRESSIF_SDK)/include/esp_https_ota/include -I$(ESPRESSIF_SDK)/include/esp_https_server/include \
-							-I$(ESPRESSIF_SDK)/include/esp_lcd/include -I$(ESPRESSIF_SDK)/include/esp_lcd/interface \
-							-I$(ESPRESSIF_SDK)/include/protobuf-c/protobuf-c -I$(ESPRESSIF_SDK)/include/protocomm/include/common \
-							-I$(ESPRESSIF_SDK)/include/protocomm/include/security -I$(ESPRESSIF_SDK)/include/protocomm/include/transports \
-							-I$(ESPRESSIF_SDK)/include/mdns/include -I$(ESPRESSIF_SDK)/include/esp_local_ctrl/include \
-							-I$(ESPRESSIF_SDK)/include/sdmmc/include -I$(ESPRESSIF_SDK)/include/esp_serial_slave_link/include \
-							-I$(ESPRESSIF_SDK)/include/esp_websocket_client/include -I$(ESPRESSIF_SDK)/include/expat/expat/expat/lib \
-							-I$(ESPRESSIF_SDK)/include/expat/port/include -I$(ESPRESSIF_SDK)/include/wear_levelling/include \
-							-I$(ESPRESSIF_SDK)/include/fatfs/diskio -I$(ESPRESSIF_SDK)/include/fatfs/vfs \
-							-I$(ESPRESSIF_SDK)/include/fatfs/src -I$(ESPRESSIF_SDK)/include/freemodbus/freemodbus/common/include \
-							-I$(ESPRESSIF_SDK)/include/idf_test/include -I$(ESPRESSIF_SDK)/include/idf_test/include/esp32s3 \
-							-I$(ESPRESSIF_SDK)/include/jsmn/include -I$(ESPRESSIF_SDK)/include/json/cJSON \
-							-I$(ESPRESSIF_SDK)/include/libsodium/libsodium/src/libsodium/include \
-							-I$(ESPRESSIF_SDK)/include/libsodium/port_include -I$(ESPRESSIF_SDK)/include/mqtt/esp-mqtt/include \
-							-I$(ESPRESSIF_SDK)/include/openssl/include -I$(ESPRESSIF_SDK)/include/perfmon/include \
-							-I$(ESPRESSIF_SDK)/include/spiffs/include -I$(ESPRESSIF_SDK)/include/usb/include \
-							-I$(ESPRESSIF_SDK)/include/ulp/include -I$(ESPRESSIF_SDK)/include/wifi_provisioning/include \
-							-I$(ESPRESSIF_SDK)/include/rmaker_common/include -I$(ESPRESSIF_SDK)/include/json_parser/upstream/include \
-							-I$(ESPRESSIF_SDK)/include/json_parser/upstream -I$(ESPRESSIF_SDK)/include/json_generator/upstream \
-							-I$(ESPRESSIF_SDK)/include/esp_schedule/include -I$(ESPRESSIF_SDK)/include/esp_rainmaker/include \
-							-I$(ESPRESSIF_SDK)/include/gpio_button/button/include -I$(ESPRESSIF_SDK)/include/qrcode/include \
-							-I$(ESPRESSIF_SDK)/include/ws2812_led -I$(ESPRESSIF_SDK)/include/esp_diagnostics/include \
-							-I$(ESPRESSIF_SDK)/include/rtc_store/include -I$(ESPRESSIF_SDK)/include/esp_insights/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/dotprod/include -I$(ESPRESSIF_SDK)/include/esp-dsp/modules/support/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/windows/include -I$(ESPRESSIF_SDK)/include/esp-dsp/modules/windows/hann/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/windows/blackman/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/windows/blackman_harris/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/windows/blackman_nuttall/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/windows/nuttall/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/windows/flat_top/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/iir/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/fir/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/math/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/math/add/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/math/sub/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/math/mul/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/math/addc/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/math/mulc/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/math/sqrt/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/matrix/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/fft/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/dct/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/conv/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/common/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/kalman/ekf/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/kalman/ekf_imu13states/include \
-							-I$(ESPRESSIF_SDK)/include/freertos/include/freertos \
-							-I$(ESPRESSIF_SDK)/include/arduino_tinyusb/tinyusb/src \
-							-I$(ESPRESSIF_SDK)/include/arduino_tinyusb/include \
-							-I$(ESPRESSIF_SDK)/include/esp_littlefs/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dl/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dl/include/tool \
-							-I$(ESPRESSIF_SDK)/include/esp-dl/include/typedef \
-							-I$(ESPRESSIF_SDK)/include/esp-dl/include/image \
-							-I$(ESPRESSIF_SDK)/include/esp-dl/include/math \
-							-I$(ESPRESSIF_SDK)/include/esp-dl/include/nn \
-							-I$(ESPRESSIF_SDK)/include/esp-dl/include/layer \
-							-I$(ESPRESSIF_SDK)/include/esp-dl/include/detect \
-							-I$(ESPRESSIF_SDK)/include/esp-dl/include/model_zoo \
-							-I$(ESPRESSIF_SDK)/include/esp-sr/src/include \
-							-I$(ESPRESSIF_SDK)/include/esp-sr/esp-tts/esp_tts_chinese/include \
-							-I$(ESPRESSIF_SDK)/include/esp-sr/include/esp32s3 \
-							-I$(ESPRESSIF_SDK)/include/esp32-camera/driver/include \
-							-I$(ESPRESSIF_SDK)/include/esp32-camera/conversions/include \
-							-I$(ESPRESSIF_SDK)/include/fb_gfx/include \
-							-I$(ESPRESSIF_SDK)/$(MEMORY_TYPE)/include
-
-	ASFLAGS = -ffunction-sections -fdata-sections -Wno-error=unused-function -Wno-error=unused-variable -Wno-error=deprecated-declarations \
-				-Wno-unused-parameter -Wno-sign-compare -ggdb -O2 -Wwrite-strings -fstack-protector -fstrict-volatile-bitfields \
-				-Wno-error=unused-but-set-variable -fno-jump-tables -fno-tree-switch-conversion  -x assembler-with-cpp -MMD -c	
-	CFLAGS =	-mlongcalls -ffunction-sections -fdata-sections -Wno-error=unused-function -Wno-error=unused-variable \
-				-Wno-error=deprecated-declarations -Wno-unused-parameter -Wno-sign-compare -ggdb -freorder-blocks -Wwrite-strings \
-				-fstack-protector -fstrict-volatile-bitfields -Wno-error=unused-but-set-variable -fno-jump-tables -fno-tree-switch-conversion \
-				-std=gnu99 -Wno-old-style-declaration  -MMD -c
-	
-	CXXFLAGS =	-mlongcalls -ffunction-sections -fdata-sections -Wno-error=unused-function -Wno-error=unused-variable \
-				-Wno-error=deprecated-declarations -Wno-unused-parameter -Wno-sign-compare -ggdb -freorder-blocks -Wwrite-strings \
-				-fstack-protector -fstrict-volatile-bitfields -Wno-error=unused-but-set-variable -fno-jump-tables -fno-tree-switch-conversion \
-				-std=gnu++11 -fexceptions -fno-rtti  -MMD -c
-				
-	ELFLIBS =	-lesp_ringbuf -lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash -lnvs_flash -lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth -ltcpip_adapter -lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc -lesp_hw_support -lxtensa -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lasio -lbt -lcbor -lunity -lcmock -lcoap -lnghttp -lesp-tls -lesp_adc_cal -lesp_hid -ltcp_transport -lesp_http_client -lesp_http_server -lesp_https_ota -lesp_https_server -lesp_lcd -lprotobuf-c -lprotocomm -lmdns -lesp_local_ctrl -lsdmmc -lesp_serial_slave_link -lesp_websocket_client -lexpat -lwear_levelling -lfatfs -lfreemodbus -ljsmn -ljson -llibsodium -lmqtt -lopenssl -lperfmon -lspiffs -lusb -lulp -lwifi_provisioning -lrmaker_common -lesp_diagnostics -lrtc_store -lesp_insights -ljson_parser -ljson_generator -lesp_schedule -lespressif__esp_secure_cert_mgr -lesp_rainmaker -lgpio_button -lqrcode -lws2812_led -lesp-sr -lesp32-camera -lesp_littlefs -lespressif__esp-dsp -lfb_gfx -lasio -lcmock -lunity -lcoap -lesp_lcd -lesp_websocket_client -lexpat -lfreemodbus -ljsmn -llibsodium -lperfmon -lusb -lesp_adc_cal -lesp_hid -lfatfs -lwear_levelling -lopenssl -lesp_insights -lcbor -lesp_diagnostics -lrtc_store -lesp_rainmaker -lesp_local_ctrl -lesp_https_server -lwifi_provisioning -lprotocomm -lbt -lbtdm_app -lprotobuf-c -lmdns -ljson_parser -ljson_generator -lesp_schedule -lespressif__esp_secure_cert_mgr -lqrcode -lrmaker_common -lmqtt -larduino_tinyusb -lcat_face_detect -lhuman_face_detect -lcolor_detect -lmfn -ldl -lhufzip -lesp_audio_front_end -lesp_audio_processor -lmultinet -lwakenet -lesp-sr -lhufzip -lesp_audio_front_end -lesp_audio_processor -lmultinet -lwakenet -ljson -lspiffs -ldl_lib -lc_speech_features -lespressif__esp-dsp -lesp_tts_chinese -lvoice_set_xiaole -lesp_ringbuf -lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash -lnvs_flash -lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth -ltcpip_adapter -lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc -lesp_hw_support -lxtensa -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lnghttp -lesp-tls -ltcp_transport -lesp_http_client -lesp_http_server -lesp_https_ota -lsdmmc -lesp_serial_slave_link -lulp -lmbedtls_2 -lmbedcrypto -lmbedx509 -lcoexist -lcore -lespnow -lmesh -lnet80211 -lpp -lsmartconfig -lwapi -lesp_ringbuf -lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash -lnvs_flash -lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth -ltcpip_adapter -lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc -lesp_hw_support -lxtensa -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lnghttp -lesp-tls -ltcp_transport -lesp_http_client -lesp_http_server -lesp_https_ota -lsdmmc -lesp_serial_slave_link -lulp -lmbedtls_2 -lmbedcrypto -lmbedx509 -lcoexist -lcore -lespnow -lmesh -lnet80211 -lpp -lsmartconfig -lwapi -lesp_ringbuf -lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash -lnvs_flash -lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth -ltcpip_adapter -lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc -lesp_hw_support -lxtensa -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lnghttp -lesp-tls -ltcp_transport -lesp_http_client -lesp_http_server -lesp_https_ota -lsdmmc -lesp_serial_slave_link -lulp -lmbedtls_2 -lmbedcrypto -lmbedx509 -lcoexist -lcore -lespnow -lmesh -lnet80211 -lpp -lsmartconfig -lwapi -lesp_ringbuf -lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash -lnvs_flash -lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth -ltcpip_adapter -lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc -lesp_hw_support -lxtensa -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lnghttp -lesp-tls -ltcp_transport -lesp_http_client -lesp_http_server -lesp_https_ota -lsdmmc -lesp_serial_slave_link -lulp -lmbedtls_2 -lmbedcrypto -lmbedx509 -lcoexist -lcore -lespnow -lmesh -lnet80211 -lpp -lsmartconfig -lwapi -lesp_ringbuf -lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash -lnvs_flash -lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth -ltcpip_adapter -lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc -lesp_hw_support -lxtensa -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lnghttp -lesp-tls -ltcp_transport -lesp_http_client -lesp_http_server -lesp_https_ota -lsdmmc -lesp_serial_slave_link -lulp -lmbedtls_2 -lmbedcrypto -lmbedx509 -lcoexist -lcore -lespnow -lmesh -lnet80211 -lpp -lsmartconfig -lwapi -lesp_ringbuf -lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash -lnvs_flash -lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth -ltcpip_adapter -lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc -lesp_hw_support -lxtensa -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lnghttp -lesp-tls -ltcp_transport -lesp_http_client -lesp_http_server -lesp_https_ota -lsdmmc -lesp_serial_slave_link -lulp -lmbedtls_2 -lmbedcrypto -lmbedx509 -lcoexist -lcore -lespnow -lmesh -lnet80211 -lpp -lsmartconfig -lwapi -lphy -lbtbb -lesp_phy -lphy -lbtbb -lesp_phy -lphy -lbtbb -lxt_hal -lm -lnewlib -lstdc++ -lpthread -lgcc -lcxx -lapp_trace -lgcov -lapp_trace -lgcov -lc 
-
-	ARFLAGS = cr
-	
-	ELFFLAGS = -T memory.ld -T sections.ld -T esp32s3.rom.ld -T esp32s3.rom.api.ld -T esp32s3.rom.libgcc.ld -T esp32s3.rom.newlib.ld \
-				-T esp32s3.rom.version.ld -T esp32s3.rom.newlib-time.ld -T esp32s3.peripherals.ld  -mlongcalls -Wl,--cref -Wl,--gc-sections \
-				-fno-rtti -fno-lto -Wl,--wrap=esp_log_write -Wl,--wrap=esp_log_writev -Wl,--wrap=log_printf -u _Z5setupv -u _Z4loopv -u esp_app_desc \
-				-u pthread_include_pthread_impl -u pthread_include_pthread_cond_impl -u pthread_include_pthread_local_storage_impl \
-				-u pthread_include_pthread_rwlock_impl -u include_esp_phy_override -u ld_include_highint_hdl -u start_app -u start_app_other_cores \
-				-u __ubsan_include -Wl,--wrap=longjmp -u __assert_func -u vfs_include_syscalls_impl -Wl,--undefined=uxTopUsedPriority -u app_main \
-				-u newlib_include_heap_impl -u newlib_include_syscalls_impl -u newlib_include_pthread_impl -u newlib_include_assert_impl -u __cxa_guard_dummy 
-
 	BUILD_EXTRA_FLAGS +=-DARDUINO_USB_MODE=$($(ARDUINO_VARIANT).build.usb_mode) -DARDUINO_USB_CDC_ON_BOOT=$($(ARDUINO_VARIANT).build.cdc_on_boot) \
 						-DARDUINO_USB_MSC_ON_BOOT=$($(ARDUINO_VARIANT).build.msc_on_boot) -DARDUINO_USB_DFU_ON_BOOT=$($(ARDUINO_VARIANT).build.dfu_on_boot)
+	MEMORY_TYPE = $($(ARDUINO_VARIANT).build.boot)_$($(ARDUINO_VARIANT).build.psram_type)
 endif #!s3
 
 ifeq ($(MCU),esp32c3)
-
-	CPREPROCESSOR_FLAGS =	-DHAVE_CONFIG_H -DMBEDTLS_CONFIG_FILE=mbedtls/esp_config.h -DUNITY_INCLUDE_CONFIG_H \
-							-DWITH_POSIX -D_GNU_SOURCE -DIDF_VER=v4.4.4 -DESP_PLATFORM -D_POSIX_READER_WRITER_LOCKS \
-							-I$(ESPRESSIF_SDK)/include/config -I$(ESPRESSIF_SDK)/include/newlib/platform_include \
-							-I$(ESPRESSIF_SDK)/include/freertos/include \
-							-I$(ESPRESSIF_SDK)/include/freertos/include/esp_additions/freertos \
-							-I$(ESPRESSIF_SDK)/include/freertos/port/riscv/include -I$(ESPRESSIF_SDK)/include/freertos/include/esp_additions \
-							-I$(ESPRESSIF_SDK)/include/esp_hw_support/include -I$(ESPRESSIF_SDK)/include/esp_hw_support/include/soc \
-							-I$(ESPRESSIF_SDK)/include/esp_hw_support/include/soc/esp32c3 -I$(ESPRESSIF_SDK)/include/esp_hw_support/port/esp32c3 \
-							-I$(ESPRESSIF_SDK)/include/esp_hw_support/port/esp32c3/private_include -I$(ESPRESSIF_SDK)/include/heap/include \
-							-I$(ESPRESSIF_SDK)/include/log/include -I$(ESPRESSIF_SDK)/include/lwip/include/apps \
-							-I$(ESPRESSIF_SDK)/include/lwip/include/apps/sntp -I$(ESPRESSIF_SDK)/include/lwip/lwip/src/include \
-							-I$(ESPRESSIF_SDK)/include/lwip/port/esp32/include -I$(ESPRESSIF_SDK)/include/lwip/port/esp32/include/arch \
-							-I$(ESPRESSIF_SDK)/include/soc/include -I$(ESPRESSIF_SDK)/include/soc/esp32c3 \
-							-I$(ESPRESSIF_SDK)/include/soc/esp32c3/include -I$(ESPRESSIF_SDK)/include/hal/esp32c3/include \
-							-I$(ESPRESSIF_SDK)/include/hal/include -I$(ESPRESSIF_SDK)/include/hal/platform_port/include \
-							-I$(ESPRESSIF_SDK)/include/esp_rom/include -I$(ESPRESSIF_SDK)/include/esp_rom/include/esp32c3 \
-							-I$(ESPRESSIF_SDK)/include/esp_rom/esp32c3 -I$(ESPRESSIF_SDK)/include/esp_common/include \
-							-I$(ESPRESSIF_SDK)/include/esp_system/include -I$(ESPRESSIF_SDK)/include/esp_system/port/soc \
-							-I$(ESPRESSIF_SDK)/include/esp_system/port/include/riscv -I$(ESPRESSIF_SDK)/include/esp_system/port/public_compat \
-							-I$(ESPRESSIF_SDK)/include/riscv/include -I$(ESPRESSIF_SDK)/include/driver/include \
-							-I$(ESPRESSIF_SDK)/include/driver/esp32c3/include -I$(ESPRESSIF_SDK)/include/esp_pm/include \
-							-I$(ESPRESSIF_SDK)/include/esp_ringbuf/include -I$(ESPRESSIF_SDK)/include/efuse/include \
-							-I$(ESPRESSIF_SDK)/include/efuse/esp32c3/include -I$(ESPRESSIF_SDK)/include/vfs/include \
-							-I$(ESPRESSIF_SDK)/include/esp_wifi/include -I$(ESPRESSIF_SDK)/include/esp_event/include \
-							-I$(ESPRESSIF_SDK)/include/esp_netif/include -I$(ESPRESSIF_SDK)/include/esp_eth/include \
-							-I$(ESPRESSIF_SDK)/include/tcpip_adapter/include -I$(ESPRESSIF_SDK)/include/esp_phy/include \
-							-I$(ESPRESSIF_SDK)/include/esp_phy/esp32c3/include -I$(ESPRESSIF_SDK)/include/esp_ipc/include \
-							-I$(ESPRESSIF_SDK)/include/app_trace/include -I$(ESPRESSIF_SDK)/include/esp_timer/include \
-							-I$(ESPRESSIF_SDK)/include/mbedtls/port/include -I$(ESPRESSIF_SDK)/include/mbedtls/mbedtls/include \
-							-I$(ESPRESSIF_SDK)/include/mbedtls/esp_crt_bundle/include -I$(ESPRESSIF_SDK)/include/app_update/include \
-							-I$(ESPRESSIF_SDK)/include/spi_flash/include -I$(ESPRESSIF_SDK)/include/bootloader_support/include \
-							-I$(ESPRESSIF_SDK)/include/nvs_flash/include -I$(ESPRESSIF_SDK)/include/pthread/include \
-							-I$(ESPRESSIF_SDK)/include/esp_gdbstub/include -I$(ESPRESSIF_SDK)/include/esp_gdbstub/riscv \
-							-I$(ESPRESSIF_SDK)/include/esp_gdbstub/esp32c3 -I$(ESPRESSIF_SDK)/include/espcoredump/include \
-							-I$(ESPRESSIF_SDK)/include/espcoredump/include/port/riscv -I$(ESPRESSIF_SDK)/include/wpa_supplicant/include \
-							-I$(ESPRESSIF_SDK)/include/wpa_supplicant/port/include -I$(ESPRESSIF_SDK)/include/wpa_supplicant/esp_supplicant/include \
-							-I$(ESPRESSIF_SDK)/include/ieee802154/include -I$(ESPRESSIF_SDK)/include/console \
-							-I$(ESPRESSIF_SDK)/include/asio/asio/asio/include -I$(ESPRESSIF_SDK)/include/asio/port/include \
-							-I$(ESPRESSIF_SDK)/include/bt/common/osi/include -I$(ESPRESSIF_SDK)/include/bt/include/esp32c3/include \
-							-I$(ESPRESSIF_SDK)/include/bt/common/api/include/api -I$(ESPRESSIF_SDK)/include/bt/common/btc/profile/esp/blufi/include \
-							-I$(ESPRESSIF_SDK)/include/bt/common/btc/profile/esp/include -I$(ESPRESSIF_SDK)/include/bt/host/bluedroid/api/include/api \
-							-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/mesh_common/include \
-							-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/mesh_common/tinycrypt/include \
-							-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/mesh_core -I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/mesh_core/include \
-							-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/mesh_core/storage -I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/btc/include \
-							-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/mesh_models/common/include \
-							-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/mesh_models/client/include \
-							-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/mesh_models/server/include \
-							-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/api/core/include -I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/api/models/include \
-							-I$(ESPRESSIF_SDK)/include/bt/esp_ble_mesh/api -I$(ESPRESSIF_SDK)/include/cbor/port/include \
-							-I$(ESPRESSIF_SDK)/include/unity/include -I$(ESPRESSIF_SDK)/include/unity/unity/src\
-							-I$(ESPRESSIF_SDK)/include/cmock/CMock/src -I$(ESPRESSIF_SDK)/include/coap/port/include \
-							-I$(ESPRESSIF_SDK)/include/coap/libcoap/include -I$(ESPRESSIF_SDK)/include/nghttp/port/include \
-							-I$(ESPRESSIF_SDK)/include/nghttp/nghttp2/lib/includes -I$(ESPRESSIF_SDK)/include/esp-tls \
-							-I$(ESPRESSIF_SDK)/include/esp-tls/esp-tls-crypto -I$(ESPRESSIF_SDK)/include/esp_adc_cal/include \
-							-I$(ESPRESSIF_SDK)/include/esp_hid/include -I$(ESPRESSIF_SDK)/include/tcp_transport/include \
-							-I$(ESPRESSIF_SDK)/include/esp_http_client/include -I$(ESPRESSIF_SDK)/include/esp_http_server/include \
-							-I$(ESPRESSIF_SDK)/include/esp_https_ota/include -I$(ESPRESSIF_SDK)/include/esp_https_server/include \
-							-I$(ESPRESSIF_SDK)/include/esp_lcd/include -I$(ESPRESSIF_SDK)/include/esp_lcd/interface \
-							-I$(ESPRESSIF_SDK)/include/protobuf-c/protobuf-c -I$(ESPRESSIF_SDK)/include/protocomm/include/common \
-							-I$(ESPRESSIF_SDK)/include/protocomm/include/security -I$(ESPRESSIF_SDK)/include/protocomm/include/transports \
-							-I$(ESPRESSIF_SDK)/include/mdns/include -I$(ESPRESSIF_SDK)/include/esp_local_ctrl/include \
-							-I$(ESPRESSIF_SDK)/include/sdmmc/include -I$(ESPRESSIF_SDK)/include/esp_serial_slave_link/include \
-							-I$(ESPRESSIF_SDK)/include/esp_websocket_client/include -I$(ESPRESSIF_SDK)/include/expat/expat/expat/lib \
-							-I$(ESPRESSIF_SDK)/include/expat/port/include -I$(ESPRESSIF_SDK)/include/wear_levelling/include \
-							-I$(ESPRESSIF_SDK)/include/fatfs/diskio -I$(ESPRESSIF_SDK)/include/fatfs/vfs \
-							-I$(ESPRESSIF_SDK)/include/fatfs/src -I$(ESPRESSIF_SDK)/include/freemodbus/freemodbus/common/include \
-							-I$(ESPRESSIF_SDK)/include/idf_test/include -I$(ESPRESSIF_SDK)/include/idf_test/include/esp32c3 \
-							-I$(ESPRESSIF_SDK)/include/jsmn/include -I$(ESPRESSIF_SDK)/include/json/cJSON \
-							-I$(ESPRESSIF_SDK)/include/libsodium/libsodium/src/libsodium/include \
-							-I$(ESPRESSIF_SDK)/include/libsodium/port_include -I$(ESPRESSIF_SDK)/include/mqtt/esp-mqtt/include \
-							-I$(ESPRESSIF_SDK)/include/openssl/include -I$(ESPRESSIF_SDK)/include/spiffs/include \
-							-I$(ESPRESSIF_SDK)/include/wifi_provisioning/include -I$(ESPRESSIF_SDK)/include/rmaker_common/include \
-							-I$(ESPRESSIF_SDK)/include/json_parser/upstream/include -I$(ESPRESSIF_SDK)/include/json_parser/upstream \
-							-I$(ESPRESSIF_SDK)/include/json_generator/upstream -I$(ESPRESSIF_SDK)/include/esp_schedule/include \
-							-I$(ESPRESSIF_SDK)/include/esp_rainmaker/include -I$(ESPRESSIF_SDK)/include/gpio_button/button/include \
-							-I$(ESPRESSIF_SDK)/include/qrcode/include -I$(ESPRESSIF_SDK)/include/ws2812_led \
-							-I$(ESPRESSIF_SDK)/include/esp_diagnostics/include -I$(ESPRESSIF_SDK)/include/rtc_store/include \
-							-I$(ESPRESSIF_SDK)/include/esp_insights/include -I$(ESPRESSIF_SDK)/include/esp-dsp/modules/dotprod/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/support/include -I$(ESPRESSIF_SDK)/include/esp-dsp/modules/windows/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/windows/hann/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/windows/blackman/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/windows/blackman_harris/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/windows/blackman_nuttall/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/windows/nuttall/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/windows/flat_top/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/iir/include -I$(ESPRESSIF_SDK)/include/esp-dsp/modules/fir/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/math/include -I$(ESPRESSIF_SDK)/include/esp-dsp/modules/math/add/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/math/sub/include -I$(ESPRESSIF_SDK)/include/esp-dsp/modules/math/mul/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/math/addc/include -I$(ESPRESSIF_SDK)/include/esp-dsp/modules/math/mulc/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/math/sqrt/include -I$(ESPRESSIF_SDK)/include/esp-dsp/modules/matrix/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/fft/include -I$(ESPRESSIF_SDK)/include/esp-dsp/modules/dct/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/conv/include -I$(ESPRESSIF_SDK)/include/esp-dsp/modules/common/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/kalman/ekf/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dsp/modules/kalman/ekf_imu13states/include \
-							-I$(ESPRESSIF_SDK)/include/esp_littlefs/include -I$(ESPRESSIF_SDK)/include/esp-dl/include \
-							-I$(ESPRESSIF_SDK)/include/esp-dl/include/tool -I$(ESPRESSIF_SDK)/include/esp-dl/include/typedef \
-							-I$(ESPRESSIF_SDK)/include/esp-dl/include/image -I$(ESPRESSIF_SDK)/include/esp-dl/include/math \
-							-I$(ESPRESSIF_SDK)/include/esp-dl/include/nn -I$(ESPRESSIF_SDK)/include/esp-dl/include/layer \
-							-I$(ESPRESSIF_SDK)/include/esp-dl/include/detect -I$(ESPRESSIF_SDK)/include/esp-dl/include/model_zoo \
-							-I$(ESPRESSIF_SDK)/include/esp-sr/esp-tts/esp_tts_chinese/include \
-							-I$(ESPRESSIF_SDK)/include/esp32-camera/driver/include -I$(ESPRESSIF_SDK)/include/esp32-camera/conversions/include \
-							-I$(ESPRESSIF_SDK)/include/fb_gfx/include \
-							-I$(ESPRESSIF_SDK)/$(MEMORY_TYPE)/include
-
-
-	ASFLAGS =	-ffunction-sections -fdata-sections -Wno-error=unused-function -Wno-error=unused-variable \
-				-Wno-error=deprecated-declarations -Wno-unused-parameter -Wno-sign-compare -ggdb \
-				-Wno-error=format= -nostartfiles -Wno-format -freorder-blocks -Wwrite-strings \
-				-fstack-protector -fstrict-volatile-bitfields -Wno-error=unused-but-set-variable -fno-jump-tables \
-				-fno-tree-switch-conversion  -x assembler-with-cpp -MMD -c
-	
-	CFLAGS =	-march=rv32imc -ffunction-sections -fdata-sections -Wno-error=unused-function -Wno-error=unused-variable \
-				-Wno-error=deprecated-declarations -Wno-unused-parameter -Wno-sign-compare -ggdb \
-				-Wno-error=format= -nostartfiles -Wno-format -freorder-blocks -Wwrite-strings \
-				-fstack-protector -fstrict-volatile-bitfields -Wno-error=unused-but-set-variable -fno-jump-tables \
-				-fno-tree-switch-conversion -std=gnu99 -Wno-old-style-declaration  -MMD -c
-	
-	CXXFLAGS =	-march=rv32imc -ffunction-sections -fdata-sections -Wno-error=unused-function -Wno-error=unused-variable \
-				-Wno-error=deprecated-declarations -Wno-unused-parameter -Wno-sign-compare -ggdb \
-				-Wno-error=format= -nostartfiles -Wno-format -freorder-blocks -Wwrite-strings \
-				-fstack-protector -fstrict-volatile-bitfields -Wno-error=unused-but-set-variable \
-				-fno-jump-tables -fno-tree-switch-conversion -std=gnu++11 -fexceptions -fno-rtti  -MMD -c
-
-	ELFLIBS =	-lesp_ringbuf -lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash -lnvs_flash -lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth -ltcpip_adapter -lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc -lesp_hw_support -lriscv -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lasio -lbt -lcbor -lunity -lcmock -lcoap -lnghttp -lesp-tls -lesp_adc_cal -lesp_hid -ltcp_transport -lesp_http_client -lesp_http_server -lesp_https_ota -lesp_https_server -lesp_lcd -lprotobuf-c -lprotocomm -lmdns -lesp_local_ctrl -lsdmmc -lesp_serial_slave_link -lesp_websocket_client -lexpat -lwear_levelling -lfatfs -lfreemodbus -ljsmn -ljson -llibsodium -lmqtt -lopenssl -lspiffs -lwifi_provisioning -lrmaker_common -lesp_diagnostics -lrtc_store -lesp_insights -ljson_parser -ljson_generator -lesp_schedule -lespressif__esp_secure_cert_mgr -lesp_rainmaker -lgpio_button -lqrcode -lws2812_led -lesp32-camera -lesp_littlefs -lespressif__esp-dsp -lfb_gfx -lasio -lcmock -lunity -lcoap -lesp_lcd -lesp_websocket_client -lexpat -lfreemodbus -ljsmn -llibsodium -lesp_adc_cal -lesp_hid -lfatfs -lwear_levelling -lopenssl -lspiffs -lesp_insights -lcbor -lesp_diagnostics -lrtc_store -lesp_rainmaker -lesp_local_ctrl -lesp_https_server -lwifi_provisioning -lprotocomm -lbt -lbtdm_app -lprotobuf-c -lmdns -ljson -ljson_parser -ljson_generator -lesp_schedule -lespressif__esp_secure_cert_mgr -lqrcode -lrmaker_common -lmqtt -lcat_face_detect -lhuman_face_detect -lcolor_detect -lmfn -ldl -lesp_tts_chinese -lvoice_set_xiaole -lesp_ringbuf -lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash -lnvs_flash -lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth -ltcpip_adapter -lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc -lesp_hw_support -lriscv -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lnghttp -lesp-tls -ltcp_transport -lesp_http_client -lesp_http_server -lesp_https_ota -lsdmmc -lesp_serial_slave_link -lmbedtls_2 -lmbedcrypto -lmbedx509 -lcoexist -lcore -lespnow -lmesh -lnet80211 -lpp -lsmartconfig -lwapi -lesp_ringbuf -lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash -lnvs_flash -lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth -ltcpip_adapter -lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc -lesp_hw_support -lriscv -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lnghttp -lesp-tls -ltcp_transport -lesp_http_client -lesp_http_server -lesp_https_ota -lsdmmc -lesp_serial_slave_link -lmbedtls_2 -lmbedcrypto -lmbedx509 -lcoexist -lcore -lespnow -lmesh -lnet80211 -lpp -lsmartconfig -lwapi -lesp_ringbuf -lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash -lnvs_flash -lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth -ltcpip_adapter -lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc -lesp_hw_support -lriscv -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lnghttp -lesp-tls -ltcp_transport -lesp_http_client -lesp_http_server -lesp_https_ota -lsdmmc -lesp_serial_slave_link -lmbedtls_2 -lmbedcrypto -lmbedx509 -lcoexist -lcore -lespnow -lmesh -lnet80211 -lpp -lsmartconfig -lwapi -lesp_ringbuf -lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash -lnvs_flash -lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth -ltcpip_adapter -lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc -lesp_hw_support -lriscv -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lnghttp -lesp-tls -ltcp_transport -lesp_http_client -lesp_http_server -lesp_https_ota -lsdmmc -lesp_serial_slave_link -lmbedtls_2 -lmbedcrypto -lmbedx509 -lcoexist -lcore -lespnow -lmesh -lnet80211 -lpp -lsmartconfig -lwapi -lesp_ringbuf -lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash -lnvs_flash -lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth -ltcpip_adapter -lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc -lesp_hw_support -lriscv -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lnghttp -lesp-tls -ltcp_transport -lesp_http_client -lesp_http_server -lesp_https_ota -lsdmmc -lesp_serial_slave_link -lmbedtls_2 -lmbedcrypto -lmbedx509 -lcoexist -lcore -lespnow -lmesh -lnet80211 -lpp -lsmartconfig -lwapi -lesp_ringbuf -lefuse -lesp_ipc -ldriver -lesp_pm -lmbedtls -lapp_update -lbootloader_support -lspi_flash -lnvs_flash -lpthread -lesp_gdbstub -lespcoredump -lesp_phy -lesp_system -lesp_rom -lhal -lvfs -lesp_eth -ltcpip_adapter -lesp_netif -lesp_event -lwpa_supplicant -lesp_wifi -lconsole -llwip -llog -lheap -lsoc -lesp_hw_support -lriscv -lesp_common -lesp_timer -lfreertos -lnewlib -lcxx -lapp_trace -lnghttp -lesp-tls -ltcp_transport -lesp_http_client -lesp_http_server -lesp_https_ota -lsdmmc -lesp_serial_slave_link -lmbedtls_2 -lmbedcrypto -lmbedx509 -lcoexist -lcore -lespnow -lmesh -lnet80211 -lpp -lsmartconfig -lwapi -lphy -lbtbb -lesp_phy -lphy -lbtbb -lesp_phy -lphy -lbtbb -lm -lnewlib -lstdc++ -lpthread -lgcc -lcxx -lapp_trace -lgcov -lapp_trace -lgcov -lc 
-
-	ARFLAGS = cr
-	
-	ELFFLAGS =	-T memory.ld -T sections.ld -T esp32c3.rom.ld -T esp32c3.rom.api.ld -T esp32c3.rom.libgcc.ld -T esp32c3.rom.newlib.ld \
-				-T esp32c3.rom.version.ld -T esp32c3.rom.newlib-time.ld -T esp32c3.rom.eco3.ld -T esp32c3.peripherals.ld  -nostartfiles \
-				-march=rv32imc --specs=nosys.specs -Wl,--cref -Wl,--gc-sections -fno-rtti -fno-lto -Wl,--wrap=esp_log_write \
-				-Wl,--wrap=esp_log_writev -Wl,--wrap=log_printf -u _Z5setupv -u _Z4loopv -u esp_app_desc -u pthread_include_pthread_impl \
-				-u pthread_include_pthread_cond_impl -u pthread_include_pthread_local_storage_impl -u pthread_include_pthread_rwlock_impl \
-				-u include_esp_phy_override -u start_app -u __ubsan_include -u __assert_func -u vfs_include_syscalls_impl \
-				-Wl,--undefined=uxTopUsedPriority -u app_main -u newlib_include_heap_impl -u newlib_include_syscalls_impl \
-				-u newlib_include_pthread_impl -u newlib_include_assert_impl -u __cxa_guard_dummy
-
 	BUILD_EXTRA_FLAGS +=-DARDUINO_USB_MODE=1 -DARDUINO_USB_CDC_ON_BOOT=$($(ARDUINO_VARIANT).build.cdc_on_boot) 
-endif #!s3
+endif #!c3
 
+ifeq ($(MCU),esp32c6)
+	BUILD_EXTRA_FLAGS +=-DARDUINO_USB_MODE=1 -DARDUINO_USB_CDC_ON_BOOT=$($(ARDUINO_VARIANT).build.cdc_on_boot) 
+endif #!c6
 
+ifeq ($(MCU),esp32h2)
+	BUILD_EXTRA_FLAGS +=-DARDUINO_USB_MODE=1 -DARDUINO_USB_CDC_ON_BOOT=$($(ARDUINO_VARIANT).build.cdc_on_boot) 
+	FLASH_FREQ = 16m
+endif #!h2
 
-#-DARDUINO_USB_CDC_ON_BOOT=0
 
 CC := $(XTENSA_TOOLCHAIN)$($(ARDUINO_VARIANT).build.tarch)-$(ARDUINO_ARCH)-elf-gcc
 CXX := $(XTENSA_TOOLCHAIN)$($(ARDUINO_VARIANT).build.tarch)-$(ARDUINO_ARCH)-elf-g++
@@ -855,13 +310,8 @@ C_COMBINE_PATTERN = -Wl,--Map=$(BUILD_OUT)/map.map -L$(ESPRESSIF_SDK)/lib -L$(ES
 SIZE_REGEX_DATA =  '^(?:\.dram0\.data|\.dram0\.bss)\s+([0-9]+).*'
 SIZE_REGEX = '^(?:\.iram0\.text|\.dram0\.text|\.flash\.text|\.dram0\.data|\.flash\.rodata)\s+([0-9]+).*'
 UPLOAD_SPEED ?= 115200
-UPLOAD_PATTERN = --chip $(MCU) --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED)  --before default_reset --after hard_reset write_flash -z \
-	--flash_mode $(FLASH_MODE) --flash_freq $(FLASH_FREQ) \
-	--flash_size detect 0xe000 $(ARDUINO_HOME)/tools/partitions/boot_app0.bin 0x1000  \
-	$(ARDUINO_HOME)/tools/sdk/bin/bootloader_$(BOOT)_$(FLASH_FREQ).bin 0x10000 \
-	$(BUILD_OUT)/$(TARGET).bin 0X8000 $(BUILD_OUT)/$(TARGET).partitions.bin  
 # WARNING : NOT TESTED TODO : TEST
-RESET_PATTERN = --chip $(MCU) --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED)  --before default_reset 
+RESET_PATTERN = --chip $(MCU) --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED)  --after hard_reset read_mac
 
 .PHONY: all dirs clean upload fs upload_fs
 
@@ -892,32 +342,32 @@ bin: $(BUILD_OUT)/$(TARGET).bin
 VTABLE_FLAGS=-DVTABLES_IN_FLASH
 
 $(BUILD_OUT)/core/%.S.o: $(ARDUINO_HOME)/cores/esp32/%.S
-	$(CC) $(CPREPROCESSOR_FLAGS) $(ASFLAGS) $(DEFINES) $(CORE_INC:%=-I%) -o $@ $<
+	$(CC) -DARDUINO_CORE_BUILD $(CPREPROCESSOR_FLAGS) $(ASFLAGS) $(DEFINES) $(CORE_INC:%=-I%) -o $@ $<
 
 $(BUILD_OUT)/core/core.a: $(CORE_OBJS)
 	@echo Creating core archive...
 	$(AR) $(ARFLAGS) $@ $(CORE_OBJS)
 
 $(BUILD_OUT)/core/%.c.o: %.c
-	$(CC) $(CORE_DEFINE) $(CPREPROCESSOR_FLAGS) $(CFLAGS) $(DEFINES) $(CORE_INC:%=-I%) -o $@ $<
+	$(CC) -DARDUINO_CORE_BUILD $(CPREPROCESSOR_FLAGS) $(CFLAGS) $(DEFINES) $(CORE_INC:%=-I%) -o $@ $<
 
 $(BUILD_OUT)/core/%.cpp.o: %.cpp
-	$(CXX) $(CORE_DEFINE) $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(DEFINES) $(CORE_INC:%=-I%)  $< -o $@
+	$(CXX) -DARDUINO_CORE_BUILD $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(DEFINES) $(CORE_INC:%=-I%)  $< -o $@
 
 $(BUILD_OUT)/libraries/%.c.o: %.c
-	$(CC) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CFLAGS) $(DEFINES)  $(INCLUDES) -o $@ $<
+	$(CC) $(CPREPROCESSOR_FLAGS) $(CFLAGS) $(DEFINES) -D_TAG_=\"$(TAG)\" $(INCLUDES) -o $@ $<
 
 $(BUILD_OUT)/libraries/%.cpp.o: %.cpp
-	$(CXX) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(USER_DEFINE) $(DEFINES) $(INCLUDE_ARDUINO_H) $(INCLUDES) $< -o $@	
+	$(CXX) $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(USER_DEFINE) $(DEFINES) -D_TAG_=\"$(TAG)\" $(INCLUDE_ARDUINO_H) $(INCLUDES) $< -o $@	
 
 $(BUILD_OUT)/libraries/%.S.o: %.S
 	$(CC) $(CPREPROCESSOR_FLAGS) $(ASFLAGS) $(DEFINES) $(USER_DEFINE) $(INCLUDES) -o $@ $<
 
 $(BUILD_OUT)/%.c.o: %.c
-	$(CC) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CFLAGS) $(DEFINES) $(INCLUDE_ARDUINO_H) $(INCLUDES) -o $@ $<
+	$(CC) -D_TAG_=\"$(TAG)\" $(CFLAGS) $(CPREPROCESSOR_FLAGS) $(DEFINES) $(INCLUDE_ARDUINO_H) $(INCLUDES) -o $@ $<
 
 $(BUILD_OUT)/%.cpp.o: %.cpp
-	$(CXX) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(USER_DEFINE) $(DEFINES) $(INCLUDE_ARDUINO_H) $(INCLUDES) $< -o $@	
+	$(CXX) $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(USER_DEFINE) -D_TAG_=\"$(TAG)\" $(DEFINES) $(INCLUDE_ARDUINO_H) $(INCLUDES) $< -o $@	
 
 $(BUILD_OUT)/%.S.o: %.S
 	$(CC) $(CPREPROCESSOR_FLAGS) $(ASFLAGS) $(DEFINES) $(USER_DEFINE) $(INCLUDES) -o $@ $<
@@ -930,7 +380,7 @@ else
 endif
 
 $(BUILD_OUT)/%.ino.cpp.o: $(BUILD_OUT)/%.ino.cpp
-	$(CXX) -D_TAG_=\"$(TAG)\" $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(USER_DEFINE) $(DEFINES) $(INCLUDE_ARDUINO_H) $(INCLUDES) $< -o $@
+	$(CXX) $(CPREPROCESSOR_FLAGS) $(CXXFLAGS) $(USER_DEFINE) -D_TAG_=\"$(TAG)\" $(DEFINES) $(INCLUDE_ARDUINO_H) $(INCLUDES) $< -o $@
 
 $(BUILD_OUT)/$(TARGET).elf: sketch core libs
 	$(LD) $(C_COMBINE_PATTERN) -o $@ 
@@ -945,9 +395,9 @@ $(BUILD_OUT)/$(TARGET).bin: $(BUILD_OUT)/$(TARGET).elf
 reset: 
 	$(PYTHON) $(ESPTOOL) $(RESET_PATTERN)
 
-upload: $(BUILD_OUT)/$(TARGET).bin size
+upload: all
 	$(PYTHON) $(ESPTOOL) --chip $(MCU) --port $(SERIAL_PORT) --baud $(UPLOAD_SPEED) $(UPLOAD_FLAGS) --before default_reset --after hard_reset write_flash -z --flash_mode $(FLASH_MODE) \
-		--flash_freq $(FLASH_FREQ) --flash_size detect 0xe000 $(ARDUINO_HOME)/tools/partitions/boot_app0.bin  $($(ARDUINO_VARIANT).build.bootloader_addr) $(BUILD_OUT)/$(TARGET).bootloader.bin 0x10000 $(BUILD_OUT)/$(TARGET).bin \
+		--flash_freq $(FLASH_FREQ) --flash_size detect 0xe000 $(ARDUINO_HOME)/tools/partitions/boot_app0.bin  $($(ARDUINO_VARIANT).build.bootloader_addr) $(BUILD_OUT)/$(TARGET).ino.bootloader.bin 0x10000 $(BUILD_OUT)/$(TARGET).bin \
 		0x8000 $(BUILD_OUT)/$(TARGET).partitions.bin $($(ARDUINO_VARIANT).upload.extra_flags)
 erase:
 	$(PYTHON) $(UPLOADTOOL) --chip $(MCU) --port $(SERIAL_PORT) erase_flash
@@ -960,16 +410,27 @@ ifneq ($(strip $(FS_FILES)),)
 endif
 
 prebuild:
-	@test ! -f $(USRCDIRS)/build_opt.h || cp  $(USRCDIRS)/build_opt.h $(BUILD_OUT)
+	# recipe.hooks.prebuild.1.pattern
 	@test ! -f $(USRCDIRS)/partitions.csv || cp  $(USRCDIRS)/partitions.csv $(BUILD_OUT)
+	# recipe.hooks.prebuild.2.pattern
 	@test -f $(BUILD_OUT)/partitions.csv || test ! -f $(ARDUINO_HOME)/variants/$(VARIANT)/partitions.csv || cp $(ARDUINO_HOME)/variants/$(VARIANT)/partitions.csv $(BUILD_OUT)
+	# recipe.hooks.prebuild.3.pattern
 	@test -f $(BUILD_OUT)/partitions.csv || cp $(ARDUINO_HOME)/tools/partitions/default.csv $(BUILD_OUT)/partitions.csv
+	# recipe.hooks.prebuild.4.pattern
 	@test ! -f $(USRCDIRS)/bootloader.bin || cp  $(USRCDIRS)/bootloader.bin $(BUILD_OUT)/$(TARGET).ino.bootloader.bin
 	@test -f $(BUILD_OUT)/bootloader.bin || test ! -f $(ARDUINO_HOME)/variants/$(VARIANT)/bootloader.bin || cp $(ARDUINO_HOME)/variants/$(VARIANT)/bootloader.bin $(BUILD_OUT)/$(TARGET).ino.bootloader.bin
-	@test -f $(BUILD_OUT)/bootloader.bin || $(PYTHON) $(ESPTOOL) --chip $(MCU) elf2image --flash_mode $(FLASH_MODE) --flash_freq $(FLASH_FREQ) \
-	--flash_size $(FLASH_SIZE) -o $(BUILD_OUT)/$(TARGET).ino.bootloader.bin $(ARDUINO_HOME)/tools/sdk/$(MCU)/bin/bootloader_$(FLASH_MODE)_$(FLASH_FREQ).elf  
+	
+																
+	test -f $(BUILD_OUT)/bootloader.bin || $(PYTHON) $(ESPTOOL) --chip $(MCU) elf2image --flash_mode $(FLASH_MODE) --flash_freq $(FLASH_FREQ) \
+	--flash_size $(FLASH_SIZE) -o $(BUILD_OUT)/$(TARGET).ino.bootloader.bin $(ARDUINO_HOME)/tools/esp32-arduino-libs/$(MCU)/bin/bootloader_$(FLASH_MODE)_$(FLASH_FREQ).elf  
+	# recipe.hooks.prebuild.5.pattern
 	@test ! -f $(USRCDIRS)/build_opt.h || cp  $(USRCDIRS)/build_opt.h $(BUILD_OUT)
+	# recipe.hooks.prebuild.6.pattern
 	@test -f $(USRCDIRS)/build_opt.h || touch $(BUILD_OUT)/build_opt.h
+	
+	# recipe.hooks.prebuild.8.pattern
+	@cp -f $(ESPRESSIF_SDK)/sdkconfig $(BUILD_OUT)/sdkconfig
+	$(PYTHON) $(OBJCOPY_PARTITION_PATTERN)
 
 upload_fs: fs
 	@echo TODO upload_fs : No SPIFFS function available for $(ARDUINO_ARCH)
