@@ -32,6 +32,10 @@ MCU = $($(ARDUINO_VARIANT).build.mcu)
 SERIAL_BAUD   ?= 115200
 CPU_FREQ ?= $($(ARDUINO_VARIANT).build.f_cpu)
 FLASH_FREQ ?= $($(ARDUINO_VARIANT).build.flash_freq)
+ifeq ($(FLASH_FREQ),)
+	FLASH_FREQ = 80m
+endif
+
 MEMORY_TYPE = $($(ARDUINO_VARIANT).build.memory_type)
 ifeq ($(MEMORY_TYPE),)
 	MEMORY_TYPE = $($(ARDUINO_VARIANT).build.boot)_qspi

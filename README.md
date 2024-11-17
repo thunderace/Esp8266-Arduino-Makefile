@@ -6,6 +6,7 @@ Based on Martin Oldfield arduino makefile : http://www.mjoldfield.com/atelier/20
 
 11/17/2024
 - ESP32 : 3.0.7 OK for ESP32C6 & ESP32C3
+- ESP32 : fix for empty flash_freq value in boards.txt (nano32)
 
 11/12/2024
 - ESP32 : 3.0.7 support (WIP)
